@@ -19,8 +19,15 @@ const { parseManeuver, toMetres, TurnGate, TRIGGER_KINDS } = require('../src/tur
 const { TurnWatch } = require('../src/turn_watch.js');
 
 let passed = 0;
+const failed = [];
 async function check(name, fn) {
-    await fn();
+    try {
+        await fn();
+    } catch (e) {
+        failed.push(name);
+        console.log(`FAIL ${name}: ${(e && e.message || String(e)).split('\n')[0]}`);
+        return;
+    }
     passed++;
     console.log(`ok   ${name}`);
 }
@@ -57,6 +64,14 @@ async function main() {
         assert(near(toMetres('1/4', 'MILES'), 402.336));
         assert(near(toMetres('1 1/2', 'mi'), 2414.016));
         assert(near(toMetres('1½', 'mi'), 2414.016));
+    });
+    await check('toMetres: digit grouping in metres, feet and yards', () => {
+        assert(near(toMetres('1,500', 'ft'), 457.2));
+        assert.strictEqual(toMetres('1.200', 'm'), 1200);
+        assert(near(toMetres('1,000', 'yd'), 914.4));
+        assert.strictEqual(toMetres('1,5', 'km'), 1500);
+        assert.strictEqual(toMetres('1.500', 'km'), 1.5 * 1000);
+        assert(near(toMetres('0.5', 'mi'), 804.672));
     });
     await check('toMetres: none for no number, an unknown unit or none', () => {
         assert.strictEqual(toMetres('', 'm'), null);
@@ -109,6 +124,16 @@ async function main() {
         const g = new TurnGate();
         assert.strictEqual(g.update(man('intersection', 50), 0), true);
         for (let t = 500; t <= 30000; t += 500) assert.strictEqual(g.update(man('intersection', null), t), true, `at ${t}`);
+    });
+    await check('a blank distance keeps it open at most 60 s, then the hold', () => {
+        const g = new TurnGate();
+        assert.strictEqual(g.update(man('destinationManeuver', 20), 0), true);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 1000), true);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 60999), true);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 61000), true);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 70999), true);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 71000), false);
+        assert.strictEqual(g.update(man('destinationManeuver', null), 200000), false);
     });
     await check('closes after 10 s past hideM', () => {
         const g = new TurnGate();
@@ -181,7 +206,8 @@ async function main() {
     });
 
     await watchChecks();
-    console.log(`${passed}/${passed} passed`);
+    console.log(`${passed}/${passed + failed.length} passed`);
+    if (failed.length) throw new Error(`${failed.length} failed`);
 }
 
 /* ---- TurnWatch against a fake GuidanceEventList and a fake clock ---- */
@@ -201,8 +227,18 @@ function fakeClock() {
             clearInterval(h) {
                 const i = timers.indexOf(h);
                 if (i >= 0) timers.splice(i, 1);
+            },
+            setTimeout(fn, ms) {
+                const h = { fn, ms, next: t + ms, once: true };
+                timers.push(h);
+                return h;
+            },
+            clearTimeout(h) {
+                const i = timers.indexOf(h);
+                if (i >= 0) timers.splice(i, 1);
             }
         },
+        pending: () => timers.length,
         async advance(ms) {
             await flush();
             const end = t + ms;
@@ -211,6 +247,7 @@ function fakeClock() {
                 if (!due) break;
                 t = due.next;
                 due.next += due.ms;
+                if (due.once) timers.splice(timers.indexOf(due), 1);
                 due.fn();
                 await flush();
             }
@@ -220,34 +257,44 @@ function fakeClock() {
     };
 }
 /* builders whose proxy answers queryContent with replyAt(now); opts: fail
- * (the build rejects), failQueries (that many queryContent calls reject). */
+ * (the build rejects), failBuilds (the first that many builds reject),
+ * failQueries (that many queryContent calls reject), hangQueries (that many
+ * never answer), throwQueries and throwConfig (that many queryContent or
+ * getViewConfig calls throw at once), slowBuild (the
+ * build resolves on b.release()). */
 function fakeBuilders(clock, replyAt, opts) {
     const o = opts || {};
-    const b = { builds: 0, configReads: 0, queries: 0 };
+    const b = { builds: 0, configReads: 0, queries: 0, shutdowns: 0 };
     b.buildTypedProxy = (iface, instance) => {
         b.builds++;
         assert.strictEqual(iface, 'de.bmw.infotainment.navigation.guiding.GuidanceEventList');
         assert.strictEqual(instance, 'Main_Instance');
-        if (o.fail) return Promise.reject(new Error('no such service'));
-        return Promise.resolve({
+        if (o.fail || b.builds <= (o.failBuilds || 0)) return Promise.reject(new Error('no such service'));
+        const proxy = {
             init: () => Promise.resolve(),
             waitUntilAvailable: () => Promise.resolve(),
-            shutdown() {},
+            shutdown() { b.shutdowns++; },
             _someIpProxy: {
                 callMethod(name, params) {
                     if (name === 'getViewConfig') {
                         b.configReads++;
+                        if (o.throwConfig && b.configReads <= o.throwConfig) throw new Error('not connected');
                         assert.deepStrictEqual(params, { viewId: 'HUD.RB.Main' });
                         return Promise.resolve({ viewConfig: { viewport: { maxElementCount: 1 } } });
                     }
                     assert.strictEqual(name, 'queryContent');
-                    assert.deepStrictEqual(params, { viewConfigs: [{ viewport: { maxElementCount: 1 } }] });
+                    /* the view's own config, or PR #94's fallback when it did not read */
+                    assert(Array.isArray(params.viewConfigs) && params.viewConfigs.length === 1 && params.viewConfigs[0].viewport);
                     b.queries++;
                     if (o.failQueries && b.queries <= o.failQueries) return Promise.reject(new Error('timed out'));
+                    if (o.hangQueries && b.queries <= o.hangQueries) return new Promise(() => {});
+                    if (o.throwQueries && b.queries <= o.throwQueries) throw new Error('not connected');
                     return Promise.resolve(replyAt(clock.now()));
                 }
             }
-        });
+        };
+        if (!o.slowBuild) return Promise.resolve(proxy);
+        return new Promise((resolve) => { b.release = () => resolve(proxy); });
     };
     return b;
 }
@@ -347,6 +394,89 @@ async function watchChecks() {
         assert.strictEqual(b.configReads, 2);
         assert.deepStrictEqual(sent, [{ at: 3000, cmd: 'turn', near: '1' }]);
         assert.strictEqual(w.maneuver.kind, 'intersection');
+    });
+    await check('the gate closing with no maneuver change emits change', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('cancelled'));
+        const { w } = watch(c, b);
+        let lastNear = null;
+        w.on('change', () => { lastNear = w.near; });
+        w.setActive(true);
+        await c.advance(14000);
+        assert.strictEqual(w.near, false);
+        assert.strictEqual(lastNear, false);
+    });
+    await check('a query that never answers times out, polling goes on', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { hangQueries: 1 });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(10000);
+        assert(b.queries > 5, `queries ${b.queries}`);
+        assert.strictEqual(sent[0].near, '1');
+    });
+    await check('a change listener that throws does not stop polling', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
+        const { w, sent, logged } = watch(c, b);
+        w.on('change', () => { throw new Error('render failed'); });
+        w.setActive(true);
+        await c.advance(29000);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1', '0']);
+        assert(logged.some((s) => s.includes('render failed')));
+    });
+    await check('a query that throws at once counts as failed, no crash', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { throwQueries: 2, throwConfig: 1 });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        assert.strictEqual(b.configReads, 1);
+        await c.advance(1000);
+        assert.strictEqual(w.status, 'available');
+        assert.strictEqual(sent[0].near, '1');
+    });
+    await check('a failed start is tried again while active, its error cleared', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { failBuilds: 1 });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        assert.strictEqual(w.status, 'unavailable');
+        await c.advance(20000);
+        assert.strictEqual(b.builds, 2);
+        assert.strictEqual(w.status, 'available');
+        assert.strictEqual(w.error, null);
+        assert.strictEqual(sent[0].near, '1');
+    });
+    await check('inactive: no retry of a failed start', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => null, { fail: true });
+        const { w } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        w.setActive(false);
+        await c.advance(120000);
+        assert.strictEqual(b.builds, 1);
+        assert.strictEqual(c.pending(), 0);
+    });
+    await check('off and on during the build: one proxy', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { slowBuild: true });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(100);
+        w.setActive(false);
+        w.setActive(true);
+        b.release();
+        await c.advance(1000);
+        assert.strictEqual(b.builds, 1);
+        assert.strictEqual(w.status, 'available');
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1']);
+    });
+    await check('stop during the build: the proxy is shut down when it comes', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => null, { slowBuild: true });
+        const { w } = watch(c, b);
+        w.setActive(true);
+        await c.advance(100);
+        w.stop();
+        b.release();
+        await c.advance(1000);
+        assert.strictEqual(b.shutdowns, 1);
+        assert.strictEqual(b.queries, 0);
     });
     await check('logs each maneuver once, and the first reply of a route raw', async () => {
         const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));

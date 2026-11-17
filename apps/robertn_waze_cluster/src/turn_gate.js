@@ -13,9 +13,10 @@
  * TurnGate.update(maneuver, nowMs) opens at a turn (TRIGGER_KINDS) within
  * showM, or branchShowM for a motorway exit. Once open it stays open while
  * the next maneuver is a turn within that distance plus extraHideM, or a
- * turn whose distance does not read (the HUD blanks it at the junction);
- * it closes after holdMs in a row of anything else: no maneuver (the route
- * ended), a maneuver that is not a turn, or a turn further on.
+ * turn whose distance does not read (the HUD blanks it at the junction)
+ * for at most blankMaxMs; it closes after holdMs in a row of anything
+ * else: no maneuver (the route ended), a maneuver that is not a turn, or a
+ * turn further on.
  */
 
 /* What the HUD view's events can be, as PR #94 found them on the car. */
@@ -33,8 +34,8 @@ const UNITS = {
 };
 const FRACTIONS = { '¼': '1/4', '½': '1/2', '¾': '3/4' };
 
-/* A shown distance in metres: "350" m, "1,5" km, "¼" or "1 1/2" mi; null
- * for no number, a unit not known here or none. */
+/* A shown distance in metres: "350" m, "1,500" ft, "1,5" km, "¼" or
+ * "1 1/2" mi; null for no number, a unit not known here or none. */
 function toMetres(distance, unit) {
     if (typeof distance !== 'string' || typeof unit !== 'string') {
         return null;
@@ -43,7 +44,10 @@ function toMetres(distance, unit) {
     if (!k) {
         return null;
     }
-    const s = distance.trim().replace(',', '.').replace(/[¼½¾]/g, (c) => ` ${FRACTIONS[c]}`).trim();
+    /* metres, feet and yards are shown whole: a separator before three digits groups them ("1,500 ft", "1.200 m") */
+    const whole = k === UNITS.m || k === UNITS.ft || k === UNITS.yd;
+    const grouped = whole ? distance.trim().replace(/[.,](?=\d{3}(?!\d))/g, '') : distance.trim();
+    const s = grouped.replace(',', '.').replace(/[¼½¾]/g, (c) => ` ${FRACTIONS[c]}`).trim();
     const m = /^(\d+(?:\.\d+)?)?\s*(?:(\d+)\/(\d+))?$/.exec(s);
     if (!m || (m[1] === undefined && m[2] === undefined)) {
         return null;
@@ -108,8 +112,10 @@ class TurnGate {
         this.branchShowM = o.branchShowM === undefined ? 1000 : o.branchShowM;
         this.extraHideM = o.extraHideM === undefined ? 400 : o.extraHideM;
         this.holdMs = o.holdMs === undefined ? 10000 : o.holdMs;
+        this.blankMaxMs = o.blankMaxMs === undefined ? 60000 : o.blankMaxMs;
         this.open = false;
         this._leavingAt = null;
+        this._blankSince = null;
     }
 
     /* maneuver: parseManeuver's, or null. Returns whether the map shows. */
@@ -118,10 +124,17 @@ class TurnGate {
         const showM = turn && maneuver.kind === 'branch' ? this.branchShowM : this.showM;
         if (!this.open) {
             this.open = turn && maneuver.metres !== null && maneuver.metres <= showM;
-            this._leavingAt = null;
+            this._leavingAt = this._blankSince = null;
             return this.open;
         }
-        if (turn && (maneuver.metres === null || maneuver.metres <= showM + this.extraHideM)) {
+        const blank = turn && maneuver.metres === null;
+        if (!blank) {
+            this._blankSince = null;
+        } else if (this._blankSince === null) {
+            this._blankSince = nowMs;
+        }
+        /* a blank distance that stays (a destination kept after arrival) holds it open no longer than blankMaxMs */
+        if ((blank && nowMs - this._blankSince < this.blankMaxMs) || (turn && !blank && maneuver.metres <= showM + this.extraHideM)) {
             this._leavingAt = null;
             return true;
         }
@@ -130,7 +143,7 @@ class TurnGate {
         }
         if (nowMs - this._leavingAt >= this.holdMs) {
             this.open = false;
-            this._leavingAt = null;
+            this._leavingAt = this._blankSince = null;
         }
         return this.open;
     }
