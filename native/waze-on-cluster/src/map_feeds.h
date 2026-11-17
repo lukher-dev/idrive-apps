@@ -74,6 +74,8 @@ public:
     /* The app's word that a turn is near or not ({"cmd":"turn"}); near
      * holds for hud_near_expire_ms after it was last said (poll). */
     void set_turn_near(bool near, int64_t now_ms);
+    /* The HUD map's zoom (FeedConfig::hud_zoom_pct), at once. */
+    void set_hud_zoom(unsigned pct);
 
     /* For poll(): one entry per feed, appended. */
     size_t poll_fds(std::vector<pollfd> *fds) const;

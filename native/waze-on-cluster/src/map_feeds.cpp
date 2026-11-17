@@ -163,6 +163,13 @@ void MapFeeds::set_turn_near(bool near, int64_t now_ms)
         hud_->set_gate(gate_open());
 }
 
+void MapFeeds::set_hud_zoom(unsigned pct)
+{
+    base_.hud_zoom_pct = pct;
+    if (hud_)
+        hud_->set_hud_zoom(pct);
+}
+
 void MapFeeds::poll(int64_t now_ms)
 {
     if (near_ && now_ms - near_at_ms_ >= base_.hud_near_expire_ms) {
@@ -264,6 +271,8 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     s.hud_keep_shown = base_.hud_keep_shown;
     s.hud_near_turn = base_.hud_near_turn;
     s.hud_gate = gate_open();
+    s.hud_zoom_pct = base_.hud_zoom_pct;
+    s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
     s.hud_offset_x = hud_ ? hud_->hud_offset_x() : base_.hud_offset_x;
     s.hud_offset_y = hud_ ? hud_->hud_offset_y() : base_.hud_offset_y;
     return s;

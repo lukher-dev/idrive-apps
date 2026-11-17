@@ -10,12 +10,13 @@
  *                  {"cmd":"hud","hud_x":"-800".."800","hud_y":...}  where it is, from the centre
  *                  {"cmd":"hud","hud_keep_shown":"0"|"1"}  kept shown over BMW's pop-ups, or not
  *                  {"cmd":"hud","hud_near_turn":"0"|"1"}  the HUD map only near turns, or always
+ *                  {"cmd":"hud","hud_zoom_pct":"100".."250"}  the HUD map's zoom
  *                  {"cmd":"turn","near":"0"|"1"}  a turn near, or not (the app's turn watch)
  *                  {"cmd":"guide","hide":0|1}  BMW's turn box hidden or not (guide_setting.h)
  *   tool -> owner  {"ev":"status",...,"hide_bmw_guidance":0|1,"guide_disabled":0|1,
  *                   "cluster":0|1,"hud":0|1,"hud_state":"off"|"disabled"|"turn_wait"|"idle"|"starting"|"showing"|...,
  *                   "hud_width_pct":...,"hud_x":...,"hud_y":...,"hud_keep_shown":0|1,
- *                   "hud_near_turn":0|1,"hud_gate":0|1}
+ *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...}
  *                  {"ev":"log","line":...}
  *
  * One connection is the owner; a second one is told "busy" and closed. */

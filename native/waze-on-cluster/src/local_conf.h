@@ -11,7 +11,8 @@
  * features_file instead, which no release before this one reads; found in
  * local_conf they are left out with a warning (patchd moves them).
  *
- * features_file (features.conf) holds the opt-in keys, each 0 or 1; a valid
+ * features_file (features.conf) holds the opt-in keys, each 0 or 1 (the HUD
+ * zoom's centre, hud_crop_cx_pm and hud_crop_cy_pm, 0-1000); a valid
  * value replaces the configuration's; another key, a value out of range or
  * a line that does not read is left out with a warning, as is a file that
  * cannot be read. */
@@ -26,7 +27,7 @@
 namespace woc {
 
 /* The keys features_file holds. */
-extern const char *const kFeatureKeys[2];
+extern const char *const kFeatureKeys[4];
 
 /* local_conf's settings over cfg's; a missing file is none. Each line left
  * out is one entry in *warnings. */

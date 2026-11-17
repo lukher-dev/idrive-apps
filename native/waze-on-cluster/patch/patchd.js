@@ -247,7 +247,12 @@ var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y
  * refuses to start with any of FEATURE_KEYS in; no release before this one
  * reads FEATURES. */
 var FEATURES = path.join(STATE_DIR, 'features.conf');
-var FEATURE_KEYS = ['hosted_vpp_scale', 'always_packed'];
+var FEATURE_KEYS = ['hosted_vpp_scale', 'always_packed', 'hud_crop_cx_pm', 'hud_crop_cy_pm'];
+/* An opt-in key's value: 0 or 1; the HUD zoom's centre a whole number 0-1000 (per mille). */
+function featureValid(k, v) {
+    if (k === 'hud_crop_cx_pm' || k === 'hud_crop_cy_pm') return /^\d+$/.test(v) && Number(v) <= 1000;
+    return /^[01]$/.test(v);
+}
 
 /* A key = value file's settings (a key += value line's value as the key's);
  * none when it cannot be read. */
@@ -303,7 +308,7 @@ function moveMapSettings() {
 }
 
 /* Moves any of FEATURE_KEYS found in LOCAL_CONF into FEATURES, a valid
- * value already there kept and one other than 0 or 1 dropped. LOCAL_CONF is
+ * value already there kept and one featureValid refuses dropped. LOCAL_CONF is
  * rewritten first, its other lines kept: cut short between the two writes,
  * the setting is lost but LOCAL_CONF is one every release starts with.
  * True when LOCAL_CONF holds none of FEATURE_KEYS. */
@@ -314,7 +319,7 @@ function moveFeatures() {
     function value(v) { return v.replace(/\s*#.*$/, ''); }
     found.forEach(function (k) {
         var v = value(local[k]);
-        if (!(k in feat && /^[01]$/.test(value(feat[k]))) && /^[01]$/.test(v)) move[k] = v;
+        if (!(k in feat && featureValid(k, value(feat[k]))) && featureValid(k, v)) move[k] = v;
     });
     try {
         rewriteConf(LOCAL_CONF, {}, FEATURE_KEYS);

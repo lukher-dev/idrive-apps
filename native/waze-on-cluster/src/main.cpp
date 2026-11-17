@@ -94,6 +94,7 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_x\":" + std::to_string(s.hud_offset_x) + ",\"hud_y\":" + std::to_string(s.hud_offset_y) +
            ",\"hud_keep_shown\":" + (s.hud_keep_shown ? "1" : "0") +
            ",\"hud_near_turn\":" + (s.hud_near_turn ? "1" : "0") + ",\"hud_gate\":" + (s.hud_gate ? "1" : "0") +
+           ",\"hud_zoom_pct\":" + std::to_string(s.hud_zoom_pct) + ",\"hud_zoom_used\":" + std::to_string(s.hud_zoom_used) +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -116,7 +117,7 @@ public:
         auto pct = msg.find("hud_width_pct");
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
-        auto near_turn = msg.find("hud_near_turn"), near = msg.find("near");
+        auto near_turn = msg.find("hud_near_turn"), near = msg.find("near"), zoom = msg.find("hud_zoom_pct");
         if (cmd == "start" && it != msg.end()) {
             log_info("start %s", it->second.c_str());
             if (!feeds_->set_target(it->second))
@@ -130,7 +131,7 @@ public:
             /* the app's turn watch: whether a turn is near, for the HUD map only near turns */
             feeds_->set_turn_near(near->second == "1", now_ms());
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
-                                    keep != msg.end() || near_turn != msg.end())) {
+                                    keep != msg.end() || near_turn != msg.end() || zoom != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -170,6 +171,15 @@ public:
                     feeds_->set_hud_near_turn(near_turn->second == "1");
                 else
                     log_warn("hud: hud_near_turn must be 0 or 1, not %s", near_turn->second.c_str());
+            }
+            /* and its zoom */
+            if (zoom != msg.end()) {
+                char *end = nullptr;
+                const long v = std::strtol(zoom->second.c_str(), &end, 10);
+                if (!zoom->second.empty() && !*end && v >= 100 && v <= 250)
+                    feeds_->set_hud_zoom((unsigned)v);
+                else
+                    log_warn("hud: hud_zoom_pct must be 100-250, not %s", zoom->second.c_str());
             }
         } else {
             log_warn("control: unknown or malformed command %s", cmd.c_str());
@@ -242,6 +252,7 @@ int serve(Config cfg)
         {"hud_width_pct", 0, 100},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_near_turn", 0, 1},       {"hud_near_expire_ms", 10000, 600000},
+        {"hud_zoom_pct", 100, 250}, {"hud_crop_cx_pm", 0, 1000},     {"hud_crop_cy_pm", 0, 1000},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -288,6 +299,9 @@ int serve(Config cfg)
     fc.hud_keep_shown = cfg.num("hud_keep_shown") != 0;
     fc.hud_near_turn = cfg.num("hud_near_turn") != 0;
     fc.hud_near_expire_ms = cfg.num("hud_near_expire_ms");
+    fc.hud_zoom_pct = (unsigned)cfg.num("hud_zoom_pct");
+    fc.hud_crop_cx_pm = (unsigned)cfg.num("hud_crop_cx_pm");
+    fc.hud_crop_cy_pm = (unsigned)cfg.num("hud_crop_cy_pm");
     fc.scale_down = cfg.num("hud_scale_down") != 0;
     fc.hud_round_corners = cfg.num("hud_round_corners") != 0;
     fc.hud_black_background = cfg.num("hud_black_background") != 0;
@@ -572,6 +586,9 @@ void define_keys(Config *cfg)
     cfg->define("hud_keep_shown", "0");
     cfg->define("hud_near_turn", "0");
     cfg->define("hud_near_expire_ms", "90000");
+    cfg->define("hud_zoom_pct", "100");
+    cfg->define("hud_crop_cx_pm", "500");
+    cfg->define("hud_crop_cy_pm", "500");
     cfg->define("hud_scale_down", "1");
     cfg->define("hud_round_corners", "1");
     cfg->define("hud_black_background", "1");
