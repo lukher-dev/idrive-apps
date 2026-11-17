@@ -63,7 +63,6 @@ const { WazeClusterControl, ZOOM_STEP, SHOWN_ON } = require('./waze_cluster_cont
 const { LogsControl, ROWS: LOGS_ROWS } = require('./logs_control.js');
 const { qrPng } = require('./qr.js');
 const { ProfileSync, sessionReader } = require('./profile_sync.js');
-const { TurnWatch } = require('./turn_watch.js');
 
 const logger = logging.getSDKLogger();
 
@@ -144,25 +143,6 @@ class WazeClusterApp extends OnlineApp {
         /* the map settings per driver profile, page shown or not */
         this._profiles = new ProfileSync({ control: this._control, log: logger, readProfile: sessionReader(someipBuilders, logger) });
         this._profiles.on('change', () => this._render());
-        /* CAR PROBE (checkpoint 0, not for merge): the turn list, always read, shown on the HUD rows */
-        this._probe = { start: new Date(), seen: 0, first: null, firstRaw: '' };
-        const probe = this._probe;
-        const probeLog = {
-            info: (s) => {
-                if (s.startsWith('turn: ') && s !== 'turn: none') {
-                    probe.seen++;
-                    probe.first = probe.first || new Date();
-                }
-                if (s.startsWith('turn reply: ') && !probe.firstRaw) {
-                    const m = /"formattedDistance":(\{[^}]*\})/.exec(s);
-                    probe.firstRaw = m ? m[1] : s.slice(12, 90);
-                }
-                logger.info(s);
-            },
-            warn: (s) => logger.warn(s)
-        };
-        this._turns = new TurnWatch({ builders: someipBuilders, log: probeLog });
-        this._turns.on('change', () => this._render());
 
         this.on('initialized', () => {
             this._appInitialized()
@@ -181,7 +161,6 @@ class WazeClusterApp extends OnlineApp {
     _appInitialized() {
         logger.info(`robertn_waze_cluster ${this.getAppId()} v${this._packageJson.version} starting`);
         this._profiles.start();
-        this._turns.setActive(true);
         if (!this.rhmiApplication) {
             logger.info('no RhmiApplication for this start reason; initializing without a screen');
             return this.initialized();
@@ -590,13 +569,8 @@ class WazeClusterApp extends OnlineApp {
         this._setEnabled(GUIDE_NAME, hide !== null && !unavailable && c.clusterOn() !== false);
         this._write(GUIDE_NAME, t("Hide BMW's turn box"));
         this._setSelected(GUIDE_NAME, !!hide && !unavailable);
-        /* CAR PROBE: what the turn list gave since the app started */
-        const w = this._turns, pr = this._probe, hhmm = (d) => d.toTimeString().slice(0, 5);
-        this._write(HUD_NAME, `Turns: ${w.status}${w.error ? ` (${w.error})` : ''}, ${pr.seen} seen` +
-            `${pr.first ? `, first ${hhmm(pr.first)}` : ''}, app ${hhmm(pr.start)}, near ${w.near ? 'yes' : 'no'}`);
-        const m = w.maneuver;
-        this._write(HUD_KEEP_NAME, `Last: ${m ? `${m.kind} ${m.metres === null ? '?' : Math.round(m.metres)} m` : 'none'}` +
-            `${pr.firstRaw ? ` | raw ${pr.firstRaw}` : ''}`);
+        this._write(HUD_NAME, c.hudText());
+        this._write(HUD_KEEP_NAME, t("Keep HUD map over BMW's pop-ups"));
         this._setSelected(HUD_KEEP_NAME, c.hudKeepShown() === true);
         this._setEnabled(HUD_KEEP_NAME, c.canKeepHud());
         /* the size slider and the place buttons: greyed while the HUD is off
@@ -691,7 +665,6 @@ class WazeClusterApp extends OnlineApp {
         }
         logger.info(`robertn_waze_cluster shutdown: ${JSON.stringify(reason)}`);
         clearTimeout(this._hideTimer);
-        this._turns.stop();
         this._control.close();
         this._logs.close();
         this._profiles.stop();
