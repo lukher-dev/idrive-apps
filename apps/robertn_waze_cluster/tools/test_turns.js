@@ -16,6 +16,7 @@
 const assert = require('assert');
 const path = require('path');
 const { parseManeuver, toMetres, TurnGate, TRIGGER_KINDS } = require('../src/turn_gate.js');
+const { TurnWatch } = require('../src/turn_watch.js');
 
 let passed = 0;
 async function check(name, fn) {
@@ -179,7 +180,185 @@ async function main() {
         assert.deepStrictEqual(got, [false, true, true, true, true, true, true, true, true, true, true, true, true, false]);
     });
 
+    await watchChecks();
     console.log(`${passed}/${passed} passed`);
+}
+
+/* ---- TurnWatch against a fake GuidanceEventList and a fake clock ---- */
+
+const flush = () => new Promise((resolve) => setImmediate(resolve));
+function fakeClock() {
+    let t = 0;
+    const timers = [];
+    return {
+        now: () => t,
+        timers: {
+            setInterval(fn, ms) {
+                const h = { fn, ms, next: t + ms };
+                timers.push(h);
+                return h;
+            },
+            clearInterval(h) {
+                const i = timers.indexOf(h);
+                if (i >= 0) timers.splice(i, 1);
+            }
+        },
+        async advance(ms) {
+            await flush();
+            const end = t + ms;
+            for (;;) {
+                const due = timers.filter((h) => h.next <= end).sort((a, b) => a.next - b.next)[0];
+                if (!due) break;
+                t = due.next;
+                due.next += due.ms;
+                due.fn();
+                await flush();
+            }
+            t = end;
+            await flush();
+        }
+    };
+}
+/* builders whose proxy answers queryContent with replyAt(now); opts: fail
+ * (the build rejects), failQueries (that many queryContent calls reject). */
+function fakeBuilders(clock, replyAt, opts) {
+    const o = opts || {};
+    const b = { builds: 0, configReads: 0, queries: 0 };
+    b.buildTypedProxy = (iface, instance) => {
+        b.builds++;
+        assert.strictEqual(iface, 'de.bmw.infotainment.navigation.guiding.GuidanceEventList');
+        assert.strictEqual(instance, 'Main_Instance');
+        if (o.fail) return Promise.reject(new Error('no such service'));
+        return Promise.resolve({
+            init: () => Promise.resolve(),
+            waitUntilAvailable: () => Promise.resolve(),
+            shutdown() {},
+            _someIpProxy: {
+                callMethod(name, params) {
+                    if (name === 'getViewConfig') {
+                        b.configReads++;
+                        assert.deepStrictEqual(params, { viewId: 'HUD.RB.Main' });
+                        return Promise.resolve({ viewConfig: { viewport: { maxElementCount: 1 } } });
+                    }
+                    assert.strictEqual(name, 'queryContent');
+                    assert.deepStrictEqual(params, { viewConfigs: [{ viewport: { maxElementCount: 1 } }] });
+                    b.queries++;
+                    if (o.failQueries && b.queries <= o.failQueries) return Promise.reject(new Error('timed out'));
+                    return Promise.resolve(replyAt(clock.now()));
+                }
+            }
+        });
+    };
+    return b;
+}
+const fromFixture = (name) => {
+    const f = fixture(name);
+    return (t) => f.replies[Math.min(Math.floor(t / f.stepMs), f.replies.length - 1)];
+};
+function watch(clock, builders, extra) {
+    const sent = [], logged = [];
+    const w = new TurnWatch(Object.assign({
+        builders, now: clock.now, timers: clock.timers,
+        send: (m) => sent.push(Object.assign({ at: clock.now() }, m)),
+        log: { info: (s) => logged.push(s), warn: (s) => logged.push(s) }
+    }, extra || {}));
+    return { w, sent, logged };
+}
+
+async function watchChecks() {
+    await check('inactive: no proxy built, nothing sent', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
+        const { w, sent } = watch(c, b);
+        await c.advance(5000);
+        assert.strictEqual(b.builds, 0);
+        assert.deepStrictEqual(sent, []);
+        assert.strictEqual(w.status, 'off');
+    });
+    await check('approach fixture sends near 1 then near 0', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(29000);
+        assert.deepStrictEqual(sent, [{ at: 6000, cmd: 'turn', near: '1' }, { at: 27000, cmd: 'turn', near: '0' }]);
+        assert.strictEqual(w.status, 'available');
+        assert.strictEqual(b.configReads, 1);
+    });
+    await check('resends every 30 s', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(65000);
+        assert.deepStrictEqual(sent.map((m) => [m.at, m.near]), [[0, '1'], [30000, '1'], [60000, '1']]);
+    });
+    await check('resend() sends the current value at once, and nothing while inactive', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => ({ viewContent: [] }));
+        const { w, sent } = watch(c, b);
+        w.resend();
+        assert.deepStrictEqual(sent, []);
+        w.setActive(true);
+        await c.advance(1000);
+        w.resend();
+        assert.deepStrictEqual(sent, [{ at: 1000, cmd: 'turn', near: '0' }]);
+    });
+    await check('setActive(false) while near sends near 0 once', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('roundabout', '50', 'm'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        w.setActive(false);
+        await c.advance(60000);
+        assert.deepStrictEqual(sent.map((m) => [m.at, m.near]), [[0, '1'], [1000, '0']]);
+        assert.strictEqual(w.status, 'off');
+        assert.strictEqual(w.near, false);
+        const queries = b.queries;
+        await c.advance(5000);
+        assert.strictEqual(b.queries, queries);
+    });
+    await check('active again: the same proxy, polling again', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        w.setActive(false);
+        w.setActive(true);
+        await c.advance(1000);
+        assert.strictEqual(b.builds, 1);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1', '0', '1']);
+    });
+    await check('proxy unavailable: status unavailable, nothing sent', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => null, { fail: true });
+        const { w, sent } = watch(c, b);
+        const statuses = [];
+        w.on('change', () => statuses.push(w.status));
+        w.setActive(true);
+        await c.advance(5000);
+        assert.strictEqual(w.status, 'unavailable');
+        assert.deepStrictEqual(sent, []);
+        assert(statuses.includes('unavailable'));
+    });
+    await check('six failed queries: config read again, treated as no maneuver', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { failQueries: 6 });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(2500);
+        assert.strictEqual(b.configReads, 1);
+        assert.deepStrictEqual(sent, []);
+        await c.advance(500);
+        assert.strictEqual(b.configReads, 2);
+        assert.deepStrictEqual(sent, [{ at: 3000, cmd: 'turn', near: '1' }]);
+        assert.strictEqual(w.maneuver.kind, 'intersection');
+    });
+    await check('logs each maneuver once, and the first reply of a route raw', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
+        const { w, logged } = watch(c, b);
+        w.setActive(true);
+        await c.advance(29000);
+        const turns = logged.filter((s) => s.startsWith('turn: '));
+        assert.deepStrictEqual(turns, ['turn: intersection 900 m (Main St)', 'turn: intersection 1500 m (High St)']);
+        const raw = logged.filter((s) => s.startsWith('turn reply: '));
+        assert.strictEqual(raw.length, 1);
+        assert(raw[0].includes('"distance":"900"'));
+    });
 }
 
 main().then(() => process.exit(0), (e) => {

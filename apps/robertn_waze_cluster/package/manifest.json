@@ -67,6 +67,15 @@
     "de.bmw.infotainment.personalization.SessionManager": {
       "instances": "*",
       "attributes": "*"
+    },
+    "de.bmw.infotainment.navigation.guiding.GuidanceEventList": {
+      "instances": [
+        "Main_Instance"
+      ],
+      "methods": [
+        "getViewConfig",
+        "queryContent"
+      ]
     }
   },
   "services": {
