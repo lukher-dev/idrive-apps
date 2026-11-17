@@ -1,0 +1,21 @@
+{
+  "about": "Synthetic: three turns 650 to 700 m apart.",
+  "stepMs": 1000,
+  "replies": [
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"600","unit":"m"},"description":{"text":"A St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"500","unit":"m"},"description":{"text":"A St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"380","unit":"m"},"description":{"text":"A St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"200","unit":"m"},"description":{"text":"A St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"20","unit":"m"},"description":{"text":"A St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"650","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"600","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"500","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"400","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"250","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"100","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"30","unit":"m"},"description":{"text":"B St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"700","unit":"m"},"description":{"text":"C St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"650","unit":"m"},"description":{"text":"C St"}}}]}]},
+    {"viewContent":[{"eventsInView":[{"intersection":{"formattedDistance":{"distance":"600","unit":"m"},"description":{"text":"C St"}}}]}]}
+  ]
+}
