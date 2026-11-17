@@ -210,7 +210,7 @@ void MapFeed::make_layer()
     lo_.y = (int)q.y;
     lo_.w = q.w;
     lo_.h = q.h;
-    lo_.visible = live_ && !frozen_ && picture_ == Picture::Shown;
+    lo_.visible = live_ && !frozen_ && picture_ == Picture::Shown && gate_open_;
     layer_ = client_.video(lo_, vo);
     if (hosted())
         target_size(client_.targets, host_.into, &tw, &th);
@@ -539,7 +539,21 @@ void MapFeed::set_stream(bool live, bool frozen, Picture picture)
     live_ = live;
     frozen_ = frozen;
     picture_ = picture;
-    const bool visible = live && !frozen && picture == Picture::Shown;
+    apply_visible();
+}
+
+void MapFeed::set_gate(bool open)
+{
+    if (open == gate_open_)
+        return;
+    gate_open_ = open;
+    log_info("render: the map on %s %s", cfg_.target.c_str(), open ? "shown: a turn is near" : "hidden until a turn is near");
+    apply_visible();
+}
+
+void MapFeed::apply_visible()
+{
+    const bool visible = live_ && !frozen_ && picture_ == Picture::Shown && gate_open_;
     if (!layer_ || (lo_.visible || show_due_) == visible)
         return;
     show_due_ = visible;

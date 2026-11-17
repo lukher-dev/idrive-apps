@@ -422,6 +422,97 @@ static void show_off()
                                                          feeds.status("decode").hud_state == "showing");
 }
 
+/* The HUD map only near turns (FeedConfig::hud_near_turn): the HUD's layer
+ * hidden, its slot let go, until the app says a turn is near, and again
+ * when it says it is past or stops saying so for hud_near_expire_ms; the
+ * cluster's map never follows it; off, the HUD as always. */
+static void near_turns()
+{
+    const std::vector<uint8_t> f1 = atlas(21), f2 = atlas(22);
+    const uint64_t kStock = 0x01000101, kMap = 0x010004f0, kHud = 0x01000400;
+    Rig b(false, 6000, false, true, true);
+    b.feed.reset();
+    b.start();
+    b.port.stock_map(0x100, kStock);
+    FeedConfig fc;
+    fc.socket = b.path;
+    fc.video.level_bits = 0;
+    fc.hud_near_turn = true;
+    fc.hud_near_expire_ms = 10000;
+    MapFeeds feeds(fc, true, true, 10);
+    feeds.set_stream(true, false, Picture::Shown);
+    std::vector<uint8_t> spare;
+    const auto pump = [&](int64_t ms, const std::vector<uint8_t> *frame) {
+        for (int64_t t = 0; t < ms; t += 5) {
+            b.now += 5;
+            if (frame && t % 65 == 0 && feeds.wants_frames()) {
+                spare.assign(frame->begin(), frame->end());
+                spare[(size_t)(t / 65) % 1088] ^= 0x80;
+                feeds.offer(&spare, (uint64_t)b.now, b.now);
+            }
+            for (int round = 0; round < 400; round++) {
+                std::vector<pollfd> fds;
+                const size_t first = b.svc->poll_fds(&fds);
+                const int n = ::poll(fds.data(), fds.size(), 0);
+                b.port.tick(b.now);
+                b.svc->after_poll(fds, first, b.now);
+                const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
+                const bool scaling = hud_scaling(feeds, b.now);
+                if (scaling)
+                    usleep(1000);
+                feeds.poll(b.now);
+                if (round > 0 && n <= 0 && !pending && !scaling)
+                    break;
+            }
+        }
+    };
+    const auto status_of = [&](uint64_t slot, uint64_t content) -> int {
+        const crs::SlotInfo *r = b.port.row(slot, content);
+        return r ? (int)r->map_status : -1;
+    };
+    const auto map_up = [&]() { return status_of(0x100, kMap) == 1; };
+    const auto hud_up = [&]() { return status_of(0x323, kHud) == 1; };
+
+    pump(2000, &f1);
+    FeedStatus st = feeds.status("decode");
+    ok("near turns, at start: the cluster's map up, the HUD's hidden and its slot not asked for, waiting for a turn",
+       map_up() && !hud_up() && st.hud_near_turn && !st.hud_gate && st.hud_state == "turn_wait" && st.state == "showing");
+
+    feeds.set_turn_near(true, b.now);
+    pump(2000, &f2);
+    st = feeds.status("decode");
+    ok("a turn near: the HUD's map shown in its slot", hud_up() && st.hud_gate && st.hud_state == "showing" && map_up());
+
+    feeds.set_turn_near(false, b.now);
+    pump(5000, &f1);
+    st = feeds.status("decode");
+    ok("past the turn: the HUD's slot let go after its linger, the cluster's map still up",
+       !hud_up() && !st.hud_gate && st.hud_state == "turn_wait" && map_up());
+
+    feeds.set_turn_near(true, b.now);
+    pump(6000, &f2);
+    feeds.set_turn_near(true, b.now);
+    pump(6000, &f1);
+    ok("near said again within hud_near_expire_ms: still shown", hud_up() && feeds.status("decode").hud_gate);
+    pump(10000, &f2);
+    st = feeds.status("decode");
+    ok("near not said again for hud_near_expire_ms: hidden, its slot let go", !hud_up() && !st.hud_gate && map_up());
+
+    feeds.set_hud_near_turn(false);
+    pump(2000, &f1);
+    st = feeds.status("decode");
+    ok("near turns off: the HUD's map shown with no turn near", hud_up() && st.hud_gate && !st.hud_near_turn &&
+                                                                 st.hud_state == "showing");
+    feeds.set_hud_near_turn(true);
+    pump(5000, &f2);
+    st = feeds.status("decode");
+    ok("near turns on again, no turn near: hidden again", !hud_up() && !st.hud_gate && st.hud_state == "turn_wait");
+
+    feeds.set_stream(false, false, Picture::None);
+    pump(500, nullptr);
+    ok("no stream: the HUD's state is the stream's, not waiting for a turn", feeds.status("decode").hud_state != "turn_wait");
+}
+
 /* Only what the renderer needs goes over its socket. */
 static void only_what_is_needed()
 {
@@ -1249,6 +1340,7 @@ int main()
 
     guide_hold();
     show_off();
+    near_turns();
     only_what_is_needed();
     {   /* (its own scope: the names of the rest of main) */
     /* ---- MapFeeds: the cluster, and the HUD's copy when it is on ---- */

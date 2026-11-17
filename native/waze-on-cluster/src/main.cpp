@@ -93,6 +93,7 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_width_pct\":" + std::to_string(s.hud_width_pct) +
            ",\"hud_x\":" + std::to_string(s.hud_offset_x) + ",\"hud_y\":" + std::to_string(s.hud_offset_y) +
            ",\"hud_keep_shown\":" + (s.hud_keep_shown ? "1" : "0") +
+           ",\"hud_near_turn\":" + (s.hud_near_turn ? "1" : "0") + ",\"hud_gate\":" + (s.hud_gate ? "1" : "0") +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -115,6 +116,7 @@ public:
         auto pct = msg.find("hud_width_pct");
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
+        auto near_turn = msg.find("hud_near_turn"), near = msg.find("near");
         if (cmd == "start" && it != msg.end()) {
             log_info("start %s", it->second.c_str());
             if (!feeds_->set_target(it->second))
@@ -124,8 +126,11 @@ public:
             feeds_->set_guide_hold(guide_->hide());
         } else if (cmd == "cluster" && on != msg.end() && (on->second == "0" || on->second == "1")) {
             feeds_->set_cluster(on->second == "1");
+        } else if (cmd == "turn" && near != msg.end() && (near->second == "0" || near->second == "1")) {
+            /* the app's turn watch: whether a turn is near, for the HUD map only near turns */
+            feeds_->set_turn_near(near->second == "1", now_ms());
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
-                                    keep != msg.end())) {
+                                    keep != msg.end() || near_turn != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -158,6 +163,13 @@ public:
                     feeds_->set_hud_keep_shown(keep->second == "1");
                 else
                     log_warn("hud: hud_keep_shown must be 0 or 1, not %s", keep->second.c_str());
+            }
+            /* and whether it shows only near turns */
+            if (near_turn != msg.end()) {
+                if (near_turn->second == "0" || near_turn->second == "1")
+                    feeds_->set_hud_near_turn(near_turn->second == "1");
+                else
+                    log_warn("hud: hud_near_turn must be 0 or 1, not %s", near_turn->second.c_str());
             }
         } else {
             log_warn("control: unknown or malformed command %s", cmd.c_str());
@@ -229,7 +241,7 @@ int serve(Config cfg)
         {"cluster", 0, 1},          {"hud", 0, 1},                   {"hud_fps", 1, 30},
         {"hud_width_pct", 0, 100},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
-        {"hud_keep_shown", 0, 1},
+        {"hud_keep_shown", 0, 1},   {"hud_near_turn", 0, 1},       {"hud_near_expire_ms", 10000, 600000},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -274,6 +286,8 @@ int serve(Config cfg)
     fc.hud_offset_x = (int)cfg.num("hud_offset_x");
     fc.hud_offset_y = (int)cfg.num("hud_offset_y");
     fc.hud_keep_shown = cfg.num("hud_keep_shown") != 0;
+    fc.hud_near_turn = cfg.num("hud_near_turn") != 0;
+    fc.hud_near_expire_ms = cfg.num("hud_near_expire_ms");
     fc.scale_down = cfg.num("hud_scale_down") != 0;
     fc.hud_round_corners = cfg.num("hud_round_corners") != 0;
     fc.hud_black_background = cfg.num("hud_black_background") != 0;
@@ -556,6 +570,8 @@ void define_keys(Config *cfg)
     cfg->define("hud_offset_x", "0");
     cfg->define("hud_offset_y", "0");
     cfg->define("hud_keep_shown", "0");
+    cfg->define("hud_near_turn", "0");
+    cfg->define("hud_near_expire_ms", "90000");
     cfg->define("hud_scale_down", "1");
     cfg->define("hud_round_corners", "1");
     cfg->define("hud_black_background", "1");
