@@ -398,6 +398,19 @@ async function main() {
         sender.send([{ cmd: 'probe-g' }]);
         await sleep(150);
     });
+    await check('ProfileSync: near turns and the zoom go to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_near_turn: 1, hud_zoom_pct: 180 }));
+        const hud = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(hud.hud_near_turn, '1');
+        assert.strictEqual(hud.hud_zoom_pct, '180');
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0));
+        const old = got.filter((m) => m.cmd === 'hud').pop();
+        assert(!('hud_near_turn' in old) && !('hud_zoom_pct' in old), 'a patchd before them: not told');
+    });
     await check('ProfileSync: settings go to the render through its RenderSender', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,

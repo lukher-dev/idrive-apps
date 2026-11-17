@@ -330,6 +330,13 @@ class ProfileSync extends EventEmitter {
         if (s.hud_keep_shown === 0 || s.hud_keep_shown === 1) {
             hud.hud_keep_shown = on(s.hud_keep_shown);
         }
+        /* near turns and the zoom, from a patchd that has them */
+        if (s.hud_near_turn === 0 || s.hud_near_turn === 1) {
+            hud.hud_near_turn = on(s.hud_near_turn);
+        }
+        if (typeof s.hud_zoom_pct === 'number') {
+            hud.hud_zoom_pct = String(s.hud_zoom_pct);
+        }
         this._sender.send(shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]));
     }
 }
