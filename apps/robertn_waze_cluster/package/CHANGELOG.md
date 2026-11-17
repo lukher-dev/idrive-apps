@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.13
+
 Car test build (lukher-dev fork, not for release): the HUD rows show what BMW's turn list (GuidanceEventList) gives the app, to check it before the HUD map near turns is built.
 
 ## 0.6.12
