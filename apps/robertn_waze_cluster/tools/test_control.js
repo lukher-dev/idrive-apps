@@ -443,6 +443,55 @@ test('the HUD map over BMW\'s pop-ups: gives way by default; a flip goes to the 
     c.close();
 });
 
+test('the HUD map only near turns: off by default; a flip goes to the render and patchd, the render\'s status shows it; ' +
+    'greyed while the HUD is off and for a render without it; waiting for a turn reads so', async (render, patch) => {
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+    assert.deepStrictEqual([c.hudNearTurn(), c.canNearTurn()], [false, false], 'always, greyed while the HUD is off');
+    c.toggleHudNearTurn();
+    assert.strictEqual(render.received.filter((m) => m.hud_near_turn !== undefined).length, 0, 'nothing sent while greyed');
+    render.hud = 1;
+    render.announce('showing', render.reason);
+    await until('on', () => c.canNearTurn());
+    c.toggleHudNearTurn();
+    await until('near turns', () => c.hudNearTurn() === true && render.hudNearTurn === 1 && patch.map.hud_near_turn === 1);
+    await until('waiting for a turn', () => c.hudText() === 'HUD map: Waiting for a turn');
+    c.toggleHudNearTurn();
+    await until('always again', () => c.hudNearTurn() === false && patch.map.hud_near_turn === 0);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_near_turn !== undefined), [{ cmd: 'hud', hud_near_turn: '1' }, { cmd: 'hud', hud_near_turn: '0' }]);
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-near-turn'), [{ cmd: 'hud-near-turn', on: 1 }, { cmd: 'hud-near-turn', on: 0 }]);
+    render.hudNearTurn = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudNearTurn() === null && !c.canNearTurn() && c.hudZoomStep() === null);
+    c.close();
+});
+
+test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom the render uses', async (render, patch) => {
+    render.hud = 1;
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('on', () => c.renderStatus && c.canChangeHudSize());
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: 100 %', 0], '100 % by default');
+    c.setHudZoomStep(5);
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: 150 %', 5], 'shown at once');
+    await until('150 %', () => render.hudZoom === 150 && c.renderStatus.hud_zoom_pct === 150 && patch.map.hud_zoom_pct === 150);
+    c.setHudZoomStep(15);
+    await until('250 % asked, 240 % used', () => c.renderStatus.hud_zoom_pct === 250 && c.hudZoomText() === 'HUD zoom: 240 %' &&
+        c.hudZoomStep() === 15);
+    const sent = render.received.length;
+    [-1, 16, 2.5, '3', 15].forEach((step) => c.setHudZoomStep(step));
+    assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-zoom').map((m) => m.pct), [150, 250]);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_zoom_pct !== undefined).map((m) => m.hud_zoom_pct), ['150', '250']);
+    c.close();
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: —', null], 'nothing known while closed');
+});
+
 test('an asked HUD size the render does not show: the render\'s own after a moment, at once on a render reconnect; ' +
     'the same step taken again', async (render, patch) => {
     render.hud = 1;

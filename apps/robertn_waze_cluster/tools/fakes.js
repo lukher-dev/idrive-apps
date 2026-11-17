@@ -47,6 +47,7 @@ class LineServer extends EventEmitter {
         this.path = path;
         this.received = [];
         this.backlog = [];
+        this.connections = 0;   /* every connection taken, for the render's single owner */
         this._clients = new Set();
         this._server = net.createServer((socket) => this._onClient(socket));
     }
@@ -91,6 +92,7 @@ class LineServer extends EventEmitter {
     }
 
     _onClient(socket) {
+        this.connections++;
         this._clients.add(socket);
         let buf = '';
         socket.setEncoding('utf8');
@@ -131,6 +133,11 @@ class FakeRender extends LineServer {
         this.hudState = null;
         /* the HUD map kept shown over BMW's pop-ups (null: a tool without the field) */
         this.hudKeep = 0;
+        /* the HUD map only near turns and its zoom (null: a tool without them); a turn near as the app said */
+        this.hudNearTurn = 0;
+        this.hudZoom = 100;
+        this.hudZoomCap = 240;
+        this.turnNear = false;
         this._showTimer = null;
     }
 
@@ -156,6 +163,12 @@ class FakeRender extends LineServer {
             Object.assign(s, { cluster: this.cluster, hud: this.hud, hud_state: this.hud ? this.hudState || this.state : 'off',
                 hud_width_pct: this.hudWidth || 0, hud_x: this.hudX || 0, hud_y: this.hudY || 0 });
             if (this.hudKeep !== null) s.hud_keep_shown = this.hudKeep;
+            if (this.hudNearTurn !== null) {
+                const gate = !this.hudNearTurn || this.turnNear;
+                Object.assign(s, { hud_near_turn: this.hudNearTurn, hud_gate: gate ? 1 : 0, hud_zoom_pct: this.hudZoom,
+                    hud_zoom_used: Math.min(this.hudZoom, this.hudZoomCap) });
+                if (this.hud && !gate && !this.hudState && this.state === 'showing') s.hud_state = 'turn_wait';
+            }
         }
         if (this.hide !== null) {
             s.hide_bmw_guidance = this.hide;
@@ -201,6 +214,12 @@ class FakeRender extends LineServer {
             if (msg.hud_x !== undefined) this.hudX = lim(Number(msg.hud_x));
             if (msg.hud_y !== undefined) this.hudY = Number(msg.hud_y);
             if (msg.hud_keep_shown !== undefined && this.hudKeep !== null) this.hudKeep = Number(msg.hud_keep_shown);
+            if (msg.hud_near_turn !== undefined && this.hudNearTurn !== null) this.hudNearTurn = Number(msg.hud_near_turn);
+            if (msg.hud_zoom_pct !== undefined && this.hudNearTurn !== null) this.hudZoom = Number(msg.hud_zoom_pct);
+            this._broadcast(this._status());
+        }
+        if (msg.cmd === 'turn' && this.hudNearTurn !== null) {
+            this.turnNear = msg.near === '1';
             this._broadcast(this._status());
         }
     }
@@ -229,7 +248,7 @@ class FakePatch extends LineServer {
         this.mute = false;         /* commands received and not answered */
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
-        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0 };
+        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 100 };
         this.shared = null;
         this.own = {};
         this.active = null;
@@ -308,9 +327,10 @@ class FakePatch extends LineServer {
             return;
         }
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
-            'hud-keep-shown': ['hud_keep_shown'] };
+            'hud-keep-shown': ['hud_keep_shown'], 'hud-near-turn': ['hud_near_turn'], 'hud-zoom': ['hud_zoom_pct'] };
         if (MAP[msg.cmd]) {
-            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y] : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.on];
+            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y]
+                : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-zoom' ? msg.pct : msg.on];
             this.map = Object.assign({}, this.map);
             MAP[msg.cmd].forEach((k, i) => { this.map[k] = v[i]; });
             return;

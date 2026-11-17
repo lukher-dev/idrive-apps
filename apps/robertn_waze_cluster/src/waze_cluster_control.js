@@ -106,6 +106,9 @@ const SAFE = '504x368+286+72';
  * whole), HUD_SIZE_STEPS of them. Standard (0) counts as HUD_STANDARD_PCT, about what the fitted box is. */
 const HUD_MIN_PCT = 30, HUD_MAX_PCT = 85, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
 const HUD_SIZE_STEPS = (HUD_MAX_PCT - HUD_MIN_PCT) / HUD_STEP_PCT;
+/* The HUD map's zoom: HUD_ZOOM_STEP_PCT steps from 100 to 250 %; the render uses at most what the box takes. */
+const HUD_ZOOM_MIN = 100, HUD_ZOOM_MAX = 250, HUD_ZOOM_STEP_PCT = 10;
+const HUD_ZOOM_STEPS = (HUD_ZOOM_MAX - HUD_ZOOM_MIN) / HUD_ZOOM_STEP_PCT;
 /* Where the map can show, the choices in their order on the page. */
 const SHOWN_ON = ['cluster', 'hud', 'both', 'off'];
 /* The HUD map moved from its centre, HUD_MOVE_PX a press, within +-HUD_MOVE_MAX; the render holds it inside the
@@ -150,6 +153,12 @@ class LineSocket extends EventEmitter {
             this._socket = null;
         }
         this.link = 'down';
+        this.emit('closed');
+    }
+
+    /* Open: connected, or connecting again until it is. */
+    isOpen() {
+        return this._open;
     }
 
     connected() {
@@ -443,6 +452,8 @@ class WazeClusterControl extends EventEmitter {
             return t('Error');
         case 'frozen':
             return t('Frozen');
+        case 'turn_wait':
+            return t('Waiting for a turn');
         case 'off':
             return t('Off');
         default:
@@ -501,6 +512,8 @@ class WazeClusterControl extends EventEmitter {
     _clearAskedHud() {
         clearTimeout(this._askedHudTimer);
         this._askedHud = null;
+        clearTimeout(this._askedZoomTimer);
+        this._askedZoom = null;
     }
 
     /* ---- where the HUD map is: moved from its centre, in HUD pixels ---- */
@@ -559,6 +572,70 @@ class WazeClusterControl extends EventEmitter {
             this.render.send({ cmd: 'hud', hud_keep_shown: keep ? '1' : '0' });
             this.patch.send({ cmd: 'hud-keep-shown', on: keep ? 1 : 0 });
         }
+    }
+
+    /* ---- the HUD map only near turns ---- */
+    /* True while it shows only near turns, false while always; null while
+     * the render has not said (or has not got it). */
+    hudNearTurn() {
+        const v = this.renderStatus && this.renderStatus.hud_near_turn;
+        return v === 0 || v === 1 ? v === 1 : null;
+    }
+    /* Changes as the size and place do. */
+    canNearTurn() {
+        return this.canChangeHudSize() && this.hudNearTurn() !== null;
+    }
+    /* Flips it: the render at once, patchd saves it; the render's next status shows it. */
+    toggleHudNearTurn() {
+        if (this.canNearTurn()) {
+            const on = !this.hudNearTurn();
+            this.render.send({ cmd: 'hud', hud_near_turn: on ? '1' : '0' });
+            this.patch.send({ cmd: 'hud-near-turn', on: on ? 1 : 0 });
+        }
+    }
+
+    /* ---- the HUD map's zoom ---- */
+    /* The zoom asked, as just asked until the render shows it; null while it has not said. */
+    hudZoom() {
+        if (this._askedZoom != null) {
+            return this._askedZoom;
+        }
+        const v = this.renderStatus && this.renderStatus.hud_zoom_pct;
+        return typeof v === 'number' ? v : null;
+    }
+    /* The text: the zoom the render uses (at most what the box takes), or the one just asked. */
+    hudZoomText() {
+        const asked = this.hudZoom();
+        const used = this.renderStatus && this.renderStatus.hud_zoom_used;
+        const shown = this._askedZoom == null && typeof used === 'number' ? used : asked;
+        return t('HUD zoom: {0}', shown == null ? '—' : t('{0} %', shown));
+    }
+    /* The zoom as a slider position, 0 (100 %) to HUD_ZOOM_STEPS (250 %); null while unknown. */
+    hudZoomStep() {
+        const z = this.hudZoom();
+        if (z == null) {
+            return null;
+        }
+        return Math.round((Math.max(HUD_ZOOM_MIN, Math.min(HUD_ZOOM_MAX, z)) - HUD_ZOOM_MIN) / HUD_ZOOM_STEP_PCT);
+    }
+    canChangeHudZoom() {
+        return this.canChangeHudSize() && this.hudZoom() !== null;
+    }
+    /* The zoom at a slider position: the render at once, patchd saves it. */
+    setHudZoomStep(step) {
+        if (!Number.isInteger(step) || step < 0 || step > HUD_ZOOM_STEPS || !this.canChangeHudZoom() || step === this.hudZoomStep()) {
+            return;
+        }
+        const pct = HUD_ZOOM_MIN + step * HUD_ZOOM_STEP_PCT;
+        this._askedZoom = pct;
+        clearTimeout(this._askedZoomTimer);
+        this._askedZoomTimer = setTimeout(() => {
+            this._askedZoom = null;
+            this.emit('change');
+        }, HUD_ASKED_MS);
+        this.render.send({ cmd: 'hud', hud_zoom_pct: String(pct) });
+        this.patch.send({ cmd: 'hud-zoom', pct });
+        this.emit('change');
     }
 
     hudPositionText() {
@@ -1084,5 +1161,5 @@ class WazeClusterControl extends EventEmitter {
 module.exports = {
     WazeClusterControl, LineSocket,
     RENDER_PATH, PATCH_PATH, PENDING_PATH, AA_PENDING_PATH, BOOT_ID_PATH,
-    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS
+    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS
 };

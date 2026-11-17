@@ -422,6 +422,187 @@ static void show_off()
                                                          feeds.status("decode").hud_state == "showing");
 }
 
+/* The HUD map only near turns (FeedConfig::hud_near_turn): the HUD's layer
+ * hidden, its slot let go, until the app says a turn is near, and again
+ * when it says it is past or stops saying so for hud_near_expire_ms; the
+ * cluster's map never follows it; off, the HUD as always. */
+static void near_turns()
+{
+    const std::vector<uint8_t> f1 = atlas(21), f2 = atlas(22);
+    const uint64_t kStock = 0x01000101, kMap = 0x010004f0, kHud = 0x01000400;
+    Rig b(false, 6000, false, true, true);
+    b.feed.reset();
+    b.start();
+    b.port.stock_map(0x100, kStock);
+    FeedConfig fc;
+    fc.socket = b.path;
+    fc.video.level_bits = 0;
+    fc.hud_near_turn = true;
+    fc.hud_near_expire_ms = 10000;
+    MapFeeds feeds(fc, true, true, 10);
+    feeds.set_stream(true, false, Picture::Shown);
+    std::vector<uint8_t> spare;
+    const auto pump = [&](int64_t ms, const std::vector<uint8_t> *frame) {
+        for (int64_t t = 0; t < ms; t += 5) {
+            b.now += 5;
+            if (frame && t % 65 == 0 && feeds.wants_frames()) {
+                spare.assign(frame->begin(), frame->end());
+                spare[(size_t)(t / 65) % 1088] ^= 0x80;
+                feeds.offer(&spare, (uint64_t)b.now, b.now);
+            }
+            for (int round = 0; round < 400; round++) {
+                std::vector<pollfd> fds;
+                const size_t first = b.svc->poll_fds(&fds);
+                const int n = ::poll(fds.data(), fds.size(), 0);
+                b.port.tick(b.now);
+                b.svc->after_poll(fds, first, b.now);
+                const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
+                const bool scaling = hud_scaling(feeds, b.now);
+                if (scaling)
+                    usleep(1000);
+                feeds.poll(b.now);
+                if (round > 0 && n <= 0 && !pending && !scaling)
+                    break;
+            }
+        }
+    };
+    const auto status_of = [&](uint64_t slot, uint64_t content) -> int {
+        const crs::SlotInfo *r = b.port.row(slot, content);
+        return r ? (int)r->map_status : -1;
+    };
+    const auto map_up = [&]() { return status_of(0x100, kMap) == 1; };
+    const auto hud_up = [&]() { return status_of(0x323, kHud) == 1; };
+
+    pump(2000, &f1);
+    FeedStatus st = feeds.status("decode");
+    ok("near turns, at start: the cluster's map up, the HUD's hidden and its slot not asked for, waiting for a turn",
+       map_up() && !hud_up() && st.hud_near_turn && !st.hud_gate && st.hud_state == "turn_wait" && st.state == "showing");
+
+    feeds.set_turn_near(true, b.now);
+    pump(2000, &f2);
+    st = feeds.status("decode");
+    ok("a turn near: the HUD's map shown in its slot", hud_up() && st.hud_gate && st.hud_state == "showing" && map_up());
+
+    feeds.set_turn_near(false, b.now);
+    pump(5000, &f1);
+    st = feeds.status("decode");
+    ok("past the turn: the HUD's slot let go after its linger, the cluster's map still up",
+       !hud_up() && !st.hud_gate && st.hud_state == "turn_wait" && map_up());
+
+    feeds.set_turn_near(true, b.now);
+    pump(6000, &f2);
+    feeds.set_turn_near(true, b.now);
+    pump(6000, &f1);
+    ok("near said again within hud_near_expire_ms: still shown", hud_up() && feeds.status("decode").hud_gate);
+    pump(10000, &f2);
+    st = feeds.status("decode");
+    ok("near not said again for hud_near_expire_ms: hidden, its slot let go", !hud_up() && !st.hud_gate && map_up());
+
+    feeds.set_hud_near_turn(false);
+    pump(2000, &f1);
+    st = feeds.status("decode");
+    ok("near turns off: the HUD's map shown with no turn near", hud_up() && st.hud_gate && !st.hud_near_turn &&
+                                                                 st.hud_state == "showing");
+    feeds.set_hud_near_turn(true);
+    pump(5000, &f2);
+    st = feeds.status("decode");
+    ok("near turns on again, no turn near: hidden again", !hud_up() && !st.hud_gate && st.hud_state == "turn_wait");
+
+    feeds.set_stream(false, false, Picture::None);
+    pump(500, nullptr);
+    ok("no stream: the HUD's state is the stream's, not waiting for a turn", feeds.status("decode").hud_state != "turn_wait");
+}
+
+/* The HUD map's zoom (FeedConfig::hud_zoom_pct): the part of the picture
+ * hud_crop() picks, scaled to the HUD's box; a zoom past the box's cap
+ * (hud_zoom_cap: the part never smaller than the box) is used at the cap;
+ * 100 % is the whole picture as before; the status has the zoom asked and
+ * the zoom used. */
+static void hud_zoom()
+{
+    const std::vector<uint8_t> f = atlas(31);
+    Rig b(false, 6000, false, true, true);
+    b.feed.reset();
+    b.start();
+    FeedConfig fc;
+    fc.socket = b.path;
+    fc.video.level_bits = 0;
+    fc.hud_round_corners = false;
+    fc.hud_black_background = false;
+    MapFeeds feeds(fc, true, true, 10);
+    feeds.set_stream(true, false, Picture::Shown);
+    std::vector<uint8_t> spare;
+    const auto pump = [&](int64_t ms) {
+        for (int64_t t = 0; t < ms; t += 5) {
+            b.now += 5;
+            if (t % 65 == 0 && feeds.wants_frames()) {
+                spare.assign(f.begin(), f.end());
+                feeds.offer(&spare, (uint64_t)b.now, b.now);
+            }
+            for (int round = 0; round < 400; round++) {
+                std::vector<pollfd> fds;
+                const size_t first = b.svc->poll_fds(&fds);
+                const int n = ::poll(fds.data(), fds.size(), 0);
+                b.port.tick(b.now);
+                b.svc->after_poll(fds, first, b.now);
+                const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
+                const bool scaling = hud_scaling(feeds, b.now);
+                if (scaling)
+                    usleep(1000);
+                feeds.poll(b.now);
+                if (round > 0 && n <= 0 && !pending && !scaling)
+                    break;
+            }
+        }
+    };
+    /* the picture the HUD shows: the crop of f scaled to dw x dh as the HUD's worker does */
+    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh) {
+        AtlasScaler sc;
+        std::vector<uint8_t> out;
+        if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h))
+            sc.scale(f.data(), &out);
+        return out;
+    };
+    const auto hud_shows = [&](const std::vector<uint8_t> &want) {
+        crs::FakeGraph *g = b.gpu.graph("hud");
+        bool on = false;
+        if (g && !want.empty())
+            for (const auto &kv : g->shown.buffers)
+                on = on || (kv.second.f == crs::TexFormat::R8 && kv.second.px == want);
+        return on;
+    };
+
+    pump(2000);
+    FeedStatus st = feeds.status("decode");
+    ok("zoom 100 (the default): the whole picture in the standard 452x200 box, as before",
+       hud_shows(scaled(0, 0, 1088, 480, 452, 200)) && st.hud_zoom_pct == 100 && st.hud_zoom_used == 100);
+
+    feeds.set_hud_zoom(200);
+    pump(2000);
+    st = feeds.status("decode");
+    ok("zoom 200: the middle 544x240 of the picture scaled to 452x200",
+       hud_shows(scaled(272, 120, 544, 240, 452, 200)) && st.hud_zoom_pct == 200 && st.hud_zoom_used == 200 &&
+           st.state == "showing");
+
+    feeds.set_hud_width(85);
+    feeds.set_hud_zoom(250);
+    pump(2000);
+    st = feeds.status("decode");
+    ok("zoom 250 in the 680x300 box: used at its cap, 160, the middle 680x300 shown 1:1",
+       hud_shows(scaled(204, 90, 680, 300, 680, 300)) && st.hud_zoom_pct == 250 && st.hud_zoom_used == 160);
+
+    feeds.set_hud_width(0);
+    pump(2000);
+    st = feeds.status("decode");
+    ok("the box back to standard: the zoom asked, 250, used at that box's cap, 240",
+       hud_shows(scaled(318, 140, 452, 200, 452, 200)) && st.hud_zoom_used == 240);
+
+    feeds.set_hud_zoom(100);
+    pump(2000);
+    ok("zoom 100 again: the whole picture", hud_shows(scaled(0, 0, 1088, 480, 452, 200)) &&
+                                              feeds.status("decode").hud_zoom_used == 100);
+}
+
 /* Only what the renderer needs goes over its socket. */
 static void only_what_is_needed()
 {
@@ -1249,6 +1430,8 @@ int main()
 
     guide_hold();
     show_off();
+    near_turns();
+    hud_zoom();
     only_what_is_needed();
     {   /* (its own scope: the names of the rest of main) */
     /* ---- MapFeeds: the cluster, and the HUD's copy when it is on ---- */

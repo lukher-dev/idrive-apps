@@ -48,19 +48,24 @@
  *                  {"cmd":"hud-size","hud_width_pct":0|20..100}   (over 85 saved as 85)
  *                  {"cmd":"hud-pos","hud_x":-800..800,"hud_y":-800..800}
  *                  {"cmd":"hud-keep-shown","on":0|1}
+ *                  {"cmd":"hud-near-turn","on":0|1}
+ *                  {"cmd":"hud-zoom","pct":100..250}
  *                                   the map on the cluster on or off, on the HUD on
  *                                   or off, the HUD's size
  *                                   (0: the default box), where it is moved from
- *                                   the centre (HUD pixels) and whether it stays
- *                                   shown over BMW's pop-ups, saved for the render's
+ *                                   the centre (HUD pixels), whether it stays
+ *                                   shown over BMW's pop-ups, whether it shows only
+ *                                   near turns and its zoom, saved for the render's
  *                                   next start as "cluster", "hud", "hud_width_pct",
- *                                   "hud_offset_x", "hud_offset_y" and
- *                                   "hud_keep_shown" in MAP_STATE
+ *                                   "hud_offset_x", "hud_offset_y",
+ *                                   "hud_keep_shown", "hud_near_turn" and
+ *                                   "hud_zoom_pct" in MAP_STATE
  *                                   (the app changes the running render itself).
  *                                   Changes are written together MAP_SAVE_MS
  *                                   after the last one; the reply (cluster-reply,
  *                                   hud-reply, hud-size-reply, hud-pos-reply,
- *                                   hud-keep-shown-reply)
+ *                                   hud-keep-shown-reply, hud-near-turn-reply,
+ *                                   hud-zoom-reply)
  *                                   follows the write and carries ok, the values
  *                                   saved and reason.
  *                  {"cmd":"profile","id":"<id>"|null}
@@ -241,13 +246,20 @@ var LOCAL_CONF = process.env.WOC_LOCAL_CONF || '/var/opt/waze-on-cluster/waze-on
  * configuration. Not in LOCAL_CONF, which waze-on-cluster 0.8 refuses to
  * start with any of MAP_KEYS in. */
 var MAP_STATE = path.join(STATE_DIR, 'map.state.conf');
-var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown'];
+var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct'];
+/* Keys added after the first sets were saved: one missing from a saved set is its default. */
+var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct'];
 /* The opt-in settings: the render reads this file (its features_file) over
  * its configuration. Not in LOCAL_CONF, which every release up to 0.10.7
  * refuses to start with any of FEATURE_KEYS in; no release before this one
  * reads FEATURES. */
 var FEATURES = path.join(STATE_DIR, 'features.conf');
-var FEATURE_KEYS = ['hosted_vpp_scale', 'always_packed'];
+var FEATURE_KEYS = ['hosted_vpp_scale', 'always_packed', 'hud_crop_cx_pm', 'hud_crop_cy_pm'];
+/* An opt-in key's value: 0 or 1; the HUD zoom's centre a whole number 0-1000 (per mille). */
+function featureValid(k, v) {
+    if (k === 'hud_crop_cx_pm' || k === 'hud_crop_cy_pm') return /^\d+$/.test(v) && Number(v) <= 1000;
+    return /^[01]$/.test(v);
+}
 
 /* A key = value file's settings (a key += value line's value as the key's);
  * none when it cannot be read. */
@@ -280,7 +292,7 @@ function rewriteConf(file, set, drop) {
 function mapValueOk(k, v) {
     var n = Number(v);
     return /^-?\d+$/.test(v) && (k === 'hud_width_pct' ? n === 0 || (n >= 20 && n <= 100)
-        : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : n === 0 || n === 1);
+        : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : k === 'hud_zoom_pct' ? n >= 100 && n <= 250 : n === 0 || n === 1);
 }
 
 /* Moves any of MAP_KEYS found in LOCAL_CONF into MAP_STATE, a value already
@@ -303,7 +315,7 @@ function moveMapSettings() {
 }
 
 /* Moves any of FEATURE_KEYS found in LOCAL_CONF into FEATURES, a valid
- * value already there kept and one other than 0 or 1 dropped. LOCAL_CONF is
+ * value already there kept and one featureValid refuses dropped. LOCAL_CONF is
  * rewritten first, its other lines kept: cut short between the two writes,
  * the setting is lost but LOCAL_CONF is one every release starts with.
  * True when LOCAL_CONF holds none of FEATURE_KEYS. */
@@ -314,7 +326,7 @@ function moveFeatures() {
     function value(v) { return v.replace(/\s*#.*$/, ''); }
     found.forEach(function (k) {
         var v = value(local[k]);
-        if (!(k in feat && /^[01]$/.test(value(feat[k]))) && /^[01]$/.test(v)) move[k] = v;
+        if (!(k in feat && featureValid(k, value(feat[k]))) && featureValid(k, v)) move[k] = v;
     });
     try {
         rewriteConf(LOCAL_CONF, {}, FEATURE_KEYS);
@@ -413,7 +425,8 @@ function saveLater(settings, withProfiles) {
 var PROFILES_FILE = path.join(STATE_DIR, 'profiles.json');
 var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
-var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0 };
+var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0,
+    hud_zoom_pct: 100 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
 var restored = false;         /* MAP_STATE written from PROFILES_FILE at the start, not yet told to the app */
@@ -428,13 +441,13 @@ function profilesKept(p) { return profilesInUse(p) || !!p.shared; }
 /* The settings in effect as PROFILES_FILE keeps them. */
 function profileEntry(p) { return p.active ? p.own[p.active] : p.shared; }
 /* Settings as PROFILES_FILE holds them, or null when any key is missing or
- * out of range; hud_keep_shown missing (a set saved before it) is its default. */
+ * out of range; one of LATER_MAP_KEYS missing (a set saved before it) is its default. */
 function profileSettings(o) {
     if (!o || typeof o !== 'object') return null;
     var s = {};
     for (var i = 0; i < MAP_KEYS.length; i++) {
         var k = MAP_KEYS[i];
-        var v = typeof o[k] === 'number' ? String(o[k]) : k === 'hud_keep_shown' && !(k in o) ? String(MAP_DEFAULTS[k]) : null;
+        var v = typeof o[k] === 'number' ? String(o[k]) : LATER_MAP_KEYS.indexOf(k) >= 0 && !(k in o) ? String(MAP_DEFAULTS[k]) : null;
         if (v === null || !mapValueOk(k, v)) return null;
         s[k] = Number(v);
     }
@@ -1814,6 +1827,20 @@ function handle(line, sock) {
     if (msg.cmd === 'hud-keep-shown') {
         if (msg.on !== 0 && msg.on !== 1) { reply(sock, { ev: 'hud-keep-shown-reply', ok: false, reason: 'on must be 0 or 1' }); return; }
         saveMapSettings(sock, 'hud-keep-shown-reply', { hud_keep_shown: msg.on }, 'the HUD map over pop-ups');
+        return;
+    }
+    if (msg.cmd === 'hud-near-turn') {
+        if (msg.on !== 0 && msg.on !== 1) { reply(sock, { ev: 'hud-near-turn-reply', ok: false, reason: 'on must be 0 or 1' }); return; }
+        saveMapSettings(sock, 'hud-near-turn-reply', { hud_near_turn: msg.on }, 'the HUD map only near turns');
+        return;
+    }
+    if (msg.cmd === 'hud-zoom') {
+        var zoom = msg.pct;
+        if (!(typeof zoom === 'number' && zoom === Math.floor(zoom) && zoom >= 100 && zoom <= 250)) {
+            reply(sock, { ev: 'hud-zoom-reply', ok: false, reason: 'the HUD zoom must be a whole number from 100 to 250 %' });
+            return;
+        }
+        saveMapSettings(sock, 'hud-zoom-reply', { hud_zoom_pct: zoom }, 'the HUD map zoom');
         return;
     }
     /* The driver profile and its own settings: not operations on carplay either. */

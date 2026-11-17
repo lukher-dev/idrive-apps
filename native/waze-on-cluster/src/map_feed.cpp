@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <sstream>
 
+#include "hud_crop.h"
 #include "log.h"
 #include "map_geometry.h"
 
@@ -166,20 +167,32 @@ void MapFeed::make_layer()
                  crop.h, crop.x, crop.y, dw, dh, part_.set() ? ", made by VPP (hosted_vpp_scale)" : "");
     } else if (cfg_.target == "hud" && cfg_.scale_down && (sw < cfg_.video.w || sh < cfg_.video.h) && sw >= 64 &&
                sh >= 32 && sw <= cfg_.video.w && sh <= cfg_.video.h) {
-        q.x += (q.w - sw) / 2;
-        q.y += (q.h - sh) / 2;
-        q.w = sw;
-        q.h = sh;
-        vo.w = sw;
-        vo.h = sh;
+        /* zoomed: the part hud_crop() picks, never narrower than the box (the scaler only scales down) */
+        zoom_used_ = std::min(std::max(cfg_.hud_zoom_pct, kHudZoomMin), hud_zoom_cap(cfg_.video.w, sw));
+        const MapRect crop = hud_crop(cfg_.video.w, cfg_.video.h, zoom_used_, cfg_.hud_crop_cx_pm, cfg_.hud_crop_cy_pm);
+        const uint32_t dw = std::min(sw, crop.w) & ~3u, dh = std::min(sh, crop.h) & ~3u;
+        q.x += (q.w - dw) / 2;
+        q.y += (q.h - dh) / 2;
+        q.w = dw;
+        q.h = dh;
+        vo.w = dw;
+        vo.h = dh;
         scaling_ = true;
         shape_ = ScaleShape();
         shape_.w = cfg_.video.w;
         shape_.h = cfg_.video.h;
-        shape_.dw = sw;
-        shape_.dh = sh;
+        shape_.dw = dw;
+        shape_.dh = dh;
+        if (zoom_used_ > kHudZoomMin) {
+            shape_.crop_x = crop.x;
+            shape_.crop_y = crop.y;
+            shape_.crop_w = crop.w;
+            shape_.crop_h = crop.h;
+            log_info("render: HUD map zoomed %u%%: the picture's %ux%u at %u,%u", zoom_used_, crop.w, crop.h, crop.x,
+                     crop.y);
+        }
         shape_.level_bits = cfg_.scaled_level_bits;
-        shape_.radius = cfg_.hud_round_corners ? (sh / 12 > 6 ? sh / 12 : 6) : 0;
+        shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
         shape_.black = cfg_.hud_black_background;
     }
     /* a VPP-made picture is of no use to a layer of another part, or none */
@@ -210,7 +223,7 @@ void MapFeed::make_layer()
     lo_.y = (int)q.y;
     lo_.w = q.w;
     lo_.h = q.h;
-    lo_.visible = live_ && !frozen_ && picture_ == Picture::Shown;
+    lo_.visible = live_ && !frozen_ && picture_ == Picture::Shown && gate_open_;
     layer_ = client_.video(lo_, vo);
     if (hosted())
         target_size(client_.targets, host_.into, &tw, &th);
@@ -311,6 +324,22 @@ void MapFeed::set_hud_width(unsigned pct)
         return;
     /* the texture's size changes with it: a new layer at the new size */
     log_info("render: HUD map %u%% wide", pct);
+    keep_newest();
+    client_.drop(layer_);
+    layer_ = 0;
+    make_layer();
+}
+
+void MapFeed::set_hud_zoom(unsigned pct)
+{
+    if (pct == cfg_.hud_zoom_pct)
+        return;
+    cfg_.hud_zoom_pct = pct;
+    uint32_t tw, th;
+    if (cfg_.target != "hud" || !layer_ || hosted() || !target_size(client_.targets, "hud", &tw, &th))
+        return;
+    /* another part of the picture: a new layer for it */
+    log_info("render: HUD map zoom %u%%", pct);
     keep_newest();
     client_.drop(layer_);
     layer_ = 0;
@@ -539,7 +568,21 @@ void MapFeed::set_stream(bool live, bool frozen, Picture picture)
     live_ = live;
     frozen_ = frozen;
     picture_ = picture;
-    const bool visible = live && !frozen && picture == Picture::Shown;
+    apply_visible();
+}
+
+void MapFeed::set_gate(bool open)
+{
+    if (open == gate_open_)
+        return;
+    gate_open_ = open;
+    log_info("render: the map on %s %s", cfg_.target.c_str(), open ? "shown: a turn is near" : "hidden until a turn is near");
+    apply_visible();
+}
+
+void MapFeed::apply_visible()
+{
+    const bool visible = live_ && !frozen_ && picture_ == Picture::Shown && gate_open_;
     if (!layer_ || (lo_.visible || show_due_) == visible)
         return;
     show_due_ = visible;
@@ -588,6 +631,8 @@ FeedStatus MapFeed::status(const std::string &decode, const std::string &stream)
     s.hud_width_pct = cfg_.hud_width_pct;
     s.hud_offset_x = placed_x_;
     s.hud_keep_shown = cfg_.hud_keep_shown;
+    s.hud_zoom_pct = cfg_.hud_zoom_pct;
+    s.hud_zoom_used = zoom_used_;
     s.hud_offset_y = placed_y_;
     s.upload_cap_kb = cap_kb_;
     s.upload_reason = budget_reason_;

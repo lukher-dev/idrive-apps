@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <iterator>
 
@@ -12,7 +13,7 @@
 
 namespace woc {
 
-const char *const kFeatureKeys[2] = {"hosted_vpp_scale", "always_packed"};
+const char *const kFeatureKeys[4] = {"hosted_vpp_scale", "always_packed", "hud_crop_cx_pm", "hud_crop_cy_pm"};
 
 namespace {
 
@@ -26,6 +27,17 @@ bool feature_key(const std::string &key)
 {
     return std::find_if(std::begin(kFeatureKeys), std::end(kFeatureKeys), [&](const char *k) { return key == k; }) !=
            std::end(kFeatureKeys);
+}
+
+/* An opt-in key's value: 0 or 1; the HUD zoom's centre a whole number 0-1000 (per mille). */
+bool feature_valid(const std::string &key, const std::string &value)
+{
+    if (key == "hud_crop_cx_pm" || key == "hud_crop_cy_pm") {
+        char *end = nullptr;
+        const long v = std::strtol(value.c_str(), &end, 10);
+        return !value.empty() && !*end && value[0] != '-' && value[0] != '+' && v >= 0 && v <= 1000;
+    }
+    return value == "0" || value == "1";
 }
 
 /* The key of a key = value or key += value line. */
@@ -82,7 +94,7 @@ void load_features(cld::Config *cfg, const std::string &path)
             continue;
         const size_t eq = line.find('=');
         const std::string key = key_of(line), value = eq == std::string::npos ? "" : trim(line.substr(eq + 1));
-        if (!feature_key(key) || (value != "0" && value != "1") || !cfg->set_pair(key + "=" + value, &err)) {
+        if (!feature_key(key) || !feature_valid(key, value) || !cfg->set_pair(key + "=" + value, &err)) {
             log_warn("%s: \"%s\" left out", path.c_str(), trim(line).c_str());
             continue;
         }

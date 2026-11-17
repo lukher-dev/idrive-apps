@@ -45,6 +45,7 @@ void MapFeeds::follow()
         fc.vpp_scale = false;   /* the HUD scales whole frames */
         fc.always_packed = false;   /* and goes exact (cluster map only) */
         hud_.reset(new MapFeed(fc));
+        hud_->set_gate(gate_open());
         hud_->set_stream(live_, frozen_, picture_);
         hud_->changed(id_);
         log_info("hud: on, at most %u frames a second", hud_fps_);
@@ -141,8 +142,41 @@ size_t MapFeeds::poll_fds(std::vector<pollfd> *fds) const
     return first;
 }
 
+void MapFeeds::set_hud_near_turn(bool on)
+{
+    if (on == base_.hud_near_turn)
+        return;
+    base_.hud_near_turn = on;
+    log_info("hud: the map %s", on ? "only near turns" : "whenever the phone sends it");
+    if (hud_)
+        hud_->set_gate(gate_open());
+}
+
+void MapFeeds::set_turn_near(bool near, int64_t now_ms)
+{
+    if (near)
+        near_at_ms_ = now_ms;
+    if (near == near_)
+        return;
+    near_ = near;
+    if (hud_)
+        hud_->set_gate(gate_open());
+}
+
+void MapFeeds::set_hud_zoom(unsigned pct)
+{
+    base_.hud_zoom_pct = pct;
+    if (hud_)
+        hud_->set_hud_zoom(pct);
+}
+
 void MapFeeds::poll(int64_t now_ms)
 {
+    if (near_ && now_ms - near_at_ms_ >= base_.hud_near_expire_ms) {
+        log_warn("hud: no word of the turn for %lld ms: the map hidden until a turn is near",
+                 (long long)base_.hud_near_expire_ms);
+        set_turn_near(false, now_ms);
+    }
     if (cluster_)
         cluster_->poll(now_ms);
     if (hud_)
@@ -225,6 +259,9 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     } else {
         const FeedStatus h = hud_->status(decode, stream);
         s.hud_state = h.disabled ? "disabled" : h.state;
+        /* a live picture the gate keeps off the HUD */
+        if (!h.disabled && !gate_open() && live_ && !frozen_ && picture_ == Picture::Shown)
+            s.hud_state = "turn_wait";
         if (!cluster_) {
             s.upload_cap_kb = h.upload_cap_kb;
             s.upload_reason = h.upload_reason;
@@ -232,6 +269,10 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     }
     s.hud_width_pct = base_.hud_width_pct;
     s.hud_keep_shown = base_.hud_keep_shown;
+    s.hud_near_turn = base_.hud_near_turn;
+    s.hud_gate = gate_open();
+    s.hud_zoom_pct = base_.hud_zoom_pct;
+    s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
     s.hud_offset_x = hud_ ? hud_->hud_offset_x() : base_.hud_offset_x;
     s.hud_offset_y = hud_ ? hud_->hud_offset_y() : base_.hud_offset_y;
     return s;

@@ -34,6 +34,8 @@ static cld::Config conf()
     c.define("src_crop", "");
     c.define("hosted_vpp_scale", "0");
     c.define("always_packed", "0");
+    c.define("hud_crop_cx_pm", "500");
+    c.define("hud_crop_cy_pm", "500");
     return c;
 }
 
@@ -84,6 +86,22 @@ int main()
     load_features(&c, feat);
     ok("out of range, another key or a line that does not read: left out, the rest taken",
        c.str("hosted_vpp_scale") == "0" && c.str("always_packed") == "1" && c.str("target_fps") == "30");
+    std::ofstream(feat) << "hud_crop_cx_pm = 700\nhud_crop_cy_pm += 1000\n";
+    c = conf();
+    load_features(&c, feat);
+    ok("the HUD zoom's centre, in per mille, from the features file", c.str("hud_crop_cx_pm") == "700" &&
+                                                                       c.str("hud_crop_cy_pm") == "1000");
+    std::ofstream(feat) << "hud_crop_cx_pm = 1001\nhud_crop_cy_pm = -1\nhud_crop_cx_pm = 0.5\n";
+    c = conf();
+    load_features(&c, feat);
+    ok("the HUD zoom's centre outside 0-1000, or not whole: left out", c.str("hud_crop_cx_pm") == "500" &&
+                                                                         c.str("hud_crop_cy_pm") == "500");
+    std::ofstream(local) << "hud_crop_cx_pm = 700\n";
+    c = conf();
+    w.clear();
+    load_local_conf(&c, local, &w);
+    ok("the HUD zoom's centre in local_conf: left out (an opt-in key)", c.str("hud_crop_cx_pm") == "500" &&
+                                                                          has(w, ":1: hud_crop_cx_pm is left out"));
     unlink(local.c_str());
     unlink(feat.c_str());
 
@@ -91,12 +109,16 @@ int main()
     cld::Config shipped;
     shipped.define("hosted_vpp_scale", "");
     shipped.define("always_packed", "");
+    shipped.define("hud_crop_cx_pm", "");
+    shipped.define("hud_crop_cy_pm", "");
     shipped.define("features_file", "");
     shipped.extra_keys = [](const std::string &) { return true; };
     std::string err;
     ok("shipped: waze-on-cluster.conf reads", shipped.load("waze-on-cluster.conf", &err));
     ok("shipped: features_file is the file patchd writes", shipped.str("features_file") == "/var/opt/waze-on-cluster/features.conf");
     ok("shipped: the opt-in keys off", shipped.str("hosted_vpp_scale") == "0" && shipped.str("always_packed") == "0");
+    ok("shipped: the HUD zoom's centre the picture's middle", shipped.str("hud_crop_cx_pm") == "500" &&
+                                                               shipped.str("hud_crop_cy_pm") == "500");
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);
     return failures ? 1 : 0;
 }
