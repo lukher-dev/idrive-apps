@@ -92,6 +92,8 @@ const PENDING_PATH = '/dev/shm/waze-on-cluster/activation-pending';
 const AA_PENDING_PATH = '/dev/shm/waze-on-cluster/aa-pending';
 const BOOT_ID_PATH = '/proc/sys/kernel/random/boot_id';
 const RETRY_MS = 1000;
+/* how long a closed connection may take to be let go before it is cut */
+const CLOSE_MS = 1000;
 /* One Zoom in or Zoom out press, in dpi: the densities' own step. */
 const ZOOM_STEP = 10;
 /* Why a restart failed, by patchd's code (English keys of src/i18n.js). */
@@ -132,8 +134,12 @@ class LineSocket extends EventEmitter {
         this.linkCode = null;
         this._open = false;
         this._socket = null;
+        this._closing = null;
+        this._waiting = false;
         this._buf = '';
         this._retryTimer = null;
+        /* a function each connection waits for first: null, or a promise of the way being clear */
+        this.beforeConnect = null;
     }
 
     open() {
@@ -143,22 +149,45 @@ class LineSocket extends EventEmitter {
         }
     }
 
+    /* Emits 'closed' once the other end has let the connection go (a
+     * single-owner socket takes the next one only then), or CLOSE_MS on. */
     close() {
         this._open = false;
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
-        if (this._socket) {
-            /* forgotten here, so its late events cannot touch a new connection */
-            this._socket.end();
-            this._socket = null;
-        }
         this.link = 'down';
-        this.emit('closed');
+        /* forgotten here, so its late events cannot touch a new connection */
+        const socket = this._socket;
+        this._socket = null;
+        if (!socket) {
+            this.emit('closed');
+            return;
+        }
+        this._closing = socket;
+        const gone = () => {
+            if (this._closing === socket) {
+                clearTimeout(timer);
+                this._closing = null;
+                this.emit('closed');
+                this._connect();
+            }
+        };
+        const timer = setTimeout(() => {
+            socket.destroy();
+            gone();
+        }, CLOSE_MS);
+        socket.on('close', gone);
+        socket.end();
     }
 
     /* Open: connected, or connecting again until it is. */
     isOpen() {
         return this._open;
+    }
+
+    /* Closed, but its connection not let go yet. */
+    closing() {
+        return !!this._closing;
     }
 
     connected() {
@@ -172,7 +201,17 @@ class LineSocket extends EventEmitter {
     }
 
     _connect() {
-        if (!this._open || this._socket) {
+        if (!this._open || this._socket || this._closing || this._waiting) {
+            return;
+        }
+        const wait = this.beforeConnect && this.beforeConnect();
+        if (wait) {
+            this._waiting = true;
+            const go = () => {
+                this._waiting = false;
+                this._connect();
+            };
+            wait.then(go, go);
             return;
         }
         const socket = net.connect(this.path);
@@ -1136,7 +1175,7 @@ class WazeClusterControl extends EventEmitter {
             this._noteCardAsked(msg);
             this._wake();
             this.emit('change');
-        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown)-reply$/.test(msg.ev)) {
+        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom)-reply$/.test(msg.ev)) {
             if (!msg.ok) {
                 this._log.info(`patchd did not save the setting: ${msg.reason || 'refused'}`);
             }

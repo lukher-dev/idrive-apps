@@ -883,6 +883,15 @@ test('no restart button when carplay restarts at once (never deferred)', async (
     c.close();
 });
 
+test('a refused save of near turns or the zoom is logged, as the other HUD settings', async () => {
+    const lines = [];
+    const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, pendingPath: PENDING, retryMs: 100,
+        log: { info: (m) => lines.push(m), warn: (m) => lines.push(m) } });
+    ['hud-keep-shown', 'hud-near-turn', 'hud-zoom'].forEach((cmd) => c._onPatch({ ev: `${cmd}-reply`, ok: false, reason: `no ${cmd}` }));
+    assert.deepStrictEqual(lines.filter((m) => /did not save/.test(m)), ['patchd did not save the setting: no hud-keep-shown',
+        'patchd did not save the setting: no hud-near-turn', 'patchd did not save the setting: no hud-zoom']);
+});
+
 test('a refused restart reply clears the asked flag so the button returns', async (render, patch) => {
     const c = control();
     c.open();

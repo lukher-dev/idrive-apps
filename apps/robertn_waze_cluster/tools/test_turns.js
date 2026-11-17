@@ -260,8 +260,8 @@ function fakeClock() {
  * (the build rejects), failBuilds (the first that many builds reject),
  * failQueries (that many queryContent calls reject), hangQueries (that many
  * never answer), throwQueries and throwConfig (that many queryContent or
- * getViewConfig calls throw at once), slowBuild (the
- * build resolves on b.release()). */
+ * getViewConfig calls throw at once), hangFrom (that query and every later
+ * one never answer), slowBuild (the build resolves on b.release()). */
 function fakeBuilders(clock, replyAt, opts) {
     const o = opts || {};
     const b = { builds: 0, configReads: 0, queries: 0, shutdowns: 0 };
@@ -287,7 +287,7 @@ function fakeBuilders(clock, replyAt, opts) {
                     assert(Array.isArray(params.viewConfigs) && params.viewConfigs.length === 1 && params.viewConfigs[0].viewport);
                     b.queries++;
                     if (o.failQueries && b.queries <= o.failQueries) return Promise.reject(new Error('timed out'));
-                    if (o.hangQueries && b.queries <= o.hangQueries) return new Promise(() => {});
+                    if ((o.hangQueries && b.queries <= o.hangQueries) || (o.hangFrom && b.queries >= o.hangFrom)) return new Promise(() => {});
                     if (o.throwQueries && b.queries <= o.throwQueries) throw new Error('not connected');
                     return Promise.resolve(replyAt(clock.now()));
                 }
@@ -412,6 +412,17 @@ async function watchChecks() {
         await c.advance(10000);
         assert(b.queries > 5, `queries ${b.queries}`);
         assert.strictEqual(sent[0].near, '1');
+    });
+    await check('the service stops answering while near: the map goes after the hold, not after six timeouts', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '100', 'm'), { hangFrom: 5 });
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(2000);
+        assert.strictEqual(w.near, true);
+        await c.advance(18000);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1', '0']);
+        assert(sent[1].at <= 16000, `hidden at ${sent[1].at} ms`);
+        assert.strictEqual(w.maneuver.kind, 'intersection', 'the last maneuver kept until six failures');
     });
     await check('a change listener that throws does not stop polling', async () => {
         const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
