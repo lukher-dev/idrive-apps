@@ -150,6 +150,12 @@ class LineSocket extends EventEmitter {
             this._socket = null;
         }
         this.link = 'down';
+        this.emit('closed');
+    }
+
+    /* Open: connected, or connecting again until it is. */
+    isOpen() {
+        return this._open;
     }
 
     connected() {

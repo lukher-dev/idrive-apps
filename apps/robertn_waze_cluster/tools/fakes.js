@@ -47,6 +47,7 @@ class LineServer extends EventEmitter {
         this.path = path;
         this.received = [];
         this.backlog = [];
+        this.connections = 0;   /* every connection taken, for the render's single owner */
         this._clients = new Set();
         this._server = net.createServer((socket) => this._onClient(socket));
     }
@@ -91,6 +92,7 @@ class LineServer extends EventEmitter {
     }
 
     _onClient(socket) {
+        this.connections++;
         this._clients.add(socket);
         let buf = '';
         socket.setEncoding('utf8');

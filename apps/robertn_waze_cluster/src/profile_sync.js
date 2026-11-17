@@ -30,6 +30,7 @@
 const EventEmitter = require('events');
 const net = require('net');
 const { RENDER_PATH, PATCH_PATH } = require('./waze_cluster_control.js');
+const { RenderSender } = require('./render_sender.js');
 
 const POLL_MS = 5000;
 const READ_MS = 3000;
@@ -39,7 +40,6 @@ const SETUP_RETRY_MAX_MS = 300000;
 const REPLY_MS = 3000;
 const RETRY_MS = 60000;
 /* how long a short render connection stays for its commands */
-const RENDER_HOLD_MS = 800;
 const IFACE = 'de.bmw.infotainment.personalization.SessionManager';
 const INSTANCE = 'de.bmw.infotainment.personalization.SessionManager';
 const FIELD = 'currentUserAccountReference';
@@ -188,6 +188,9 @@ class ProfileSync extends EventEmitter {
         this._read = o.readProfile;
         this._patchPath = o.patchPath || PATCH_PATH;
         this._renderPath = o.renderPath || RENDER_PATH;
+        /* the render's socket has one owner: the page's link while it is up, else a short connection */
+        this._sender = o.sender || new RenderSender({ path: this._renderPath, link: this._control ? this._control.render : null,
+            log: this._log });
         this._pollMs = o.pollMs || POLL_MS;
         this._replyMs = o.replyMs || REPLY_MS;
         this._retryMs = o.retryMs || RETRY_MS;
@@ -327,21 +330,7 @@ class ProfileSync extends EventEmitter {
         if (s.hud_keep_shown === 0 || s.hud_keep_shown === 1) {
             hud.hud_keep_shown = on(s.hud_keep_shown);
         }
-        const cmds = shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]);
-        const c = this._control;
-        if (c && c.render && c.render.connected()) {
-            cmds.forEach((m) => c.render.send(m));
-            return;
-        }
-        /* the render down or owned by another: its next start reads the saved settings */
-        const sock = net.connect(this._renderPath);
-        const end = setTimeout(() => sock.destroy(), RENDER_HOLD_MS * 3);
-        sock.on('connect', () => {
-            cmds.forEach((m) => sock.write(JSON.stringify(m) + '\n'));
-            setTimeout(() => sock.end(), RENDER_HOLD_MS);
-        });
-        sock.on('error', () => {});
-        sock.on('close', () => clearTimeout(end));
+        this._sender.send(shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]));
     }
 }
 

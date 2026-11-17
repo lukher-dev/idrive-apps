@@ -29,6 +29,7 @@ const fs = require('fs');
 const { ProfileSync, sessionReader, IFACE, INSTANCE, FIELD } = require('../src/profile_sync.js');
 const { WazeClusterControl } = require('../src/waze_cluster_control.js');
 const { FakeRender, FakePatch } = require('./fakes.js');
+const { RenderSender } = require('../src/render_sender.js');
 
 const RSOCK = `/tmp/woc-sr-${process.pid}.sock`;
 const PSOCK = `/tmp/woc-sp-${process.pid}.sock`;
@@ -339,6 +340,71 @@ async function main() {
         await until('taken', () => sync4.profile === 'driverB');
         sync4.stop();
         await p2.close();
+    });
+
+    /* ---- RenderSender: one serialized way to the render's single-owner socket ---- */
+    await check('RenderSender: the page link up, written there', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        await until('the page link', () => c.render.connected());
+        const before = render.connections, n = render.count('probe-a');
+        new RenderSender({ path: RSOCK, link: c.render }).send([{ cmd: 'probe-a' }]);
+        await until('probe-a', () => render.count('probe-a') === n + 1);
+        assert.strictEqual(render.connections, before);
+        c.close();
+    });
+    await check('RenderSender: queued while the page link connects, no second socket, a newer turn replaces an older', async () => {
+        const path = `/tmp/woc-sr2-${process.pid}.sock`;
+        const r2 = new FakeRender(path);
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        const sender = new RenderSender({ path, link: c.render, holdMs: 50 });
+        sender.send([{ cmd: 'turn', near: '1' }, { cmd: 'probe-b' }]);
+        sender.send([{ cmd: 'turn', near: '0' }]);
+        await sleep(150);
+        await r2.listen();
+        await until('both', () => r2.count('turn') === 1 && r2.count('probe-b') === 1);
+        await sleep(100);
+        assert.strictEqual(r2.connections, 1);
+        assert.deepStrictEqual(r2.received.filter((m) => m.cmd === 'turn' || m.cmd === 'probe-b').map((m) => m.cmd + (m.near || '')),
+            ['probe-b', 'turn0']);
+        c.close();
+        await r2.close();
+    });
+    await check('RenderSender: the page closed, one short connection carries every queued message', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        const before = render.connections, a = render.count('probe-c'), b = render.count('probe-d');
+        const sender = new RenderSender({ path: RSOCK, link: c.render, holdMs: 100 });
+        sender.send([{ cmd: 'probe-c' }]);
+        sender.send([{ cmd: 'probe-d' }]);
+        await until('both', () => render.count('probe-c') === a + 1 && render.count('probe-d') === b + 1);
+        await sleep(200);
+        assert.strictEqual(render.connections, before + 1);
+    });
+    await check('RenderSender: the page closing with messages queued sends them on a short connection', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        const sender = new RenderSender({ path: RSOCK, link: c.render, holdMs: 50 });
+        const n = render.count('probe-e');
+        sender.send([{ cmd: 'probe-e' }]);
+        c.close();
+        await until('probe-e', () => render.count('probe-e') === n + 1);
+    });
+    await check('RenderSender: no render, the messages are dropped, nothing thrown', async () => {
+        const c = new WazeClusterControl({ renderPath: `/tmp/woc-nowhere-${process.pid}.sock`, patchPath: PSOCK, retryMs: 50 });
+        const sender = new RenderSender({ path: `/tmp/woc-nowhere-${process.pid}.sock`, link: c.render, holdMs: 50 });
+        sender.send([{ cmd: 'probe-f' }]);
+        await sleep(150);
+        sender.send([{ cmd: 'probe-g' }]);
+        await sleep(150);
+    });
+    await check('ProfileSync: settings go to the render through its RenderSender', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(settings(1, 1, 40, 0, 0, 1));
+        assert.deepStrictEqual(got.map((m) => m.cmd), ['cluster', 'hud', 'hud']);
+        assert.strictEqual(got[2].hud_keep_shown, '1');
     });
 
     await render.close();
