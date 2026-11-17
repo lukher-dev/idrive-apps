@@ -94,6 +94,10 @@
     "2.4 GHz": "2,4 GHz",
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ljudet kan försvinna. Stäng av och slå på Wi-Fi på din iPhone.",
     "Own settings for this driver": "Egna inställningar för den här föraren",
-    "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster"
+    "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster",
+    "Only near turns": "Bara nära svängar",
+    "HUD zoom: {0}": "HUD-zoom: {0}",
+    "Waiting for a turn": "Väntar på en sväng",
+    "No turn data": "Ingen svängdata"
   }
 }

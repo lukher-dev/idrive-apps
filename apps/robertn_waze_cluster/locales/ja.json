@@ -94,6 +94,10 @@
     "2.4 GHz": "2.4 GHz",
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音声が途切れることがあります。iPhoneでWi-Fiをオフにしてからオンにしてください。",
     "Own settings for this driver": "このドライバー専用の設定",
-    "Keep HUD map over BMW's pop-ups": "HUDの地図をBMWのポップアップより優先"
+    "Keep HUD map over BMW's pop-ups": "HUDの地図をBMWのポップアップより優先",
+    "Only near turns": "曲がり角の手前のみ",
+    "HUD zoom: {0}": "HUDズーム：{0}",
+    "Waiting for a turn": "曲がり角待ち",
+    "No turn data": "曲がり角データなし"
   }
 }
