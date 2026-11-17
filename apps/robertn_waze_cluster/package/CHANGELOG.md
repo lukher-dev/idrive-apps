@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.14
+
 Only near turns, a checkbox in HUD: ticked, the HUD map shows only while a
 turn is close (about 400 m ahead, 1 km for a motorway exit) and goes about
 10 s after it. It reads the turns your navigation app sends the car, as
