@@ -59,7 +59,7 @@ WOC_SRC = src/main.cpp src/refused.cpp src/video_producer.cpp src/freeze_watch.c
 CR_SRC  = $(CR)/client/client.cpp $(CR)/client/protocol.cpp
 SRC     = $(WOC_SRC) $(CR_SRC) $(CR)/src/config.cpp $(CR)/src/log.cpp $(CR)/src/head_unit.cpp
 
-.PHONY: all test test-bin test-cpp test-node test-x86 test-x86-in-docker test-firmware target target-in-docker clean
+.PHONY: all hud-preview hud-preview-check test test-bin test-cpp test-node test-x86 test-x86-in-docker test-firmware target target-in-docker clean
 
 CPP_TESTS = $(BUILD)/host/nal_reader_test $(BUILD)/host/rtp_h264_test $(BUILD)/host/udp_probe_test \
 		$(BUILD)/host/map_feed_test $(BUILD)/host/keyframe_wait_test $(BUILD)/host/freeze_watch_test \
@@ -154,6 +154,24 @@ test-firmware:
 $(BUILD)/host/source_crop_test: test/source_crop_test.cpp src/source_crop.h
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -Isrc -o $@ test/source_crop_test.cpp
+
+# hud-preview: what the HUD shows of a 1088x480 BMP, with the HUD feed's own
+# crop and scaler (tools/hud_preview.cpp); builds on macOS too.
+$(BUILD)/host/hud-preview: tools/hud_preview.cpp src/atlas_scale.cpp src/atlas_scale.h src/hud_crop.h $(KIT)/map_geometry.cpp $(KIT)/yuv_atlas.cpp
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -Isrc -I$(KIT) -o $@ tools/hud_preview.cpp src/atlas_scale.cpp $(KIT)/map_geometry.cpp $(KIT)/yuv_atlas.cpp -lpthread
+
+hud-preview: $(BUILD)/host/hud-preview
+
+# the grid's middle marker lands in the middle of the shown part at 200 %, and
+# at 150 % centred at 700 per mille, the 724 px part held at the right edge
+# (x 364), 182 x 452/724 = 114 px left of it
+hud-preview-check: hud-preview
+	@set -e; T=$$(mktemp -d); P=$(BUILD)/host/hud-preview; $$P --grid $$T/g.bmp; \
+	check() { out=$$($$P $$T/g.bmp $$T/o.bmp --no-black --no-round "$$@"); echo "$$out"; \
+	  echo "$$out" | awk -v dx=$$DX '/its middle/ { split($$NF, m, ","); mx = m[1]; my = m[2] } \
+	    /^marker/ { split($$2, k, ","); d = k[1] - (mx + dx); e = k[2] - my; exit (d < -3 || d > 3 || e < -3 || e > 3) }'; }; \
+	DX=0 check --zoom 200; DX=-114 check --zoom 150 --cx-pm 700; rm -rf $$T; echo "hud-preview-check: ok"
 
 $(BUILD)/host/hud_crop_test: test/hud_crop_test.cpp src/hud_crop.h src/map_rect.h
 	mkdir -p $(@D)

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+Only near turns, a checkbox in HUD: ticked, the HUD map shows only while a
+turn is close (about 400 m ahead, 1 km for a motorway exit) and goes about
+10 s after it. It reads the turns your navigation app sends the car, as
+BMW's own HUD arrow does: Google Maps and Apple Maps send them, Waze does
+not. HUD zoom, a slider in HUD: 100 to 250 %, a closer part of the map on
+the HUD, never scaled up past what the HUD map's size takes.
+
 ## 0.6.12
 
 The cluster's safe area is back to 504x368 at (286, 72); a smaller area made

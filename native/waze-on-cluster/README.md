@@ -110,6 +110,25 @@ unless **Keep HUD map over BMW's pop-ups** is ticked. **Own settings for
 this driver** gives the driver profile in use its own copy of these
 settings.
 
+**Only near turns** (`hud_near_turn`) keeps the HUD map hidden, its slot
+let go, until the app says a turn is near. The app reads the maneuvers
+BMW navigation keeps for its own HUD view (`GuidanceEventList`, view
+`HUD.RB.Main`, which the phone's navigation feeds) and sends
+`{"cmd":"turn","near":"1"|"0"}`: near from 400 m before a turn (1 km
+before a motorway exit), past 10 s after the next maneuver is further
+than that plus 400 m, or gone. It says so again every 30 s; a near not
+said again for `hud_near_expire_ms` (90 s) counts as past. The cluster's
+map does not follow it.
+
+**HUD zoom** (`hud_zoom_pct`, 100 to 250 %) shows the picture's middle
+100/zoom of each side, centred on `hud_crop_cx_pm`, `hud_crop_cy_pm`
+(per mille of the picture, 500 and 500 by default; opt-in keys in
+`features.conf`) and held inside it, scaled to the HUD map's size. A size
+takes at most the zoom whose part is as wide as the map is shown, so the
+picture is never scaled up; the status's `hud_zoom_used` is the zoom in
+use. `make hud-preview` builds a host tool that runs the same crop and
+scaling on a 1088x480 BMP, to choose the centre.
+
 From a shell, `waze-on-cluster -c <conf> run map|panel` sets the cluster
 target until the service restarts and prints the status.
 

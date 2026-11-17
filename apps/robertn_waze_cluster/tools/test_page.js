@@ -858,7 +858,7 @@ async function main() {
     } finally {
         await render.close();
         await patch.close();
-        [RSOCK, PSOCK, PENDING, LSOCK].forEach((p) => { try { fs.unlinkSync(p); } catch (e) { /* gone */ } });
+        [RSOCK, PSOCK, PENDING, LSOCK, STATUS_FILE].forEach((p) => { try { fs.unlinkSync(p); } catch (e) { /* gone */ } });
     }
 }
 
