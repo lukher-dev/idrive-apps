@@ -398,6 +398,41 @@ async function main() {
         sender.send([{ cmd: 'probe-g' }]);
         await sleep(150);
     });
+    await check('RenderSender: the page opening while a short connection is held waits for it to end, not refused busy', async () => {
+        const path = `/tmp/woc-sr3-${process.pid}.sock`;
+        const r3 = new FakeRender(path, { singleOwner: true });
+        r3.releaseLagMs = 50;
+        await r3.listen();
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 1000 });
+        const sender = new RenderSender({ path, link: c.render, holdMs: 800 });
+        sender.send([{ cmd: 'turn', near: '1' }]);
+        await until('the short connection', () => r3.count('turn') === 1);
+        const t0 = Date.now();
+        c.open();
+        await until('the page link', () => c.render.connected(), 1500);
+        assert(Date.now() - t0 < 500, `the page link up in ${Date.now() - t0} ms, after the short connection, not a refusal's retry`);
+        assert.strictEqual(r3.refused, 0);
+        sender.send([{ cmd: 'probe-h' }]);
+        await until('probe-h on the page link', () => r3.count('probe-h') === 1);
+        assert.strictEqual(r3.connections, 2);
+        c.close();
+        await r3.close();
+    });
+    await check('RenderSender: the page closing, a short connection waits for the render to let the page go', async () => {
+        const path = `/tmp/woc-sr4-${process.pid}.sock`;
+        const r4 = new FakeRender(path, { singleOwner: true });
+        r4.releaseLagMs = 50;
+        await r4.listen();
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 1000 });
+        const sender = new RenderSender({ path, link: c.render, holdMs: 50 });
+        c.open();
+        await until('the page link', () => c.render.connected());
+        c.close();
+        sender.send([{ cmd: 'probe-i' }]);
+        await until('probe-i', () => r4.count('probe-i') === 1, 1500);
+        assert.strictEqual(r4.refused, 0);
+        await r4.close();
+    });
     await check('ProfileSync: near turns and the zoom go to the render with the other HUD settings', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,

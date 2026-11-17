@@ -225,6 +225,8 @@ class TurnWatch extends EventEmitter {
                     this._errors = 0;
                     this._config = null;
                     if (gen === this._gen) this._update(null, null);
+                } else if (gen === this._gen) {
+                    this._decide(null);
                 }
             })
             .catch((e) => this._log.warn(`turn: ${(e && e.message) || e}`))
@@ -243,17 +245,26 @@ class TurnWatch extends EventEmitter {
             this._log.info('turn: none');
         }
         this.maneuver = m;
-        const near = this._gate.update(m, this._now());
-        const flipped = near !== this.near;
+        const flipped = this._decide(m);
         const moved = !before !== !m || (m && before && (before.kind !== m.kind ||
             Math.round(before.metres || 0) !== Math.round(m.metres || 0)));
-        if (flipped) {
-            this.near = near;
-            this._send({ cmd: 'turn', near: near ? '1' : '0' });
-        }
-        if (moved || flipped) {
+        if (moved && !flipped) {
             this._emitChange();
         }
+    }
+
+    /* The gate given m; a change sent and emitted. A query that failed
+     * gives it null with the last maneuver kept, so its hold runs while the
+     * service does not answer. Returns whether near changed. */
+    _decide(m) {
+        const near = this._gate.update(m, this._now());
+        if (near === this.near) {
+            return false;
+        }
+        this.near = near;
+        this._send({ cmd: 'turn', near: near ? '1' : '0' });
+        this._emitChange();
+        return true;
     }
 
     _setStatus(s) {

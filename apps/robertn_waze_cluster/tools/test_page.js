@@ -543,6 +543,13 @@ async function main() {
         await until('the page hidden: still told, on a connection of its own', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
         byName.ST_OnlineApps_WazeCluster.emit('visible', { visible: true });
         await until('the page again', () => nearBox.selected === true && nearBox.enabled === true);
+        const gate = OnlineApp.instance._turns._gate;
+        OnlineApp.instance._control._onRender({ ev: 'status', state: 'error', target: null, page: null, reason: 'busy' });
+        await sleep(50);
+        assert(OnlineApp.instance._turns.status === 'available' && OnlineApp.instance._turns._gate === gate,
+            'the render answering busy: the watch and its gate go on, as the status file says');
+        render.announce(render.state, render.reason);
+        await until('the render\'s status again', () => nearBox.selected === true && nearBox.enabled === true);
         await sleep(450);
         nearBox.press();
         await until('always again: the turn taken back', () => render.hudNearTurn === 0 && render.turnNear === false && nearBox.selected === false);

@@ -42,14 +42,15 @@ const RENDER_PAGE = 'map';
 const RENDER_FPS = '30 updates/s';
 
 class LineServer extends EventEmitter {
-    constructor(path) {
+    /* opts.halfOpen: a connection's end comes to the subclass, which ends its side itself */
+    constructor(path, opts) {
         super();
         this.path = path;
         this.received = [];
         this.backlog = [];
         this.connections = 0;   /* every connection taken, for the render's single owner */
         this._clients = new Set();
-        this._server = net.createServer((socket) => this._onClient(socket));
+        this._server = net.createServer({ allowHalfOpen: !!(opts && opts.halfOpen) }, (socket) => this._onClient(socket));
     }
 
     listen() {
@@ -119,8 +120,16 @@ class LineServer extends EventEmitter {
 }
 
 class FakeRender extends LineServer {
-    constructor(path) {
-        super(path);
+    /* opts.singleOwner: one connection at a time, as the render's control.h:
+     * a second one is told busy and closed (refused counts them); the owner
+     * is let go releaseLagMs after its end comes, and only then is its side
+     * closed. */
+    constructor(path, opts) {
+        super(path, { halfOpen: !!(opts && opts.singleOwner) });
+        this.singleOwner = !!(opts && opts.singleOwner);
+        this.releaseLagMs = 0;
+        this.refused = 0;
+        this._owner = null;
         this.state = 'idle';
         this.target = null;
         this.page = null;
@@ -186,15 +195,33 @@ class FakeRender extends LineServer {
     }
 
     _onConnect(socket) {
+        if (this.singleOwner) {
+            if (this._owner) {
+                this.refused++;
+                socket.refused = true;
+                this._clients.delete(socket);
+                socket.end(JSON.stringify({ ev: 'status', state: 'error', target: null, page: null, reason: 'busy' }) + '\n');
+                return;
+            }
+            this._owner = socket;
+            socket.on('end', () => setTimeout(() => {
+                if (this._owner === socket) this._owner = null;
+                socket.end();
+            }, this.releaseLagMs));
+        }
         this._send(socket, this._status());
         this.backlog.forEach((line) => this._send(socket, { ev: 'log', line }));
     }
 
     _onClose(socket) {
         this._clients.delete(socket);
+        if (this._owner === socket) this._owner = null;
     }
 
-    _onCommand(msg) {
+    _onCommand(msg, socket) {
+        if (socket && socket.refused) {
+            return;
+        }
         this.received.push(msg);
         this.emit('command', msg);
         this.log(`control: ${JSON.stringify(msg)}`);

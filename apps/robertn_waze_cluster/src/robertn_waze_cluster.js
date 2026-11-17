@@ -501,10 +501,11 @@ class WazeClusterApp extends OnlineApp {
 
     /* The turn watch on while the HUD shows the map only near turns: as the
      * render says while the page holds its socket, else as its status file
-     * says (the page closed, or never opened since the head unit started). */
+     * says (the page closed, or never opened since the head unit started,
+     * or a status without the field: the render answering busy). */
     _followTurnMode() {
         let rs = this._control.renderStatus;
-        if (!rs) {
+        if (!rs || rs.hud_near_turn === undefined) {
             try {
                 rs = JSON.parse(fs.readFileSync(this._statusFile, 'utf8'));
             } catch (e) {

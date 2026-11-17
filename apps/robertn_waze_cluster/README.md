@@ -73,8 +73,9 @@ The app is in the head unit's display language.
 - **Only near turns:** ticked, the HUD map shows only while a turn is close
   (about 400 m ahead, 1 km for a motorway exit) and goes about 10 s after
   it. It reads the turns your navigation app sends the car, as BMW's own
-  HUD arrow does: Google Maps and Apple Maps send them, Waze doesn't, so
-  with Waze the map never shows.
+  HUD arrow does. Google Maps sends them; Apple Maps should too, though it
+  is untried. With an app that sends none, such as Waze, the map never
+  shows.
 - **HUD zoom:** a closer part of the map on the HUD, 100 % (the whole map)
   to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
   the row shows the zoom in use.
