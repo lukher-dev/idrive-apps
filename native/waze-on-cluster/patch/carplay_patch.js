@@ -657,10 +657,14 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         put(resText, o, (wantRes ? resWant : orig).slice(o, o + 8));
     });
 
-    /* The URL edits, in every mode, where the build has them. */
-    var writes = { mapurl: c.mapurl.state !== 'absent', showui: c.showui.state !== 'absent', res: wantRes };
-    if (writes.mapurl) c.mapurl.sites.forEach(function (s) { put('map URL -> ' + MAP_URL, s[0], Buffer.from(s[1], 'hex')); });
-    if (writes.showui) c.showui.sites.forEach(function (s) { put('ShowUI URL -> ' + SHOWUI_URL, s[0], Buffer.from(s[1], 'hex')); });
+    /* Test build: the URL edits are left stock, restored from the backup
+     * where an earlier apply wrote them, as patches were before the map URL
+     * edit. It asks whether the cluster then goes to the app that navigates
+     * (Google Maps) instead of Apple Maps' map from connect. */
+    var writes = { mapurl: false, showui: false, res: wantRes };
+    URL_EDITS.forEach(function (e) {
+        if (c[e].sites) c[e].sites.forEach(function (s) { put('URL edits -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
+    });
 
     var rec = applyRecord(record.current(target), !!PROVEN[loc.buildId], coding, c, writes);
     if (changed.length === 0) {
@@ -675,8 +679,8 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         : cc.sink.state !== (sinkUrl !== undefined ? 'redirected' : 'original') ? 'sink'
         : cc.selfstart.state !== 'patched' ? 'self-start'
         : cc.res.state !== (wantRes ? 'patched' : 'original') ? 'resolution'
-        : cc.mapurl.state !== (writes.mapurl ? 'patched' : 'absent') ? 'map URL'
-        : cc.showui.state !== (writes.showui ? 'patched' : 'absent') ? 'ShowUI URL'
+        : cc.mapurl.state !== (c.mapurl.state === 'absent' ? 'absent' : 'original') ? 'map URL'
+        : cc.showui.state !== (c.showui.state === 'absent' ? 'absent' : 'original') ? 'ShowUI URL'
         : !onlyRegionsDiffer(buf, out, regions(c)) ? 'bytes outside the edit regions' : null;
     if (wrong) die('refusing: the edited binary does not verify (' + wrong + '); no change made');
 
