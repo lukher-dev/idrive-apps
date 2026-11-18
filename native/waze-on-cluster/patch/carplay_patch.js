@@ -157,7 +157,10 @@ var RES_DEFAULT = { w: 1088, h: 480, mmw: 138, mmh: 61 };
  * below the native model badge. Other --res sizes scale it. The
  * safe area 0.10.6 wrote (476x306 at 306,72) reads as patched, and an apply
  * rewrites it. */
-var SAFE_DEFAULT = { x: 286, y: 72, w: 504, h: 368 };
+/* Test build: the whole frame, so iOS's cluster card layout for apps other
+ * than Apple Maps (CarPlaySupport's CPSInstrumentClusterCardLayout) has a
+ * defined layout; 504x368 at 138 mm over 1088 px gets "undefined layout". */
+var SAFE_DEFAULT = { x: 0, y: 0, w: 1088, h: 480 };
 var EDITS = ['variant', 'sink', 'selfstart', 'res'];
 var URL_EDITS = ['mapurl', 'showui'];
 
