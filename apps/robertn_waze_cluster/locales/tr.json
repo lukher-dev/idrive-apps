@@ -98,6 +98,7 @@
     "Only near turns": "Yalnızca dönüşlere yakın",
     "HUD zoom: {0}": "HUD yakınlaştırma: {0}",
     "Waiting for a turn": "Dönüş bekleniyor",
-    "No turn data": "Dönüş verisi yok"
+    "No turn data": "Dönüş verisi yok",
+    "Arrival time on the cluster": "Göstergede varış saati"
   }
 }

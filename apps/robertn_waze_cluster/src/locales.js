@@ -102,7 +102,8 @@ module.exports = [
    "Only near turns": "فقط قرب المنعطفات",
    "HUD zoom: {0}": "تكبير HUD: {0}",
    "Waiting for a turn": "بانتظار منعطف",
-   "No turn data": "لا توجد بيانات منعطفات"
+   "No turn data": "لا توجد بيانات منعطفات",
+   "Arrival time on the cluster": "وقت الوصول على لوحة العدادات"
   }
  },
  {
@@ -206,7 +207,8 @@ module.exports = [
    "Only near turns": "Jen u odboček",
    "HUD zoom: {0}": "Přiblížení HUD: {0}",
    "Waiting for a turn": "Čeká se na odbočku",
-   "No turn data": "Žádná data o odbočkách"
+   "No turn data": "Žádná data o odbočkách",
+   "Arrival time on the cluster": "Čas příjezdu na štítu"
   }
  },
  {
@@ -310,7 +312,8 @@ module.exports = [
    "Only near turns": "Kun nær sving",
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Venter på et sving",
-   "No turn data": "Ingen svingdata"
+   "No turn data": "Ingen svingdata",
+   "Arrival time on the cluster": "Ankomsttid i instrumentpanel"
   }
  },
  {
@@ -414,7 +417,8 @@ module.exports = [
    "Only near turns": "Nur vor dem Abbiegen",
    "HUD zoom: {0}": "HUD-Zoom: {0}",
    "Waiting for a turn": "Warten auf Abbiegehinweis",
-   "No turn data": "Keine Abbiegedaten"
+   "No turn data": "Keine Abbiegedaten",
+   "Arrival time on the cluster": "Ankunftszeit im Kombi"
   }
  },
  {
@@ -518,7 +522,8 @@ module.exports = [
    "Only near turns": "Μόνο κοντά σε στροφές",
    "HUD zoom: {0}": "Ζουμ HUD: {0}",
    "Waiting for a turn": "Αναμονή για στροφή",
-   "No turn data": "Δεν υπάρχουν δεδομένα στροφών"
+   "No turn data": "Δεν υπάρχουν δεδομένα στροφών",
+   "Arrival time on the cluster": "Ώρα άφιξης στα όργανα"
   }
  },
  {
@@ -622,7 +627,8 @@ module.exports = [
    "Only near turns": "Solo cerca de los giros",
    "HUD zoom: {0}": "Zoom del HUD: {0}",
    "Waiting for a turn": "Esperando un giro",
-   "No turn data": "Sin datos de giros"
+   "No turn data": "Sin datos de giros",
+   "Arrival time on the cluster": "Hora de llegada en el tablero"
   }
  },
  {
@@ -726,7 +732,8 @@ module.exports = [
    "Only near turns": "Solo cerca de los giros",
    "HUD zoom: {0}": "Zoom del HUD: {0}",
    "Waiting for a turn": "Esperando un giro",
-   "No turn data": "Sin datos de giros"
+   "No turn data": "Sin datos de giros",
+   "Arrival time on the cluster": "Hora de llegada en el cuadro"
   }
  },
  {
@@ -830,7 +837,8 @@ module.exports = [
    "Only near turns": "Vain käännösten lähellä",
    "HUD zoom: {0}": "HUD-zoomaus: {0}",
    "Waiting for a turn": "Odotetaan käännöstä",
-   "No turn data": "Ei käännöstietoja"
+   "No turn data": "Ei käännöstietoja",
+   "Arrival time on the cluster": "Saapumisaika mittaristossa"
   }
  },
  {
@@ -934,7 +942,8 @@ module.exports = [
    "Only near turns": "Seulement près des virages",
    "HUD zoom: {0}": "Zoom du HUD : {0}",
    "Waiting for a turn": "En attente d'un virage",
-   "No turn data": "Aucune donnée de virage"
+   "No turn data": "Aucune donnée de virage",
+   "Arrival time on the cluster": "Heure d'arrivée au combiné"
   }
  },
  {
@@ -1038,7 +1047,8 @@ module.exports = [
    "Only near turns": "Seulement près des virages",
    "HUD zoom: {0}": "Zoom du HUD : {0}",
    "Waiting for a turn": "En attente d'un virage",
-   "No turn data": "Aucune donnée de virage"
+   "No turn data": "Aucune donnée de virage",
+   "Arrival time on the cluster": "Heure d'arrivée au combiné"
   }
  },
  {
@@ -1142,7 +1152,8 @@ module.exports = [
    "Only near turns": "רק ליד פניות",
    "HUD zoom: {0}": "זום HUD: {0}",
    "Waiting for a turn": "ממתין לפנייה",
-   "No turn data": "אין נתוני פניות"
+   "No turn data": "אין נתוני פניות",
+   "Arrival time on the cluster": "שעת הגעה בלוח המחוונים"
   }
  },
  {
@@ -1246,7 +1257,8 @@ module.exports = [
    "Only near turns": "Csak kanyarok előtt",
    "HUD zoom: {0}": "HUD nagyítás: {0}",
    "Waiting for a turn": "Várakozás kanyarra",
-   "No turn data": "Nincs kanyaradat"
+   "No turn data": "Nincs kanyaradat",
+   "Arrival time on the cluster": "Érkezési idő a műszerfalon"
   }
  },
  {
@@ -1350,7 +1362,8 @@ module.exports = [
    "Only near turns": "Hanya dekat belokan",
    "HUD zoom: {0}": "Zoom HUD: {0}",
    "Waiting for a turn": "Menunggu belokan",
-   "No turn data": "Tidak ada data belokan"
+   "No turn data": "Tidak ada data belokan",
+   "Arrival time on the cluster": "Waktu tiba di panel"
   }
  },
  {
@@ -1454,7 +1467,8 @@ module.exports = [
    "Only near turns": "Solo vicino alle svolte",
    "HUD zoom: {0}": "Zoom dell'HUD: {0}",
    "Waiting for a turn": "In attesa di una svolta",
-   "No turn data": "Nessun dato sulle svolte"
+   "No turn data": "Nessun dato sulle svolte",
+   "Arrival time on the cluster": "Orario di arrivo sul quadro"
   }
  },
  {
@@ -1558,7 +1572,8 @@ module.exports = [
    "Only near turns": "曲がり角の手前のみ",
    "HUD zoom: {0}": "HUDズーム：{0}",
    "Waiting for a turn": "曲がり角待ち",
-   "No turn data": "曲がり角データなし"
+   "No turn data": "曲がり角データなし",
+   "Arrival time on the cluster": "メーターに到着予定時刻"
   }
  },
  {
@@ -1662,7 +1677,8 @@ module.exports = [
    "Only near turns": "회전 지점 근처에서만",
    "HUD zoom: {0}": "HUD 줌: {0}",
    "Waiting for a turn": "회전 대기 중",
-   "No turn data": "회전 데이터 없음"
+   "No turn data": "회전 데이터 없음",
+   "Arrival time on the cluster": "계기판에 도착 시간"
   }
  },
  {
@@ -1766,7 +1782,8 @@ module.exports = [
    "Only near turns": "Bare nær svinger",
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Venter på en sving",
-   "No turn data": "Ingen svingdata"
+   "No turn data": "Ingen svingdata",
+   "Arrival time on the cluster": "Ankomsttid i instrumentpanel"
   }
  },
  {
@@ -1872,7 +1889,8 @@ module.exports = [
    "Only near turns": "Alleen bij afslagen",
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Wachten op afslag",
-   "No turn data": "Geen afslaggegevens"
+   "No turn data": "Geen afslaggegevens",
+   "Arrival time on the cluster": "Aankomsttijd in paneel"
   }
  },
  {
@@ -1976,7 +1994,8 @@ module.exports = [
    "Only near turns": "Tylko przed skrętami",
    "HUD zoom: {0}": "Powiększenie HUD: {0}",
    "Waiting for a turn": "Oczekiwanie na skręt",
-   "No turn data": "Brak danych o skrętach"
+   "No turn data": "Brak danych o skrętach",
+   "Arrival time on the cluster": "Czas przyjazdu na zegarach"
   }
  },
  {
@@ -2080,7 +2099,8 @@ module.exports = [
    "Only near turns": "Só perto das curvas",
    "HUD zoom: {0}": "Zoom do HUD: {0}",
    "Waiting for a turn": "Aguardando uma curva",
-   "No turn data": "Sem dados de curvas"
+   "No turn data": "Sem dados de curvas",
+   "Arrival time on the cluster": "Horário de chegada no painel"
   }
  },
  {
@@ -2184,7 +2204,8 @@ module.exports = [
    "Only near turns": "Só perto das viragens",
    "HUD zoom: {0}": "Zoom do HUD: {0}",
    "Waiting for a turn": "À espera de uma viragem",
-   "No turn data": "Sem dados de viragens"
+   "No turn data": "Sem dados de viragens",
+   "Arrival time on the cluster": "Hora de chegada no quadrante"
   }
  },
  {
@@ -2288,7 +2309,8 @@ module.exports = [
    "Only near turns": "Doar lângă viraje",
    "HUD zoom: {0}": "Zoom HUD: {0}",
    "Waiting for a turn": "Se așteaptă un viraj",
-   "No turn data": "Fără date despre viraje"
+   "No turn data": "Fără date despre viraje",
+   "Arrival time on the cluster": "Ora sosirii pe bord"
   }
  },
  {
@@ -2392,7 +2414,8 @@ module.exports = [
    "Only near turns": "Только у поворотов",
    "HUD zoom: {0}": "Масштаб HUD: {0}",
    "Waiting for a turn": "Ожидание поворота",
-   "No turn data": "Нет данных о поворотах"
+   "No turn data": "Нет данных о поворотах",
+   "Arrival time on the cluster": "Время прибытия на приборах"
   }
  },
  {
@@ -2496,7 +2519,8 @@ module.exports = [
    "Only near turns": "Len pri odbočkách",
    "HUD zoom: {0}": "Priblíženie HUD: {0}",
    "Waiting for a turn": "Čaká sa na odbočku",
-   "No turn data": "Žiadne údaje o odbočkách"
+   "No turn data": "Žiadne údaje o odbočkách",
+   "Arrival time on the cluster": "Čas príchodu na prístrojovej doske"
   }
  },
  {
@@ -2600,7 +2624,8 @@ module.exports = [
    "Only near turns": "Samo blizu zavojev",
    "HUD zoom: {0}": "Povečava HUD: {0}",
    "Waiting for a turn": "Čakanje na zavoj",
-   "No turn data": "Ni podatkov o zavojih"
+   "No turn data": "Ni podatkov o zavojih",
+   "Arrival time on the cluster": "Čas prihoda na armaturi"
   }
  },
  {
@@ -2704,7 +2729,8 @@ module.exports = [
    "Only near turns": "Bara nära svängar",
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Väntar på en sväng",
-   "No turn data": "Ingen svängdata"
+   "No turn data": "Ingen svängdata",
+   "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet"
   }
  },
  {
@@ -2808,7 +2834,8 @@ module.exports = [
    "Only near turns": "เฉพาะใกล้ทางเลี้ยว",
    "HUD zoom: {0}": "ซูม HUD: {0}",
    "Waiting for a turn": "กำลังรอทางเลี้ยว",
-   "No turn data": "ไม่มีข้อมูลทางเลี้ยว"
+   "No turn data": "ไม่มีข้อมูลทางเลี้ยว",
+   "Arrival time on the cluster": "เวลาถึงบนหน้าปัด"
   }
  },
  {
@@ -2912,7 +2939,8 @@ module.exports = [
    "Only near turns": "Yalnızca dönüşlere yakın",
    "HUD zoom: {0}": "HUD yakınlaştırma: {0}",
    "Waiting for a turn": "Dönüş bekleniyor",
-   "No turn data": "Dönüş verisi yok"
+   "No turn data": "Dönüş verisi yok",
+   "Arrival time on the cluster": "Göstergede varış saati"
   }
  },
  {
@@ -3016,7 +3044,8 @@ module.exports = [
    "Only near turns": "Лише біля поворотів",
    "HUD zoom: {0}": "Масштаб HUD: {0}",
    "Waiting for a turn": "Очікування повороту",
-   "No turn data": "Немає даних про повороти"
+   "No turn data": "Немає даних про повороти",
+   "Arrival time on the cluster": "Час прибуття на приладах"
   }
  },
  {
@@ -3120,7 +3149,8 @@ module.exports = [
    "Only near turns": "Chỉ gần chỗ rẽ",
    "HUD zoom: {0}": "Thu phóng HUD: {0}",
    "Waiting for a turn": "Đang chờ chỗ rẽ",
-   "No turn data": "Không có dữ liệu chỗ rẽ"
+   "No turn data": "Không có dữ liệu chỗ rẽ",
+   "Arrival time on the cluster": "Giờ đến trên bảng đồng hồ"
   }
  },
  {
@@ -3226,7 +3256,8 @@ module.exports = [
    "Only near turns": "仅在转弯前",
    "HUD zoom: {0}": "HUD 缩放：{0}",
    "Waiting for a turn": "等待转弯",
-   "No turn data": "无转弯数据"
+   "No turn data": "无转弯数据",
+   "Arrival time on the cluster": "仪表盘显示到达时间"
   }
  },
  {
@@ -3332,7 +3363,8 @@ module.exports = [
    "Only near turns": "僅在轉彎前",
    "HUD zoom: {0}": "HUD 縮放：{0}",
    "Waiting for a turn": "等待轉彎",
-   "No turn data": "無轉彎資料"
+   "No turn data": "無轉彎資料",
+   "Arrival time on the cluster": "儀表板顯示抵達時間"
   }
  }
 ];

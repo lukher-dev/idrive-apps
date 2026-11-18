@@ -98,6 +98,7 @@
     "Only near turns": "Len pri odbočkách",
     "HUD zoom: {0}": "Priblíženie HUD: {0}",
     "Waiting for a turn": "Čaká sa na odbočku",
-    "No turn data": "Žiadne údaje o odbočkách"
+    "No turn data": "Žiadne údaje o odbočkách",
+    "Arrival time on the cluster": "Čas príchodu na prístrojovej doske"
   }
 }

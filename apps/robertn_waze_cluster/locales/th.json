@@ -98,6 +98,7 @@
     "Only near turns": "เฉพาะใกล้ทางเลี้ยว",
     "HUD zoom: {0}": "ซูม HUD: {0}",
     "Waiting for a turn": "กำลังรอทางเลี้ยว",
-    "No turn data": "ไม่มีข้อมูลทางเลี้ยว"
+    "No turn data": "ไม่มีข้อมูลทางเลี้ยว",
+    "Arrival time on the cluster": "เวลาถึงบนหน้าปัด"
   }
 }

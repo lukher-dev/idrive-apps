@@ -98,6 +98,7 @@
     "Only near turns": "Hanya dekat belokan",
     "HUD zoom: {0}": "Zoom HUD: {0}",
     "Waiting for a turn": "Menunggu belokan",
-    "No turn data": "Tidak ada data belokan"
+    "No turn data": "Tidak ada data belokan",
+    "Arrival time on the cluster": "Waktu tiba di panel"
   }
 }

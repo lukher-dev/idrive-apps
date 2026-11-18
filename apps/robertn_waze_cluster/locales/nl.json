@@ -100,6 +100,7 @@
     "Only near turns": "Alleen bij afslagen",
     "HUD zoom: {0}": "HUD-zoom: {0}",
     "Waiting for a turn": "Wachten op afslag",
-    "No turn data": "Geen afslaggegevens"
+    "No turn data": "Geen afslaggegevens",
+    "Arrival time on the cluster": "Aankomsttijd in paneel"
   }
 }

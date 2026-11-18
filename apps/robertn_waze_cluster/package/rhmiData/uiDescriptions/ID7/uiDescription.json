@@ -591,6 +591,32 @@
             }
           ]
         },
+        "96": {
+          "type": "checkBox",
+          "name": "wocCpEta",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Arrival time on the cluster",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
         "29": {
           "type": "label",
           "name": "wocWifi",

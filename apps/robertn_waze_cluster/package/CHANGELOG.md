@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+Arrival time on the cluster, a checkbox in CarPlay: whether CarPlay's patch
+asks the phone for its arrival-time card on the cluster map. Off by default;
+a change applies the patch again and takes effect after the head unit
+restarts.
+
 The HUD zoom starts as close as the HUD map's size allows, the cluster's own
 scale, with the map service from the next release on. A zoom you saved stays.
 

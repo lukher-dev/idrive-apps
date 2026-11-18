@@ -84,6 +84,7 @@ const AA_ZOOM_NAME = 'wocAaZoom';
 const AA_ZOOM_OUT_NAME = 'wocAaZoomOut';
 const AA_ZOOM_IN_NAME = 'wocAaZoomIn';
 const AA_CARD_NAME = 'wocAaCard';
+const CP_ETA_NAME = 'wocCpEta';
 const GUIDE_NAME = 'wocGuide';
 const HEAD_GENERAL_NAME = 'wocHeadGeneral';
 const HEAD_HUD_NAME = 'wocHeadHud';
@@ -226,7 +227,7 @@ class WazeClusterApp extends OnlineApp {
             return Promise.reject(new Error(`uiDescription has no ${STATE_NAME} or ${LOGS_STATE}`));
         }
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
-            AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, RESTART_NAME, GUIDE_NAME,
+            AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, CP_ETA_NAME, RESTART_NAME, GUIDE_NAME,
             HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_SIZE_NAME,
             HUD_ZOOM_NAME, HUD_POS_NAME]
             .concat(Object.values(HUD_MOVE_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
@@ -246,6 +247,11 @@ class WazeClusterApp extends OnlineApp {
             /* as for the turn box: patchd's answer decides the tick */
             delete this._written[`selected:${AA_CARD_NAME}`];
             this._control.toggleCard();
+        });
+        this._bind(CP_ETA_NAME, () => {
+            /* as for the turn card: patchd's answer decides the tick */
+            delete this._written[`selected:${CP_ETA_NAME}`];
+            this._control.toggleCarplayEta();
         });
         this._bind(RESTART_NAME, () => this._control.requestRestart());
         this._bind(GUIDE_NAME, () => {
@@ -588,12 +594,14 @@ class WazeClusterApp extends OnlineApp {
         this._write(AA_ZOOM_NAME, c.zoomText());
         this._write(AA_CARD_NAME, c.cardText());
         this._setSelected(AA_CARD_NAME, c.cardHidden());
+        this._write(CP_ETA_NAME, c.etaText());
+        this._setSelected(CP_ETA_NAME, !!c.carplayEta());
         this._write(CAPTURE_NAME, c.captureButtonText());
         this._write(CAPTURE_STATUS, c.captureText());
         [[ENABLE_NAME, c.canEnable()], [DISABLE_NAME, c.canDisable()],
             [AA_ENABLE_NAME, c.canEnableAa()], [AA_DISABLE_NAME, c.canDisableAa()],
             [AA_ZOOM_OUT_NAME, c.canZoom(-ZOOM_STEP)], [AA_ZOOM_IN_NAME, c.canZoom(ZOOM_STEP)],
-            [AA_CARD_NAME, c.canToggleCard()], [CAPTURE_NAME, c.canCapture()], [RESTART_NAME, c.canRestart()]]
+            [AA_CARD_NAME, c.canToggleCard()], [CP_ETA_NAME, c.canToggleCarplayEta()], [CAPTURE_NAME, c.canCapture()], [RESTART_NAME, c.canRestart()]]
             .forEach(([name, enabled]) => this._setEnabled(name, enabled));
         const restartText = c.restartText();
         this._setVisibleComp(RESTART_NAME, c.restartNeeded() || c.restartRequested());

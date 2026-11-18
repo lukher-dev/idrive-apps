@@ -98,6 +98,7 @@
     "Only near turns": "회전 지점 근처에서만",
     "HUD zoom: {0}": "HUD 줌: {0}",
     "Waiting for a turn": "회전 대기 중",
-    "No turn data": "회전 데이터 없음"
+    "No turn data": "회전 데이터 없음",
+    "Arrival time on the cluster": "계기판에 도착 시간"
   }
 }

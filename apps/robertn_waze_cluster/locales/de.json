@@ -98,6 +98,7 @@
     "Only near turns": "Nur vor dem Abbiegen",
     "HUD zoom: {0}": "HUD-Zoom: {0}",
     "Waiting for a turn": "Warten auf Abbiegehinweis",
-    "No turn data": "Keine Abbiegedaten"
+    "No turn data": "Keine Abbiegedaten",
+    "Arrival time on the cluster": "Ankunftszeit im Kombi"
   }
 }

@@ -98,6 +98,7 @@
     "Only near turns": "Tylko przed skrętami",
     "HUD zoom: {0}": "Powiększenie HUD: {0}",
     "Waiting for a turn": "Oczekiwanie na skręt",
-    "No turn data": "Brak danych o skrętach"
+    "No turn data": "Brak danych o skrętach",
+    "Arrival time on the cluster": "Czas przyjazdu na zegarach"
   }
 }

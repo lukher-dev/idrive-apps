@@ -100,6 +100,7 @@
     "Only near turns": "仅在转弯前",
     "HUD zoom: {0}": "HUD 缩放：{0}",
     "Waiting for a turn": "等待转弯",
-    "No turn data": "无转弯数据"
+    "No turn data": "无转弯数据",
+    "Arrival time on the cluster": "仪表盘显示到达时间"
   }
 }

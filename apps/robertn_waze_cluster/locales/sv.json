@@ -98,6 +98,7 @@
     "Only near turns": "Bara nära svängar",
     "HUD zoom: {0}": "HUD-zoom: {0}",
     "Waiting for a turn": "Väntar på en sväng",
-    "No turn data": "Ingen svängdata"
+    "No turn data": "Ingen svängdata",
+    "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet"
   }
 }

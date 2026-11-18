@@ -94,7 +94,7 @@
  *
  *   carplay_patch.js status [--target <file>] [--coding <shm>]
  *   carplay_patch.js probe  [<file>]
- *   carplay_patch.js apply  --panel high|mid [--sink <url> | --capture <fifo>] [--res WxH|stock] [--safe WxH+X+Y|full] [--target <file>] [--coding <shm>] [--unproven] [--yes]
+ *   carplay_patch.js apply  --panel high|mid [--sink <url> | --capture <fifo>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--target <file>] [--coding <shm>] [--unproven] [--yes]
  *   carplay_patch.js revert [--target <file>] [--yes] [--drop-backup]
  *   carplay_patch.js verify [--target <file>]
  *
@@ -587,7 +587,7 @@ function restorePlan(target, cur, c) {
     return { b: b, bc: bc, regionWise: false, out: orig };
 }
 
-function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, codingFile) {
+function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, codingFile, eta) {
     var hu = headUnit.refused();
     if (hu) die('refusing: ' + hu);
     if (panel !== 'high' && panel !== 'mid') die('--panel must be high or mid');
@@ -663,13 +663,14 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         put(resText, o, (wantRes ? resWant : orig).slice(o, o + 8));
     });
 
-    /* Test build: the map URL edit as released (the cluster map from
-     * connect); the ShowUI URL left stock, without showETA, restored from the
-     * backup where an earlier apply wrote it: appearance options in that URL
-     * can blank apps other than Apple Maps. */
-    var writes = { mapurl: c.mapurl.state !== 'absent', showui: false, res: wantRes };
+    /* The map URL edit (the cluster map from connect) where the build has it.
+     * The ShowUI URL edit, which asks for the arrival-time card, with --eta
+     * yes (the default); with --eta no it is left stock, restored from the
+     * backup where an earlier apply wrote it. */
+    var writes = { mapurl: c.mapurl.state !== 'absent', showui: c.showui.state !== 'absent' && eta !== 'no', res: wantRes };
     if (writes.mapurl) c.mapurl.sites.forEach(function (s) { put('map URL -> ' + MAP_URL, s[0], Buffer.from(s[1], 'hex')); });
-    if (c.showui.sites) c.showui.sites.forEach(function (s) { put('ShowUI URL -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
+    if (writes.showui) c.showui.sites.forEach(function (s) { put('ShowUI URL -> ' + SHOWUI_URL, s[0], Buffer.from(s[1], 'hex')); });
+    else if (c.showui.sites) c.showui.sites.forEach(function (s) { put('ShowUI URL -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
 
     var rec = applyRecord(record.current(target), !!PROVEN[loc.buildId], coding, c, writes);
     if (changed.length === 0) {
@@ -685,7 +686,7 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         : cc.selfstart.state !== 'patched' ? 'self-start'
         : cc.res.state !== (wantRes ? 'patched' : 'original') ? 'resolution'
         : cc.mapurl.state !== (writes.mapurl ? 'patched' : 'absent') ? 'map URL'
-        : cc.showui.state !== (c.showui.state === 'absent' ? 'absent' : 'original') ? 'ShowUI URL'
+        : cc.showui.state !== (writes.showui ? 'patched' : c.showui.state === 'absent' ? 'absent' : 'original') ? 'ShowUI URL'
         : !onlyRegionsDiffer(buf, out, regions(c)) ? 'bytes outside the edit regions' : null;
     if (wrong) die('refusing: the edited binary does not verify (' + wrong + '); no change made');
 
@@ -836,6 +837,9 @@ function parseArgs(argv) {
             a.sink = (i + 1 < argv.length && argv[i + 1].indexOf('--') !== 0) ? argv[++i] : null;
         } else if (t === '--res') {
             a.res = (i + 1 < argv.length && argv[i + 1].indexOf('--') !== 0) ? argv[++i] : null;
+        } else if (t === '--eta') {
+            a.eta = argv[++i];
+            if (a.eta !== 'yes' && a.eta !== 'no') die('--eta needs yes or no');
         } else if (t === '--safe') {
             a.safe = (i + 1 < argv.length && argv[i + 1].indexOf('--') !== 0) ? argv[++i] : null;
         } else a._.push(t);
@@ -850,10 +854,10 @@ function main() {
     var coding = a.coding || process.env.WOC_CODING || '/dev/shm/rawcodingdata';
     if (cmd === 'status') { cmdStatus(target, coding); line('end', 'complete'); }
     else if (cmd === 'probe') cmdProbe(a.target || a._[1] || '/usr/bin/carplay');
-    else if (cmd === 'apply') cmdApply(target, a.panel, a.capture, a.sink, a.res, a.safe, a.yes, a.unproven, coding);
+    else if (cmd === 'apply') cmdApply(target, a.panel, a.capture, a.sink, a.res, a.safe, a.yes, a.unproven, coding, a.eta);
     else if (cmd === 'revert') cmdRevert(target, a.yes, a.force, a.dropBackup);
     else if (cmd === 'verify') cmdVerify(target);
-    else { process.stderr.write('usage: carplay_patch.js status|probe|apply|revert|verify [--target <file>] [--coding <shm>] [--panel high|mid] [--capture <fifo> | --sink <url>] [--res WxH|stock] [--safe WxH+X+Y|full] [--unproven] [--yes] [--force] [--drop-backup]\n'); process.exit(2); }
+    else { process.stderr.write('usage: carplay_patch.js status|probe|apply|revert|verify [--target <file>] [--coding <shm>] [--panel high|mid] [--capture <fifo> | --sink <url>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--unproven] [--yes] [--force] [--drop-backup]\n'); process.exit(2); }
 }
 
 module.exports = { trustedBackup: trustedBackup, PROVEN: PROVEN };

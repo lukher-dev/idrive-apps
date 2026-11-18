@@ -98,6 +98,7 @@
     "Only near turns": "Doar lângă viraje",
     "HUD zoom: {0}": "Zoom HUD: {0}",
     "Waiting for a turn": "Se așteaptă un viraj",
-    "No turn data": "Fără date despre viraje"
+    "No turn data": "Fără date despre viraje",
+    "Arrival time on the cluster": "Ora sosirii pe bord"
   }
 }

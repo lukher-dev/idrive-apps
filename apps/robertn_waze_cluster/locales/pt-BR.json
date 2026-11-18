@@ -98,6 +98,7 @@
     "Only near turns": "Só perto das curvas",
     "HUD zoom: {0}": "Zoom do HUD: {0}",
     "Waiting for a turn": "Aguardando uma curva",
-    "No turn data": "Sem dados de curvas"
+    "No turn data": "Sem dados de curvas",
+    "Arrival time on the cluster": "Horário de chegada no painel"
   }
 }

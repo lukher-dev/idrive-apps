@@ -260,6 +260,7 @@ class FakePatch extends LineServer {
         this.res = null;    /* the advertised geometry patchd reports: "WxH" */
         this.safe = null;   /* and its safe area: "WxH+X+Y" */
         this.mapurl = undefined;   /* the map URL edit: 'eta' | 'no-eta' | 'off' | null; undefined: a daemon that does not send it */
+        this.eta = undefined;      /* the arrival-time card chosen: 'on' | 'off'; undefined: a daemon without the choice */
         this.carplay = null;  /* 'deferred' once a patch is written but not active */
         this.pending = null;  /* 'apply' | 'revert': the change waiting for a head-unit start */
         this.conflict = null; /* why the install left carplay as it was */
@@ -295,7 +296,7 @@ class FakePatch extends LineServer {
 
     _status() {
         return { ev: 'status', state: this.busy ? 'busy' : this.state, panel: this.panel,
-            res: this.res, safe: this.safe, mapurl: this.mapurl, carplay: this.carplay, reason: this.reason,
+            res: this.res, safe: this.safe, mapurl: this.mapurl, eta: this.eta, carplay: this.carplay, reason: this.reason,
             pending: this.pending, conflict: this.conflict, recovered: this.recovered, aa: this.aa,
             removable: this.removable !== null ? this.removable : this.pending === 'apply' || (!this.pending && ['patched', 'unknown', 'error'].includes(this.state)),
             busy: this.busy ? 'carplay' : this.aa.state === 'busy' ? 'aa' : this._rebooting ? 'restart' : null,
@@ -417,6 +418,24 @@ class FakePatch extends LineServer {
                 if (this.mapurl !== undefined) this.mapurl = 'eta';
                 this.reason = 'restarted';
                 this.log('apply done');
+                this._broadcast(this._status());
+            }, STEP_MS);
+        } else if (msg.cmd === 'carplay-eta' && this.eta !== undefined) {
+            /* the choice saved; a patch on disk applied again, CarPlay taking it at the next head-unit start */
+            this.eta = msg.on ? 'on' : 'off';
+            if (this.state !== 'patched') {
+                this._broadcast(this._status());
+                return;
+            }
+            this.busy = true;
+            this.reason = 'applying';
+            this._broadcast(this._status());
+            this._timer = setTimeout(() => {
+                this.busy = false;
+                this.mapurl = this.eta === 'on' ? 'eta' : 'map';
+                this.carplay = 'deferred';
+                this.pending = 'apply';
+                this.reason = 'patch written; takes effect at the next head-unit start';
                 this._broadcast(this._status());
             }, STEP_MS);
         } else if (msg.cmd === 'revert') {

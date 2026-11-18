@@ -98,6 +98,7 @@
     "Only near turns": "Μόνο κοντά σε στροφές",
     "HUD zoom: {0}": "Ζουμ HUD: {0}",
     "Waiting for a turn": "Αναμονή για στροφή",
-    "No turn data": "Δεν υπάρχουν δεδομένα στροφών"
+    "No turn data": "Δεν υπάρχουν δεδομένα στροφών",
+    "Arrival time on the cluster": "Ώρα άφιξης στα όργανα"
   }
 }

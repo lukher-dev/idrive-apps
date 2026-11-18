@@ -30,6 +30,7 @@
  *                       {"cmd":"revert"}
  *                       {"cmd":"aa-apply"} | {"cmd":"aa-revert"}
  *                       {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"}
+ *                       {"cmd":"carplay-eta","on":0|1}
  *                       {"cmd":"reboot"}  activate a deferred change, CarPlay's or
  *                        Android Auto's, with a normal head-unit restart
  *     daemon -> app     {"ev":"status","state":"original"|"patched"|"unknown"|
@@ -805,6 +806,39 @@ class WazeClusterControl extends EventEmitter {
             (ps.res && ps.res !== SIZE) || (ps.safe && ps.safe !== SAFE) || ps.mapurl === 'no-eta');
     }
 
+    /* ---- CarPlay's arrival-time card ---- */
+    /* Whether CarPlay's patch asks the phone for the arrival-time card on
+     * the cluster map: the choice a change asked for while it runs (the HMI
+     * ticks the box itself on a press), else patchd's; null from a patchd
+     * without the choice. */
+    carplayEta() {
+        if (this._etaAsked !== null) {
+            return this._etaAsked === 1;
+        }
+        const ps = this.patchStatus;
+        return ps && (ps.eta === 'on' || ps.eta === 'off') ? ps.eta === 'on' : null;
+    }
+
+    /* Offered with a patch of ours on disk, in effect or waiting for the
+     * restart, while nothing else runs. */
+    canToggleCarplayEta() {
+        const ps = this.patchStatus;
+        return this.connectedPatch() && !!ps && !this.busy() && (ps.eta === 'on' || ps.eta === 'off') &&
+            (ps.state === 'patched' || this.pending() === 'apply');
+    }
+
+    etaText() {
+        return t('Arrival time on the cluster') + afterRestart(this.pending() === 'apply');
+    }
+
+    toggleCarplayEta() {
+        if (this.canToggleCarplayEta()) {
+            this._etaAsked = this.carplayEta() ? 0 : 1;
+            this.patch.send({ cmd: 'carplay-eta', on: this._etaAsked });
+            this.emit('change');
+        }
+    }
+
     /* ---- BMW's turn box ---- */
     /* Whether BMW's turn box is hidden while the map shows, as the render
      * last said; null while it has not (not connected, or a tool without
@@ -1122,6 +1156,7 @@ class WazeClusterControl extends EventEmitter {
         this.patchStatus = null;     /* the patch daemon's last status while connected */
         this._inEffect = { carplay: false, androidAuto: false };
         this._cardAsked = null;      /* the turn card an aa-card change asked for, while it runs */
+        this._etaAsked = null;       /* the arrival-time card a carplay-eta change asked for (0|1), while it runs */
     }
 
     /* From a status outside a change (neither busy nor an error): which
@@ -1143,6 +1178,14 @@ class WazeClusterControl extends EventEmitter {
     _noteCardAsked(msg) {
         if (msg.aa && (msg.aa.state !== 'busy' || olderAaRefusal(msg))) {
             this._cardAsked = null;
+        }
+    }
+
+    /* The asked arrival-time card goes once patchd holds that choice and
+     * runs nothing for CarPlay. */
+    _noteEtaAsked(msg) {
+        if (this._etaAsked !== null && msg.state !== 'busy' && msg.busy !== 'carplay' && msg.eta === (this._etaAsked ? 'on' : 'off')) {
+            this._etaAsked = null;
         }
     }
 
@@ -1173,6 +1216,7 @@ class WazeClusterControl extends EventEmitter {
             this.patchStatus = !status.aa && prev && prev.aa ? Object.assign({}, status, { aa: prev.aa }) : status;
             this._noteInEffect();
             this._noteCardAsked(msg);
+            this._noteEtaAsked(msg);
             this._wake();
             this.emit('change');
         } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom)-reply$/.test(msg.ev)) {
@@ -1191,6 +1235,10 @@ class WazeClusterControl extends EventEmitter {
             this._log.info(`patchd refused ${msg.cmd}: ${msg.reason}`);
             if (msg.cmd === 'aa-card') {
                 this._cardAsked = null;
+                this.emit('change');
+            }
+            if (msg.cmd === 'carplay-eta') {
+                this._etaAsked = null;
                 this.emit('change');
             }
         }

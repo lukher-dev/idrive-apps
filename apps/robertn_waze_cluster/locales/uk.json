@@ -98,6 +98,7 @@
     "Only near turns": "Лише біля поворотів",
     "HUD zoom: {0}": "Масштаб HUD: {0}",
     "Waiting for a turn": "Очікування повороту",
-    "No turn data": "Немає даних про повороти"
+    "No turn data": "Немає даних про повороти",
+    "Arrival time on the cluster": "Час прибуття на приладах"
   }
 }

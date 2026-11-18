@@ -28,6 +28,8 @@
  *                    file); fifo = file:// FIFO sink
  *                  {"cmd":"revert"}
  *                  {"cmd":"aa-apply"} | {"cmd":"aa-revert"}   the Android Auto patch
+ *                  {"cmd":"carplay-eta","on":0|1}  save whether CarPlay's patch asks for
+ *                                   the arrival-time card and, with the patch on disk, apply it
  *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"}
  *                                   save the choice and, with the patch on disk,
  *                                   apply it (one change per DENSITY_SPACING_MS)
@@ -187,6 +189,12 @@ var aapdConf = require('./aapd_conf.js');
 var STATE_DIR = process.env.WOC_STATE_DIR || '/var/opt/waze-on-cluster';
 var AA_DPI_FILE = path.join(STATE_DIR, 'aa-density');
 var AA_CARD_FILE = path.join(STATE_DIR, 'aa-card');
+/* Whether CarPlay's patch asks the phone for the arrival-time card on the
+ * cluster map (the ShowUI URL edit): "on" or "off", kept across updates.
+ * Test build: off by default, since appearance options in that URL can
+ * blank apps other than Apple Maps. */
+var CP_ETA_FILE = path.join(STATE_DIR, 'carplay-eta');
+var CP_ETA_DEFAULT = 'off';
 /* With the turn card hidden, the crop waze-on-cluster.service passes to the
  * render (EnvironmentFile): the card's rows grow with the density. The
  * shipped waze-on-cluster.conf holds the crop for the card shown. */
@@ -749,13 +757,16 @@ function readState(cb) {
         var safeMatch = /res:\s+PATCHED \(IC_HIGH advertises [^,\n]*, safe (\d+x\d+) at (\d+),(\d+)\)/.exec(text);
         var resOriginal = /res:\s+ORIGINAL/.test(text);
         /* The URL edits (map URL, ShowUI URL): 'eta' (the ShowUI URL with
-         * the arrival-time card), 'map' (the map URL alone, on a build
-         * without the ShowUI URL edit), 'no-eta' (either in a form CarPlay's
-         * Patch button replaces or completes), 'off', or null where the
-         * build lacks both or the status says neither. */
+         * the arrival-time card, chosen on), 'map' (the map URL alone: the
+         * card chosen off, or a build without the ShowUI URL edit), 'no-eta'
+         * (either differing from the choice, or in a form CarPlay's Patch
+         * button replaces or completes), 'off', or null where the build lacks
+         * both or the status says neither. */
         var m5 = /^mapurl:\s+(ORIGINAL|PATCHED WITH ETA|PATCHED) /m.exec(text), m6 = /^showui:\s+(ORIGINAL|PATCHED) /m.exec(text);
-        var e5 = m5 ? m5[1] : null, e6 = m6 ? m6[1] : null;
-        var mapurl = e5 === 'PATCHED WITH ETA' || (e5 === 'PATCHED' && e6 === 'ORIGINAL') || (e5 === 'ORIGINAL' && e6 === 'PATCHED') ? 'no-eta'
+        var e5 = m5 ? m5[1] : null, e6 = m6 ? m6[1] : null, etaOn = cpEta() === 'on';
+        var mapurl = e5 === 'PATCHED WITH ETA' || (e5 === 'ORIGINAL' && e6 === 'PATCHED') ? 'no-eta'
+            : e5 === 'PATCHED' && e6 === 'PATCHED' ? (etaOn ? 'eta' : 'no-eta')
+            : e5 === 'PATCHED' && e6 === 'ORIGINAL' ? (etaOn ? 'no-eta' : 'map')
             : e6 === 'PATCHED' ? 'eta' : e5 === 'PATCHED' ? 'map' : e5 === 'ORIGINAL' || e6 === 'ORIGINAL' ? 'off' : null;
         var known = /known:\s+NO/.test(text) ? false : true;
         var unknownWhy = /known:\s+NO — (.*)/.exec(text);
@@ -915,6 +926,12 @@ function codingConflict(coding) {
  * app shows as not supported. */
 function notSupported(why) { return 'not supported on this car (' + why + ')'; }
 
+/* Whether the owner chose the arrival-time card on CarPlay's cluster map, else the default. */
+function cpEta() {
+    var v = (readText(CP_ETA_FILE) || '').trim();
+    return v === 'on' || v === 'off' ? v : CP_ETA_DEFAULT;
+}
+
 /* The density and turn-card setting the owner chose, else the defaults. */
 function aaDensity() {
     var n = parseInt(readText(AA_DPI_FILE), 10);
@@ -955,7 +972,7 @@ function status(extra, aaExtra) {
         readAaState(function (aa) {
             var cpBusy = busy === 'carplay';
             var msg = { ev: 'status', state: cpBusy ? 'busy' : st.state, panel: st.panel, mode: st.mode, res: st.res, safe: st.safe, mapurl: st.mapurl,
-                        removable: !!st.restorable, busy: busy || (rebooting ? 'restart' : null), restart: restartMsg() };
+                        eta: cpEta(), removable: !!st.restorable, busy: busy || (rebooting ? 'restart' : null), restart: restartMsg() };
             if (!cpBusy && st.reason) msg.reason = st.reason;
             if (!cpBusy && st.carplay) msg.carplay = st.carplay;
             if (!cpBusy && st.pending) msg.pending = st.pending;
@@ -1549,7 +1566,8 @@ function patchWith(t, args, action, blocked, done, run) {
  * install-time activation never does. */
 function apply(panel, mode, noRestart, unproven, done) {
     if (panel !== 'high' && panel !== 'mid') { done(new Error('panel must be high or mid')); return; }
-    var args = ['apply', '--panel', panel, '--target', TARGET, '--coding', CODING, '--yes'].concat(unproven ? ['--unproven'] : []);
+    var args = ['apply', '--panel', panel, '--target', TARGET, '--coding', CODING, '--eta', cpEta() === 'on' ? 'yes' : 'no', '--yes']
+        .concat(unproven ? ['--unproven'] : []);
     if (mode === 'avb') {
         log('apply IC_' + panel.toUpperCase() + ', stock AVB sink (the render joins the media bus)');
     } else if (mode === 'udp') {
@@ -1863,6 +1881,29 @@ function handle(line, sock) {
         var mode = (msg.mode === 'avb' || msg.mode === 'udp') ? msg.mode : 'fifo';   /* capture mode; default fifo */
         operate('carplay', msg.cmd === 'apply' ? 'applying' : 'reverting',
             msg.cmd === 'apply' ? function (cb) { apply(panel, mode, false, true, cb); } : function (cb) { revert(false, false, cb); });
+    } else if (msg.cmd === 'carplay-eta') {
+        if (msg.on !== 0 && msg.on !== 1) { refuse('on must be 0 or 1'); return; }
+        /* Busy from here on. With a patch of ours on disk (or one waiting for
+         * the restart) the choice is applied at once and, CarPlay running,
+         * waits for the next head-unit start; without one, for the next apply. */
+        busy = 'carplay';
+        readState(function (st) {
+            try { saveFile(CP_ETA_FILE, (msg.on ? 'on' : 'off') + '\n'); } catch (e) {
+                busy = null;
+                status({ state: 'error', reason: 'saving the choice failed: ' + e.message });
+                quitWhenIdle();
+                return;
+            }
+            log('CarPlay: arrival-time card ' + (msg.on ? 'on' : 'off') + ' chosen');
+            if (st.state === 'patched' || st.pending === 'apply') {
+                var mode = st.mode === 'udp' ? 'udp' : 'avb';
+                operate('carplay', 'applying', function (cb) { apply(st.panel || 'high', mode, false, true, cb); });
+                return;
+            }
+            busy = null;
+            status();
+            quitWhenIdle();
+        });
     } else if (msg.cmd === 'aa-apply') {
         operate('aa', 'applying', aaEnable);
     } else if (msg.cmd === 'aa-revert') {

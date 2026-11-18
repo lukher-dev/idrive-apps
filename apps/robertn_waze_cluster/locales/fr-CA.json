@@ -98,6 +98,7 @@
     "Only near turns": "Seulement près des virages",
     "HUD zoom: {0}": "Zoom du HUD : {0}",
     "Waiting for a turn": "En attente d'un virage",
-    "No turn data": "Aucune donnée de virage"
+    "No turn data": "Aucune donnée de virage",
+    "Arrival time on the cluster": "Heure d'arrivée au combiné"
   }
 }

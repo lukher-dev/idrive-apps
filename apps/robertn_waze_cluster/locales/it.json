@@ -98,6 +98,7 @@
     "Only near turns": "Solo vicino alle svolte",
     "HUD zoom: {0}": "Zoom dell'HUD: {0}",
     "Waiting for a turn": "In attesa di una svolta",
-    "No turn data": "Nessun dato sulle svolte"
+    "No turn data": "Nessun dato sulle svolte",
+    "Arrival time on the cluster": "Orario di arrivo sul quadro"
   }
 }

@@ -98,6 +98,7 @@
     "Only near turns": "فقط قرب المنعطفات",
     "HUD zoom: {0}": "تكبير HUD: {0}",
     "Waiting for a turn": "بانتظار منعطف",
-    "No turn data": "لا توجد بيانات منعطفات"
+    "No turn data": "لا توجد بيانات منعطفات",
+    "Arrival time on the cluster": "وقت الوصول على لوحة العدادات"
   }
 }

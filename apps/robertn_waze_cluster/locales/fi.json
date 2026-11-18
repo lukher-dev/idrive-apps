@@ -98,6 +98,7 @@
     "Only near turns": "Vain käännösten lähellä",
     "HUD zoom: {0}": "HUD-zoomaus: {0}",
     "Waiting for a turn": "Odotetaan käännöstä",
-    "No turn data": "Ei käännöstietoja"
+    "No turn data": "Ei käännöstietoja",
+    "Arrival time on the cluster": "Saapumisaika mittaristossa"
   }
 }

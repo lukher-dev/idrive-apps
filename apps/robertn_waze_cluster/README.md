@@ -89,6 +89,9 @@ The app is in the head unit's display language.
 - **Status:** whether the map is on for that phone type.
 - **Patch** and **Remove patch:** see
   [above](#do-i-need-to-press-patch-or-remove-patch).
+- **Arrival time on the cluster** (CarPlay only): whether the cluster map
+  shows the phone's arrival-time card. Off by default; a change takes effect
+  after the head unit restarts.
 - **CarPlay Wi-Fi** (CarPlay only): the Wi-Fi band your iPhone uses.
 - **Zoom out / Zoom in** (Android Auto only): out shows more map, in shows
   bigger text.

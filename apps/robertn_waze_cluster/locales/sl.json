@@ -98,6 +98,7 @@
     "Only near turns": "Samo blizu zavojev",
     "HUD zoom: {0}": "Povečava HUD: {0}",
     "Waiting for a turn": "Čakanje na zavoj",
-    "No turn data": "Ni podatkov o zavojih"
+    "No turn data": "Ni podatkov o zavojih",
+    "Arrival time on the cluster": "Čas prihoda na armaturi"
   }
 }

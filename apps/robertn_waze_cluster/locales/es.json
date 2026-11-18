@@ -98,6 +98,7 @@
     "Only near turns": "Solo cerca de los giros",
     "HUD zoom: {0}": "Zoom del HUD: {0}",
     "Waiting for a turn": "Esperando un giro",
-    "No turn data": "Sin datos de giros"
+    "No turn data": "Sin datos de giros",
+    "Arrival time on the cluster": "Hora de llegada en el cuadro"
   }
 }

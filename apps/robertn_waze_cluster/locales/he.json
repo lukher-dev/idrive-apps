@@ -98,6 +98,7 @@
     "Only near turns": "רק ליד פניות",
     "HUD zoom: {0}": "זום HUD: {0}",
     "Waiting for a turn": "ממתין לפנייה",
-    "No turn data": "אין נתוני פניות"
+    "No turn data": "אין נתוני פניות",
+    "Arrival time on the cluster": "שעת הגעה בלוח המחוונים"
   }
 }

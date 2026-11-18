@@ -98,6 +98,7 @@
     "Only near turns": "Jen u odboček",
     "HUD zoom: {0}": "Přiblížení HUD: {0}",
     "Waiting for a turn": "Čeká se na odbočku",
-    "No turn data": "Žádná data o odbočkách"
+    "No turn data": "Žádná data o odbočkách",
+    "Arrival time on the cluster": "Čas příjezdu na štítu"
   }
 }
