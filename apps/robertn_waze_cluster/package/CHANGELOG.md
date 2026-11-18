@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+CarPlay's Patch button is offered for the cluster area the phone keeps its
+turn card in from the next map service on, which starts higher, so the turn
+card sits higher on the cluster; the arrival-time card stays where it was.
+The HUD map starts at 85 % of the HUD's width, the whole picture (zoom
+100 %), 40 px up, so the arrival-time card clears BMW's speed readout. Sizes,
+positions and zooms you saved stay.
+
 ## 0.6.15
 
 Arrival time on the cluster, a checkbox in CarPlay: whether CarPlay's patch

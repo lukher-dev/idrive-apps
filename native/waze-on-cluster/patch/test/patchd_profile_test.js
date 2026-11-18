@@ -36,7 +36,7 @@ var PROFILES = path.join(dir, 'profiles.json');
 var SAVE_MS = 200;
 var LOCAL = 'upload_kb_per_s = 3000\n';
 fs.writeFileSync(CONF, LOCAL);
-fs.writeFileSync(STATE, 'hud = 1\nhud_width_pct = 70\n');
+fs.writeFileSync(STATE, 'hud = 1\nhud_width_pct = 70\nhud_offset_y = 0\n');
 
 var ENV = Object.assign({}, process.env, {
     WOC_PATCH_SOCK: SOCK,
@@ -109,7 +109,7 @@ function state() {
 function profiles() { var t = fs.readFileSync(PROFILES, 'utf8'); try { return JSON.parse(t); } catch (e) { throw new Error(e.message + ': ' + t); } }
 function settings(cluster, hud, pct, x, y, keep, near, zoom) {
     return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
-        hud_near_turn: near || 0, hud_zoom_pct: zoom || 250 };
+        hud_near_turn: near || 0, hud_zoom_pct: zoom || 100 };
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 /* For a check that nothing is written: past the save's delay. */
@@ -360,7 +360,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
      * settings (the HUD alone, standard size) survive; A's were 60 %. */
     var SHARED = settings(0, 1, 0, 0, 0);
     async function aOwn() {
-        fs.writeFileSync(STATE, 'cluster = 0\nhud = 1\n');
+        fs.writeFileSync(STATE, 'cluster = 0\nhud = 1\nhud_width_pct = 0\nhud_offset_y = 0\n');
         try { fs.unlinkSync(PROFILES); } catch (e) {}
         await start();
         await ask({ cmd: 'profile', id: A });
@@ -422,7 +422,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     /* map.state.conf's settings, in whatever order its lines are; a later key it lacks (a file an
      * earlier version wrote) is what the render takes for it, its default */
     var sameKeys = function (a, b) {
-        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 250 }, a);
+        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100 }, a);
         return Object.keys(b).length === Object.keys(a).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
     };
     fs.writeFileSync(STATE, 'cluster = 1\nhud = 0\nhud_width_pct = 0\nhud_offset_x = 0\nhud_offset_y = 0\nhud_keep_shown = 0\n');
@@ -503,9 +503,9 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     ok('back to A: kept shown, changed', r.ok && r.own && r.changed && r.settings.hud_keep_shown === 1 &&
         await when(function () { return state().hud_keep_shown === 1; }), JSON.stringify(r));
 
-    /* Near turns and the zoom, per profile; a profiles.json from before them: 0 and 250. */
-    ok('a profiles.json from before hud_near_turn and hud_zoom_pct: A\'s set read with 0 and 250',
-        r.settings.hud_near_turn === 0 && r.settings.hud_zoom_pct === 250, JSON.stringify(r));
+    /* Near turns and the zoom, per profile; a profiles.json from before them: 0 and 100. */
+    ok('a profiles.json from before hud_near_turn and hud_zoom_pct: A\'s set read with 0 and 100',
+        r.settings.hud_near_turn === 0 && r.settings.hud_zoom_pct === 100, JSON.stringify(r));
     r = await ask({ cmd: 'hud-near-turn', on: 1 });
     var rz = await ask({ cmd: 'hud-zoom', pct: 180 });
     ok('near turns and zoom 180 as A\'s own: in A\'s copy and map.state.conf', r.ok && rz.ok && await when(function () {
@@ -513,8 +513,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
         return state().hud_near_turn === 1 && state().hud_zoom_pct === 180 && a.hud_near_turn === 1 && a.hud_zoom_pct === 180;
     }), JSON.stringify(profiles()));
     r = await ask({ cmd: 'profile', id: B });
-    ok('B without its own: always, zoom 250', r.ok && !r.own && r.settings.hud_near_turn === 0 && r.settings.hud_zoom_pct === 250 &&
-        await when(function () { return state().hud_near_turn === 0 && state().hud_zoom_pct === 250; }), JSON.stringify(r));
+    ok('B without its own: always, zoom 100', r.ok && !r.own && r.settings.hud_near_turn === 0 && r.settings.hud_zoom_pct === 100 &&
+        await when(function () { return state().hud_near_turn === 0 && state().hud_zoom_pct === 100; }), JSON.stringify(r));
     r = await ask({ cmd: 'profile', id: A });
     ok('back to A: near turns, zoom 180', r.ok && r.own && r.settings.hud_near_turn === 1 && r.settings.hud_zoom_pct === 180 &&
         await when(function () { return state().hud_near_turn === 1 && state().hud_zoom_pct === 180; }), JSON.stringify(r));

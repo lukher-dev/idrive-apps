@@ -580,13 +580,13 @@ void define_keys(Config *cfg)
     cfg->define("cluster", "1");
     cfg->define("hud", "0");
     cfg->define("hud_fps", "10");
-    cfg->define("hud_width_pct", "0");
+    cfg->define("hud_width_pct", "85");
     cfg->define("hud_offset_x", "0");
-    cfg->define("hud_offset_y", "0");
+    cfg->define("hud_offset_y", "-40");
     cfg->define("hud_keep_shown", "0");
     cfg->define("hud_near_turn", "0");
     cfg->define("hud_near_expire_ms", "90000");
-    cfg->define("hud_zoom_pct", "250");
+    cfg->define("hud_zoom_pct", "100");
     cfg->define("hud_crop_cx_pm", "500");
     cfg->define("hud_crop_cy_pm", "500");
     cfg->define("hud_scale_down", "1");

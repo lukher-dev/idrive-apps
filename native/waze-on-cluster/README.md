@@ -101,8 +101,10 @@ the cluster is hidden (cluster-render README, "Guide hold"). The app's
 
 **Where the map shows.** The app's **Show on** sets the cluster, the HUD,
 both or neither (**Off**), at once. On the HUD the frames are scaled on the
-head unit to the size shown (**Size**, 30 % to 85 % of the HUD's width, or
-Standard, about 57 %), moved by **Position**, the corners rounded and a
+head unit to the size shown (**Size**, 30 % to 85 % of the HUD's width, 85 %
+by default, or Standard, about 57 %), moved by **Position** (40 px up by
+default, which lifts the phone's arrival-time card above BMW's HUD speed
+readout), the corners rounded and a
 night map's background made black, which the HUD shows as nothing. With
 both, the HUD gets up to half the upload budget, only what it uses. The
 HUD map steps aside while BMW's HUD lists show (never for route guidance),
@@ -126,8 +128,8 @@ map does not follow it.
 `features.conf`) and held inside it, scaled to the HUD map's size. A size
 takes at most the zoom whose part is as wide as the map is shown, so the
 picture is never scaled up; the status's `hud_zoom_used` is the zoom in
-use. The default, 250 %, is therefore used at that cap: the HUD shows the
-picture's middle at the cluster's own scale. `make hud-preview` builds a host tool that runs the same crop and
+use. The default, 100 %, shows the whole picture, the phone's turn card
+and arrival-time card with it. `make hud-preview` builds a host tool that runs the same crop and
 scaling on a 1088x480 BMP, to choose the centre.
 
 From a shell, `waze-on-cluster -c <conf> run map|panel` sets the cluster

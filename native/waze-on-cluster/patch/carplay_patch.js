@@ -159,11 +159,13 @@ var RES_DEFAULT = { w: 1088, h: 480, mmw: 180, mmh: 80 };
 /* The physical size earlier releases wrote, still read as this tool's. */
 var RES_EARLIER_MM = [{ mmw: 138, mmh: 61 }];
 /* The default safe area in the 1088x480 frame (PATCH.md "Safe area"): x
- * from BMW's own IC_MID safe area (which lies inside the map area), y from
- * below the native model badge. Other --res sizes scale it. The
- * safe area 0.10.6 wrote (476x306 at 306,72) reads as patched, and an apply
- * rewrites it. */
-var SAFE_DEFAULT = { x: 286, y: 72, w: 504, h: 368 };
+ * from BMW's own IC_MID safe area (which lies inside the map area). Test
+ * build: y from 16, not from below the native model badge (y 72), so iOS's
+ * turn card, at the safe area's top, sits higher; the bottom stays at 440,
+ * where the arrival-time card is. Other --res sizes scale it. The
+ * safe areas earlier releases wrote (504x368 at 286,72; 0.10.6's 476x306 at
+ * 306,72) read as patched, and an apply rewrites them. */
+var SAFE_DEFAULT = { x: 286, y: 16, w: 504, h: 424 };
 var EDITS = ['variant', 'sink', 'selfstart', 'res'];
 var URL_EDITS = ['mapurl', 'showui'];
 
