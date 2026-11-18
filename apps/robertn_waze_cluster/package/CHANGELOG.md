@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.15
+
 Arrival time on the cluster, a checkbox in CarPlay: whether CarPlay's patch
 asks the phone for its arrival-time card on the cluster map. Off by default;
 a change applies the patch again and takes effect after the head unit
