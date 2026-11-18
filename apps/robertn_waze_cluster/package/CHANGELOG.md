@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+The HUD zoom starts as close as the HUD map's size allows, the cluster's own
+scale, with the map service from the next release on. A zoom you saved stays.
+
 ## 0.6.14
 
 Only near turns, a checkbox in HUD: ticked, the HUD map shows only while a
@@ -10,8 +13,7 @@ turn is close (about 400 m ahead, 1 km for a motorway exit) and goes about
 BMW's own HUD arrow does. Google Maps sends them; Apple Maps should too,
 though it is untried; Waze does not. HUD zoom, a slider in HUD: 100 to
 250 %, a closer part of the map on the HUD, never scaled up past what the
-HUD map's size takes. By default it is as close as that size allows, the
-cluster's own scale.
+HUD map's size takes.
 
 ## 0.6.13
 
