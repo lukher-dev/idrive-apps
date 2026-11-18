@@ -151,16 +151,19 @@ var PROVEN = {
  * area (138x61 mm of glass), which the render's texture covers pixel for
  * pixel. Every geometry this tool writes has this physical size, which tells
  * it from a build's stock geometry. */
-var RES_DEFAULT = { w: 1088, h: 480, mmw: 138, mmh: 61 };
+/* Test build: a larger physical size than the map area's 138x61 mm, so
+ * iOS draws the cluster's content smaller and its card layout for apps
+ * other than Apple Maps is "center" in the default safe area (at 138 mm it
+ * is undefined; above about 173 mm it is center). */
+var RES_DEFAULT = { w: 1088, h: 480, mmw: 180, mmh: 80 };
+/* The physical size earlier releases wrote, still read as this tool's. */
+var RES_EARLIER_MM = [{ mmw: 138, mmh: 61 }];
 /* The default safe area in the 1088x480 frame (PATCH.md "Safe area"): x
  * from BMW's own IC_MID safe area (which lies inside the map area), y from
  * below the native model badge. Other --res sizes scale it. The
  * safe area 0.10.6 wrote (476x306 at 306,72) reads as patched, and an apply
  * rewrites it. */
-/* Test build: the whole frame, so iOS's cluster card layout for apps other
- * than Apple Maps (CarPlaySupport's CPSInstrumentClusterCardLayout) has a
- * defined layout; 504x368 at 138 mm over 1088 px gets "undefined layout". */
-var SAFE_DEFAULT = { x: 0, y: 0, w: 1088, h: 480 };
+var SAFE_DEFAULT = { x: 286, y: 72, w: 504, h: 368 };
 var EDITS = ['variant', 'sink', 'selfstart', 'res'];
 var URL_EDITS = ['mapurl', 'showui'];
 
@@ -292,7 +295,7 @@ function resState(buf, r) {
     if (!r.ok) return { state: 'unknown', reason: r.reason };
     var g = readRes(buf, r);
     var inside = g.w > 0 && g.h > 0 && g.safew > 0 && g.safeh > 0 && g.safex + g.safew <= g.w && g.safey + g.safeh <= g.h;
-    var ours = g.mmw === RES_DEFAULT.mmw && g.mmh === RES_DEFAULT.mmh;
+    var ours = [RES_DEFAULT].concat(RES_EARLIER_MM).some(function (m) { return g.mmw === m.mmw && g.mmh === m.mmh; });
     if (inside && !ours && g.mmw > 0 && g.mmh > 0) return { state: 'original', res: g };
     if (inside && ours && g.viewx === 0 && g.viewy === 0) return { state: 'patched', res: g };
     return { state: 'unknown', reason: 'resolution: geometry not recognised', res: g };
@@ -660,14 +663,13 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         put(resText, o, (wantRes ? resWant : orig).slice(o, o + 8));
     });
 
-    /* Test build: the URL edits are left stock, restored from the backup
-     * where an earlier apply wrote them, as patches were before the map URL
-     * edit. It asks whether the cluster then goes to the app that navigates
-     * (Google Maps) instead of Apple Maps' map from connect. */
-    var writes = { mapurl: false, showui: false, res: wantRes };
-    URL_EDITS.forEach(function (e) {
-        if (c[e].sites) c[e].sites.forEach(function (s) { put('URL edits -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
-    });
+    /* Test build: the map URL edit as released (the cluster map from
+     * connect); the ShowUI URL left stock, without showETA, restored from the
+     * backup where an earlier apply wrote it: appearance options in that URL
+     * can blank apps other than Apple Maps. */
+    var writes = { mapurl: c.mapurl.state !== 'absent', showui: false, res: wantRes };
+    if (writes.mapurl) c.mapurl.sites.forEach(function (s) { put('map URL -> ' + MAP_URL, s[0], Buffer.from(s[1], 'hex')); });
+    if (c.showui.sites) c.showui.sites.forEach(function (s) { put('ShowUI URL -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
 
     var rec = applyRecord(record.current(target), !!PROVEN[loc.buildId], coding, c, writes);
     if (changed.length === 0) {
@@ -682,7 +684,7 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         : cc.sink.state !== (sinkUrl !== undefined ? 'redirected' : 'original') ? 'sink'
         : cc.selfstart.state !== 'patched' ? 'self-start'
         : cc.res.state !== (wantRes ? 'patched' : 'original') ? 'resolution'
-        : cc.mapurl.state !== (c.mapurl.state === 'absent' ? 'absent' : 'original') ? 'map URL'
+        : cc.mapurl.state !== (writes.mapurl ? 'patched' : 'absent') ? 'map URL'
         : cc.showui.state !== (c.showui.state === 'absent' ? 'absent' : 'original') ? 'ShowUI URL'
         : !onlyRegionsDiffer(buf, out, regions(c)) ? 'bytes outside the edit regions' : null;
     if (wrong) die('refusing: the edited binary does not verify (' + wrong + '); no change made');
