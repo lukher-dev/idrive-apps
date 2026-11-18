@@ -476,7 +476,7 @@ test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom 
     await until('connected', () => c.connectedRender() && c.connectedPatch());
     render.stream(true);
     await until('on', () => c.renderStatus && c.canChangeHudSize());
-    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: 100 %', 0], '100 % by default');
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: 240 %', 15], '250 % by default, used at the cap: the cluster\'s scale');
     c.setHudZoomStep(5);
     assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: 150 %', 5], 'shown at once');
     await until('150 %', () => render.hudZoom === 150 && c.renderStatus.hud_zoom_pct === 150 && patch.map.hud_zoom_pct === 150);

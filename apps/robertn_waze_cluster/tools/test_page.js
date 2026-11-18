@@ -509,10 +509,10 @@ async function main() {
         /* the HUD map only near turns and its zoom */
         const nearBox = byName.wocHudNearTurn, zoom = byName.wocHudZoom;
         assert(nearBox.enabled === true && nearBox.selected === false && nearBox.text === 'Only near turns', 'always by default');
-        assert(zoom.text === 'HUD zoom: 100 %' && zoom.cells['0:Value'] === 0, 'the zoom 100 % by default');
-        zoom.turn(1);
-        await until('zoomed', () => render.hudZoom === 110 && zoom.text === 'HUD zoom: 110 %' && zoom.cells['0:Value'] === 1);
-        await until('the zoom saved', () => patch.map.hud_zoom_pct === 110);
+        assert(zoom.text === 'HUD zoom: 240 %' && zoom.cells['0:Value'] === 15, 'the zoom at the cluster\'s scale by default');
+        zoom.turn(-1);
+        await until('zoomed out a step', () => render.hudZoom === 240 && zoom.text === 'HUD zoom: 240 %' && zoom.cells['0:Value'] === 14);
+        await until('the zoom saved', () => patch.map.hud_zoom_pct === 240);
         assert.strictEqual(guidanceQueries, 0, 'the turn list not read while always');
         guidanceFails = true;
         await sleep(450);

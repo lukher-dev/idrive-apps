@@ -10,7 +10,8 @@ turn is close (about 400 m ahead, 1 km for a motorway exit) and goes about
 BMW's own HUD arrow does. Google Maps sends them; Apple Maps should too,
 though it is untried; Waze does not. HUD zoom, a slider in HUD: 100 to
 250 %, a closer part of the map on the HUD, never scaled up past what the
-HUD map's size takes.
+HUD map's size takes. By default it is as close as that size allows, the
+cluster's own scale.
 
 ## 0.6.13
 

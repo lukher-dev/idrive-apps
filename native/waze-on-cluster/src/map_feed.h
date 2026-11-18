@@ -98,8 +98,9 @@ struct FeedConfig {
     bool hud_near_turn = false;
     int64_t hud_near_expire_ms = 90000;
     /* On the HUD: the zoom, 100-250 % (hud_crop.h), centred on a point in
-     * per mille of the picture; used at most at the box's cap. */
-    unsigned hud_zoom_pct = 100;
+     * per mille of the picture; used at most at the box's cap (the default,
+     * 250, is the cluster's own scale at any box 435 px wide or more). */
+    unsigned hud_zoom_pct = 250;
     unsigned hud_crop_cx_pm = 500, hud_crop_cy_pm = 500;
     /* A target shown smaller than the decoded frame (the HUD) gets the frame
      * scaled on the head unit to the size it is shown at (atlas_scale.h), on
@@ -144,7 +145,7 @@ struct FeedStatus {
     bool hud_keep_shown = false;   /* the HUD map kept shown over the stock HMI's pop-ups */
     bool hud_near_turn = false;    /* the HUD map only near turns */
     bool hud_gate = true;          /* and whether a turn is near (always, with hud_near_turn off) */
-    unsigned hud_zoom_pct = 100;   /* the HUD map's zoom setting */
+    unsigned hud_zoom_pct = 250;   /* the HUD map's zoom setting */
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
 };
 

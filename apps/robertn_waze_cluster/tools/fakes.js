@@ -144,7 +144,7 @@ class FakeRender extends LineServer {
         this.hudKeep = 0;
         /* the HUD map only near turns and its zoom (null: a tool without them); a turn near as the app said */
         this.hudNearTurn = 0;
-        this.hudZoom = 100;
+        this.hudZoom = 250;
         this.hudZoomCap = 240;
         this.turnNear = false;
         this._showTimer = null;
@@ -275,7 +275,7 @@ class FakePatch extends LineServer {
         this.mute = false;         /* commands received and not answered */
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
-        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 100 };
+        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 250 };
         this.shared = null;
         this.own = {};
         this.active = null;

@@ -78,7 +78,8 @@ The app is in the head unit's display language.
   shows.
 - **HUD zoom:** a closer part of the map on the HUD, 100 % (the whole map)
   to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
-  the row shows the zoom in use.
+  the row shows the zoom in use. By default it is as close as the HUD map's
+  size allows, which is the cluster's own scale.
 - **Size:** how wide the map is on the HUD.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
   map sits on the HUD.

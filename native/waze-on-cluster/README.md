@@ -126,7 +126,8 @@ map does not follow it.
 `features.conf`) and held inside it, scaled to the HUD map's size. A size
 takes at most the zoom whose part is as wide as the map is shown, so the
 picture is never scaled up; the status's `hud_zoom_used` is the zoom in
-use. `make hud-preview` builds a host tool that runs the same crop and
+use. The default, 250 %, is therefore used at that cap: the HUD shows the
+picture's middle at the cluster's own scale. `make hud-preview` builds a host tool that runs the same crop and
 scaling on a 1088x480 BMP, to choose the centre.
 
 From a shell, `waze-on-cluster -c <conf> run map|panel` sets the cluster

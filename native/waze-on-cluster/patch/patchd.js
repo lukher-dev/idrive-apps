@@ -426,7 +426,7 @@ var PROFILES_FILE = path.join(STATE_DIR, 'profiles.json');
 var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
 var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0,
-    hud_zoom_pct: 100 };
+    hud_zoom_pct: 250 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
 var restored = false;         /* MAP_STATE written from PROFILES_FILE at the start, not yet told to the app */

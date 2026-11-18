@@ -574,8 +574,8 @@ static void hud_zoom()
 
     pump(2000);
     FeedStatus st = feeds.status("decode");
-    ok("zoom 100 (the default): the whole picture in the standard 452x200 box, as before",
-       hud_shows(scaled(0, 0, 1088, 480, 452, 200)) && st.hud_zoom_pct == 100 && st.hud_zoom_used == 100);
+    ok("zoom 250 (the default): used at the standard box's cap, 240, the cluster's own scale: the middle 452x200 1:1",
+       hud_shows(scaled(318, 140, 452, 200, 452, 200)) && st.hud_zoom_pct == 250 && st.hud_zoom_used == 240);
 
     feeds.set_hud_zoom(200);
     pump(2000);
@@ -1442,6 +1442,7 @@ int main()
     FeedConfig bfc;
     bfc.socket = b.path;
     bfc.video.level_bits = 0;
+    bfc.hud_zoom_pct = 100;   /* the whole frame on the HUD: this checks the scaling, hud_zoom() the zoom */
     MapFeeds feeds(bfc, true, false, 10);
     feeds.set_stream(true, false, Picture::Shown);
     std::vector<uint8_t> bspare, boffered;

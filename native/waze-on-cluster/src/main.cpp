@@ -586,7 +586,7 @@ void define_keys(Config *cfg)
     cfg->define("hud_keep_shown", "0");
     cfg->define("hud_near_turn", "0");
     cfg->define("hud_near_expire_ms", "90000");
-    cfg->define("hud_zoom_pct", "100");
+    cfg->define("hud_zoom_pct", "250");
     cfg->define("hud_crop_cx_pm", "500");
     cfg->define("hud_crop_cy_pm", "500");
     cfg->define("hud_scale_down", "1");
