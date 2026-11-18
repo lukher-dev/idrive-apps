@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.16
+
 CarPlay's Patch button is offered for the cluster area the phone keeps its
 turn card in from the next map service on, which starts higher, so the turn
 card sits higher on the cluster; the arrival-time card stays where it was.
