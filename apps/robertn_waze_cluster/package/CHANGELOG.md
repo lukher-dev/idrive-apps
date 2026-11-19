@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.17
+
 The HUD map's size goes up to 135 %: above 100 % its sides are cut by the
 HUD's edges and left and right Position slide it. Edge fade fades the HUD
 map's edges out (30 px by default, 0 for a hard edge). Clear behind speed
