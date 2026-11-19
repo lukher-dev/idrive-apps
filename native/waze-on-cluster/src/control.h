@@ -9,6 +9,8 @@
  *                  {"cmd":"hud","hud_x":"-800".."800","hud_y":...}  where it is, from the centre
  *                  {"cmd":"hud","hud_keep_shown":"0"|"1"}  kept shown over BMW's pop-ups, or not
  *                  {"cmd":"hud","hud_near_turn":"0"|"1"}  the HUD map only near turns, or always
+ *                  {"cmd":"hud","hud_near_m":"200".."2000"}  how many metres before a turn the app shows it
+ *                   (the app gates on it; the tool keeps it and reports it)
  *                  {"cmd":"hud","hud_zoom_pct":"100".."250"}  the HUD map's zoom
  *                  {"cmd":"hud","hud_edge_fade_px":"0".."60"}  its edges faded to black over that many px (0: none)
  *                  {"cmd":"hud","hud_clear":"0"|"1","hud_clear_x":"0".."799","hud_clear_y":"0".."479",
@@ -21,7 +23,7 @@
  *                   "hud_width_pct":...,"hud_x":...,"hud_y":...,"hud_keep_shown":0|1,
  *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...,
  *                   "hud_edge_fade_px":...,"hud_clear":0|1,"hud_clear_x":...,"hud_clear_y":...,
- *                   "hud_clear_w":...,"hud_clear_h":...}
+ *                   "hud_clear_w":...,"hud_clear_h":...,"hud_near_m":...}
  *                  {"ev":"log","line":...}
  *
  * One connection is the owner; a second one is told "busy" and closed. */

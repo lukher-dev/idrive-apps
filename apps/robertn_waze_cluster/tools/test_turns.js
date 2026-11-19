@@ -5,7 +5,9 @@
  * The HUD map near turns: distances read in metres from what BMW's
  * GuidanceEventList shows (metric, imperial, fractions, a decimal comma;
  * anything else none), the first maneuver of a queryContent reply, and the
- * gate: opened by a turn close ahead (a motorway exit from further), kept
+ * gate: opened by a turn close ahead (1000 m by default, or the distance
+ * set, a motorway exit from at least 1000 m; a new distance taken while it
+ * runs, open or closed as it was), kept
  * open through the turn while its distance blanks and between turns close
  * together, closed only after a while past the turn, at the end of the
  * route, or on a maneuver that is not a turn. The timelines are
@@ -40,10 +42,10 @@ const reply = (kind, distance, unit, text) => ({
 });
 const man = (kind, metres) => ({ kind, metres, text: '' });
 
-/* The gate's answer at each step of a fixture, from t 0. */
+/* The gate's answer at each step of a fixture, from t 0: by default a gate that opens at 400 m. */
 function replay(name, gate) {
     const f = fixture(name);
-    const g = gate || new TurnGate();
+    const g = gate || new TurnGate({ showM: 400 });
     return f.replies.map((r, i) => g.update(parseManeuver(r), i * f.stepMs));
 }
 
@@ -101,10 +103,39 @@ async function main() {
         assert.deepStrictEqual(TRIGGER_KINDS, ['intersection', 'roundabout', 'branch', 'destinationManeuver']);
     });
 
-    await check('approach opens at 400 m', () => {
+    await check('approach opens at 1000 m by default', () => {
         const g = new TurnGate();
-        assert.deepStrictEqual([600, 450, 401, 400].map((m, i) => g.update(man('intersection', m), i * 500)),
+        assert.deepStrictEqual([1500, 1200, 1001, 1000].map((m, i) => g.update(man('intersection', m), i * 500)),
             [false, false, false, true]);
+    });
+    await check('the set distance: a turn opens at it, a motorway exit at it but never under 1000 m', () => {
+        const at = (d, kind, metres) => {
+            const g = new TurnGate();
+            g.setDistance(d);
+            return g.update(man(kind, metres), 0);
+        };
+        assert.deepStrictEqual([[200, 201], [200, 200], [400, 400], [1200, 1201], [1200, 1200], [2000, 2000]]
+            .map(([d, m]) => at(d, 'intersection', m)), [false, true, true, false, true, true]);
+        assert.deepStrictEqual([[200, 1000], [200, 1001], [1400, 1400], [1400, 1401], [2000, 2000]]
+            .map(([d, m]) => at(d, 'branch', m)), [true, false, true, false, true]);
+        const g = new TurnGate();
+        g.setDistance(600);
+        assert.deepStrictEqual([g.showM, g.branchShowM, g.extraHideM], [600, 1000, 400]);
+        g.setDistance(1800);
+        assert.deepStrictEqual([g.showM, g.branchShowM, g.extraHideM], [1800, 1800, 400]);
+    });
+    await check('a new distance applies to the running gate, open or closed as it was', () => {
+        const g = new TurnGate();
+        g.setDistance(400);
+        assert.strictEqual(g.update(man('intersection', 300), 0), true);
+        g.setDistance(200);
+        assert.strictEqual(g.open, true, 'still open');
+        assert.strictEqual(g.update(man('intersection', 550), 500), true, 'kept open within the new distance plus 400 m');
+        assert.strictEqual(g.update(man('intersection', 650), 1000), true, 'past it: the hold');
+        assert.strictEqual(g.update(man('intersection', 650), 11000), false);
+        g.setDistance(800);
+        assert.strictEqual(g.open, false, 'still closed');
+        assert.strictEqual(g.update(man('intersection', 700), 11500), true, 'opens at the new distance');
     });
     await check('branch opens at 1000 m', () => {
         const g = new TurnGate();
@@ -138,15 +169,15 @@ async function main() {
     await check('closes after 10 s past hideM', () => {
         const g = new TurnGate();
         assert.strictEqual(g.update(man('intersection', 100), 0), true);
-        assert.strictEqual(g.update(man('intersection', 900), 1000), true);
-        assert.strictEqual(g.update(man('intersection', 900), 10999), true);
-        assert.strictEqual(g.update(man('intersection', 900), 11000), false);
+        assert.strictEqual(g.update(man('intersection', 1500), 1000), true);
+        assert.strictEqual(g.update(man('intersection', 1500), 10999), true);
+        assert.strictEqual(g.update(man('intersection', 1500), 11000), false);
     });
     await check('stays open up to hideM, for a branch further', () => {
         const g = new TurnGate();
         assert.strictEqual(g.update(man('intersection', 100), 0), true);
-        assert.strictEqual(g.update(man('intersection', 800), 1000), true);
-        assert.strictEqual(g.update(man('intersection', 800), 60000), true);
+        assert.strictEqual(g.update(man('intersection', 1400), 1000), true);
+        assert.strictEqual(g.update(man('intersection', 1400), 60000), true);
         assert.strictEqual(g.update(man('branch', 1400), 61000), true);
         assert.strictEqual(g.update(man('branch', 1400), 120000), true);
     });
@@ -166,18 +197,18 @@ async function main() {
     await check('a turn back within the hold keeps it open, the hold starts again', () => {
         const g = new TurnGate();
         assert.strictEqual(g.update(man('intersection', 100), 0), true);
-        assert.strictEqual(g.update(man('intersection', 900), 1000), true);
-        assert.strictEqual(g.update(man('intersection', 700), 9000), true);
-        assert.strictEqual(g.update(man('intersection', 900), 10000), true);
-        assert.strictEqual(g.update(man('intersection', 900), 19999), true);
-        assert.strictEqual(g.update(man('intersection', 900), 20000), false);
+        assert.strictEqual(g.update(man('intersection', 1500), 1000), true);
+        assert.strictEqual(g.update(man('intersection', 1300), 9000), true);
+        assert.strictEqual(g.update(man('intersection', 1500), 10000), true);
+        assert.strictEqual(g.update(man('intersection', 1500), 19999), true);
+        assert.strictEqual(g.update(man('intersection', 1500), 20000), false);
     });
     await check('closed, it opens again at the next turn', () => {
         const g = new TurnGate();
         g.update(man('intersection', 100), 0);
         g.update(null, 1000);
         assert.strictEqual(g.update(null, 11000), false);
-        assert.strictEqual(g.update(man('intersection', 390), 12000), true);
+        assert.strictEqual(g.update(man('intersection', 990), 12000), true);
     });
     await check('the thresholds are options', () => {
         const g = new TurnGate({ showM: 200, branchShowM: 500, extraHideM: 100, holdMs: 1000 });
@@ -324,6 +355,7 @@ async function watchChecks() {
     await check('approach fixture sends near 1 then near 0', async () => {
         const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
         const { w, sent } = watch(c, b);
+        w.setDistance(400);
         w.setActive(true);
         await c.advance(29000);
         assert.deepStrictEqual(sent, [{ at: 6000, cmd: 'turn', near: '1' }, { at: 27000, cmd: 'turn', near: '0' }]);
@@ -394,6 +426,34 @@ async function watchChecks() {
         assert.strictEqual(b.configReads, 2);
         assert.deepStrictEqual(sent, [{ at: 3000, cmd: 'turn', near: '1' }]);
         assert.strictEqual(w.maneuver.kind, 'intersection');
+    });
+    await check('approach fixture at the default 1000 m: near from the first reply', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, fromFixture('approach'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(29000);
+        assert.deepStrictEqual(sent, [{ at: 0, cmd: 'turn', near: '1' }, { at: 27000, cmd: 'turn', near: '0' }]);
+    });
+    await check('setDistance: the running gate takes it, open as it was; a new gate too; none known is 1000 m', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '700', 'm'));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(1000);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1'], '700 m: near at 1000 m');
+        const gate = w._gate;
+        w.setDistance(400);
+        await c.advance(5000);
+        assert(w._gate === gate && w.near === true && gate.showM === 400, 'the same gate, still open: 700 m is within 400 m plus 400 m');
+        w.setActive(false);
+        w.setActive(true);
+        await c.advance(5000);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1', '0'], 'a new gate at 400 m: 700 m not near');
+        assert.deepStrictEqual([w._gate.showM, w._gate.branchShowM, w._gate.extraHideM], [400, 1000, 400]);
+        w.setDistance(undefined);
+        await c.advance(1000);
+        assert.deepStrictEqual(sent.map((m) => m.near), ['1', '0', '1'], 'none known: 1000 m');
+        w.setDistance(2000);
+        assert.deepStrictEqual([w._gate.showM, w._gate.branchShowM], [2000, 2000]);
     });
     await check('the gate closing with no maneuver change emits change', async () => {
         const c = fakeClock(), b = fakeBuilders(c, fromFixture('cancelled'));

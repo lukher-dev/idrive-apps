@@ -19,9 +19,9 @@
  * as a profile's own or the shared settings is switched to and from and kept
  * at the next start. The HUD map kept shown over BMW's pop-ups is a
  * profile's own setting like the others; a profiles.json saved before it is
- * taken, giving way. So are near turns, the zoom, the edge fade and the
- * map cleared behind the speed: a set saved before them takes their
- * defaults. */
+ * taken, giving way. So are near turns, the zoom, the edge fade, the
+ * map cleared behind the speed and how far before a turn the HUD map
+ * shows: a set saved before them takes their defaults. */
 'use strict';
 var cp = require('child_process');
 var fs = require('fs');
@@ -112,12 +112,12 @@ function profiles() { var t = fs.readFileSync(PROFILES, 'utf8'); try { return JS
 function settings(cluster, hud, pct, x, y, keep, near, zoom) {
     return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
         hud_near_turn: near || 0, hud_zoom_pct: zoom || 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
-        hud_clear_w: 250, hud_clear_h: 90 };
+        hud_clear_w: 250, hud_clear_h: 90, hud_near_m: 1000 };
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 /* A line of map.state.conf: one of the map keys, a whole number. */
 var MAP_LINE = new RegExp('^(cluster|hud|hud_width_pct|hud_offset_x|hud_offset_y|hud_keep_shown|hud_near_turn|hud_zoom_pct|' +
-    'hud_edge_fade_px|hud_clear|hud_clear_x|hud_clear_y|hud_clear_w|hud_clear_h) = -?\\d+$');
+    'hud_edge_fade_px|hud_clear|hud_clear_x|hud_clear_y|hud_clear_w|hud_clear_h|hud_near_m) = -?\\d+$');
 /* For a check that nothing is written: past the save's delay. */
 function saved() { return sleep(SAVE_MS + 150); }
 /* For a check that something is written: until it holds, at most 10 s
@@ -231,8 +231,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
 
     /* The format a patchd and render without profiles read. */
     var lines = fs.readFileSync(STATE, 'utf8').split('\n').filter(Boolean);
-    ok('map.state.conf: only "key = whole number" lines of the fourteen map keys (0.9.x reads them, leaving out the later ones)',
-        lines.length === 14 && lines.every(function (l) {
+    ok('map.state.conf: only "key = whole number" lines of the fifteen map keys (0.9.x reads them, leaving out the later ones)',
+        lines.length === 15 && lines.every(function (l) {
             return MAP_LINE.test(l);
         }), lines.join('|'));
 
@@ -429,7 +429,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
      * earlier version wrote) is what the render takes for it, its default */
     var sameKeys = function (a, b) {
         a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
-            hud_clear_w: 250, hud_clear_h: 90 }, a);
+            hud_clear_w: 250, hud_clear_h: 90, hud_near_m: 1000 }, a);
         return Object.keys(b).length === Object.keys(a).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
     };
     fs.writeFileSync(STATE, 'cluster = 1\nhud = 0\nhud_width_pct = 0\nhud_offset_x = 0\nhud_offset_y = 0\nhud_keep_shown = 0\n');
@@ -543,6 +543,18 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     r = await ask({ cmd: 'profile', id: A });
     ok('back to A: its fade, clear and rectangle', r.ok && r.own && hasAll(r.settings, MINE) &&
         await when(function () { return hasAll(state(), MINE); }), JSON.stringify(r));
+
+    /* How far before a turn the HUD map shows, per profile; a profiles.json from before it: 1000 m. */
+    ok('a profiles.json from before hud_near_m: A\'s set read with 1000 m', r.settings.hud_near_m === 1000, JSON.stringify(r));
+    r = await ask({ cmd: 'hud-near-dist', m: 600 });
+    ok('600 m as A\'s own: in A\'s copy and map.state.conf', r.ok && r.hud_near_m === 600 &&
+        await when(function () { return state().hud_near_m === 600 && profiles().own[A].hud_near_m === 600; }), JSON.stringify(profiles()));
+    r = await ask({ cmd: 'profile', id: B });
+    ok('B without its own: 1000 m', r.ok && !r.own && r.settings.hud_near_m === 1000 &&
+        await when(function () { return state().hud_near_m === 1000; }), JSON.stringify(r));
+    r = await ask({ cmd: 'profile', id: A });
+    ok('back to A: 600 m', r.ok && r.own && r.settings.hud_near_m === 600 &&
+        await when(function () { return state().hud_near_m === 600; }), JSON.stringify(r));
     r = await ask({ cmd: 'hud-size', hud_width_pct: 135 });
     ok('the widest HUD size, 135 %, as A\'s own', r.ok && r.hud_width_pct === 135 &&
         await when(function () { return state().hud_width_pct === 135 && profiles().own[A].hud_width_pct === 135; }), JSON.stringify(r));

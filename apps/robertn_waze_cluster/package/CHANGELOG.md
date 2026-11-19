@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+Every HUD row now says what it changes: Map size, Map zoom, Fade map edges,
+Map position with Move map left and the rest, Hide map behind BMW's speed
+with its Speed area buttons. Show from, a new slider under Show HUD map only
+near turns, sets how far before a turn the map appears: 200 m to 2 km, 1 km
+by default, at least 1 km before a motorway exit. Android Auto's Zoom is now
+Cluster map zoom.
+
 ## 0.6.18
 
 The HUD map's corners are no longer rounded; Edge fade softens its edges

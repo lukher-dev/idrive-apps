@@ -4,7 +4,8 @@
 /**
  * turn_watch - tells the render whether a turn is close, for the HUD map
  * that shows only near turns. Runs from the app's start, page shown or not,
- * while setActive(true) (the HUD map on, with Only near turns ticked).
+ * while setActive(true) (the HUD map on, with Show HUD map only near turns
+ * ticked).
  *
  * It reads, read-only, the maneuvers BMW navigation keeps for its own HUD
  * view (GuidanceEventList Main_Instance, view HUD.RB.Main, which the
@@ -13,8 +14,11 @@
  * A call not answered within CALL_MS counts as failed; six failed queries
  * in a row read the config again and count as no maneuver. A start that
  * fails (no proxy yet at boot) is tried again every RETRY_MS while active.
- * TurnGate (turn_gate.js) decides; each change goes to send() as
- * {"cmd":"turn","near":"1"|"0"}, and the current value again every
+ * TurnGate (turn_gate.js) decides, at the distance setDistance(m) gives
+ * (the render's hud_near_m; DEFAULT_NEAR_M while none is known): the
+ * running gate takes a new one at once, open or closed as it was, and a
+ * gate made when the watch starts again starts with it. Each change goes
+ * to send() as {"cmd":"turn","near":"1"|"0"}, and the current value again every
  * resendMs and on resend() (the page's render link coming up), so a render
  * that restarted hears it. Inactive, nothing is polled or sent, and a
  * near turn is taken back once.
@@ -33,6 +37,8 @@ const CALL_MS = 3000;
 const RETRY_MS = 20000;
 const FAILS_BEFORE_RECONFIG = 6;
 const RAW_MAX = 2000;
+/* The distance before a turn the map shows from while none is known, in metres. */
+const DEFAULT_NEAR_M = 1000;
 /* What the HUD view's own config asks for, if it cannot be read (PR #94). */
 const FALLBACK_CONFIG = {
     viewport: {
@@ -50,7 +56,7 @@ function monotonicMs() {
 class TurnWatch extends EventEmitter {
     /* options: builders (oap-sdk someipBuilders), send(msg), log ({info, warn}),
      * queryMs, resendMs, now(), timers ({setInterval, clearInterval,
-     * setTimeout, clearTimeout}), gate. */
+     * setTimeout, clearTimeout}), gate (a TurnGate, whose distance the watch sets as for its own). */
     constructor(options) {
         super();
         const o = options || {};
@@ -61,7 +67,12 @@ class TurnWatch extends EventEmitter {
         this._resendMs = o.resendMs || 30000;
         this._now = o.now || monotonicMs;
         this._timers = o.timers || { setInterval, clearInterval, setTimeout, clearTimeout };
-        this._newGate = () => o.gate || new TurnGate();
+        this._nearM = DEFAULT_NEAR_M;
+        this._newGate = () => {
+            const gate = o.gate || new TurnGate();
+            gate.setDistance(this._nearM);
+            return gate;
+        };
         this._gate = this._newGate();
         this._active = false;
         this._stopped = false;
@@ -99,6 +110,15 @@ class TurnWatch extends EventEmitter {
             this._send({ cmd: 'turn', near: '0' });
         }
         this._setStatus('off');
+    }
+
+    /* How far before a turn the map shows, in metres: anything but a positive number is DEFAULT_NEAR_M. */
+    setDistance(m) {
+        const d = typeof m === 'number' && m > 0 ? m : DEFAULT_NEAR_M;
+        if (d !== this._nearM) {
+            this._nearM = d;
+            this._gate.setDistance(d);
+        }
     }
 
     /* The current value again, now: the page's render link has come up. */
@@ -284,4 +304,4 @@ class TurnWatch extends EventEmitter {
     }
 }
 
-module.exports = { TurnWatch, IFACE, INSTANCE, VIEW };
+module.exports = { TurnWatch, IFACE, INSTANCE, VIEW, DEFAULT_NEAR_M };

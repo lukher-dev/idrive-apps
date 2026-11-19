@@ -20,7 +20,7 @@
  * Patch button
  * enabled only while unpatched and CarPlay's Remove patch button only while patched;
  * pressing every button sends the render nothing; Android Auto's Status,
- * Zoom and the Hide phone's turn card checkbox; info rows as Name: Value;
+ * Cluster map zoom and the Hide phone's turn card checkbox; info rows as Name: Value;
  * the Cluster map row in General; Hide BMW's turn box ticked as the render
  * reports, each press one guide command to the render, greyed and unticked,
  * its label kept, while the cluster renderer holds the box shown; Show on,
@@ -34,9 +34,13 @@
  * greyed; Keep HUD map over BMW's pop-ups, a checkbox under HUD map,
  * unticked by default, each press one command to the render and one save,
  * ticked as the render reports, greyed with the size slider and for a render
- * without the setting; the Edge fade slider, a 10 px step a turn, saved like
- * the size; Clear behind speed, a checkbox under the position buttons, ticked
- * by default, with the Speed patch row and its move and size buttons, each
+ * without the setting; Show HUD map only near turns and under it the Show
+ * from ... before a turn slider, a 200 m step a turn from 200 m to 2 km,
+ * 1 km by default, saved like the size, taken by the turn watch at once,
+ * greyed while the map shows always; the Fade map edges slider, a 10 px
+ * step a turn, saved like the size; Hide map behind BMW's speed, a checkbox
+ * under the position buttons, ticked by default, with the Speed area row
+ * and its move and size buttons, each
  * press one command to the render and one save, the buttons greyed while
  * it is unticked; Own settings for this driver, a checkbox under Show on, greyed
  * while no driver profile is detected, ticked for a profile with its own
@@ -64,7 +68,7 @@ const fs = require('fs');
 const net = require('net');
 const path = require('path');
 const { FakeRender, FakePatch, FakeLogs, RENDER_PAGE, RENDER_FPS } = require('./fakes.js');
-const { RENDER_PATH, PATCH_PATH, PENDING_PATH, SIZE, SAFE, HUD_SIZE_STEPS, HUD_FADE_STEPS } = require('../src/waze_cluster_control.js');
+const { RENDER_PATH, PATCH_PATH, PENDING_PATH, SIZE, SAFE, HUD_SIZE_STEPS, HUD_FADE_STEPS, HUD_NEAR_STEPS } = require('../src/waze_cluster_control.js');
 const { LOGS_PATH } = require('../src/logs_control.js');
 
 const MANIFEST = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'mgu-app.json'), 'utf8'));
@@ -302,16 +306,16 @@ async function main() {
     assert.deepStrictEqual(main.map(([id, type, name, text]) => (type === 'title' ? name : `${name} ${text}`)), [
         'wocTitle',
         'wocHeadGeneral General', 'wocShowOn Show on: Cluster', 'wocProfile Own settings for this driver', 'wocMap Cluster map: Off', "wocGuide Hide BMW's turn box", 'wocLogs Logs',
-        'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudNearTurn Only near turns',
-        'wocHudSize Size: \u2014', 'wocHudZoom HUD zoom: \u2014', 'wocHudFade Edge fade: \u2014', 'wocHudPos Position: \u2014',
-        'wocHudLeft Move left', 'wocHudRight Move right', 'wocHudUp Move up', 'wocHudDown Move down', 'wocHudCentre Centre',
-        'wocHudClear Clear behind speed', 'wocHudClearRect Speed patch: \u2014', 'wocHudClearLeft Move left', 'wocHudClearRight Move right',
-        'wocHudClearUp Move up', 'wocHudClearDown Move down', 'wocHudClearWider Wider', 'wocHudClearNarrower Narrower',
-        'wocHudClearTaller Taller', 'wocHudClearShorter Shorter',
+        'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudNearTurn Show HUD map only near turns',
+        'wocHudNearDist Show from \u2014 before a turn', 'wocHudSize Map size: \u2014', 'wocHudZoom Map zoom: \u2014', 'wocHudFade Fade map edges: \u2014', 'wocHudPos Map position: \u2014',
+        'wocHudLeft Move map left', 'wocHudRight Move map right', 'wocHudUp Move map up', 'wocHudDown Move map down', 'wocHudCentre Centre map',
+        "wocHudClear Hide map behind BMW's speed", 'wocHudClearRect Speed area: \u2014', 'wocHudClearLeft Move speed area left', 'wocHudClearRight Move speed area right',
+        'wocHudClearUp Move speed area up', 'wocHudClearDown Move speed area down', 'wocHudClearWider Speed area wider', 'wocHudClearNarrower Speed area narrower',
+        'wocHudClearTaller Speed area taller', 'wocHudClearShorter Speed area shorter',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch',
         'wocCpEta Arrival time on the cluster', 'wocWifi ', 'wocWifiHint ',
         'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch',
-        'wocAaZoom Zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
+        'wocAaZoom Cluster map zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
         'wocRestart Restart head unit', 'wocRestartStatus '],
         'the main page: four sections, in order');
     assert.deepStrictEqual(xmlIds('1').map(([id, type]) => `${id} ${type}`).sort(),
@@ -330,8 +334,12 @@ async function main() {
     assert(!main.some(([, , name]) => /^wocRow|^wocSetup|^wocCapture/.test(name)), 'no log rows, setup line or capture on the main page');
     assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep', 'wocHudNearTurn', 'wocHudClear'].map((n) => widgets[n]),
         Array(6).fill('LT_CheckBox_1Row'), 'the on/off settings are checkboxes');
-    assert.deepStrictEqual([widgets.wocHudZoom, widgets.wocHudFade], Array(2).fill('LT_Slider_LeftJustified_Fill_Steps'),
-        'the HUD zoom and the edge fade sliders like the size');
+    assert.deepStrictEqual([widgets.wocHudNearDist, widgets.wocHudZoom, widgets.wocHudFade], Array(3).fill('LT_Slider_LeftJustified_Fill_Steps'),
+        'the near-turn distance, the map zoom and the edge fade sliders like the size');
+    const nearDesc = Object.values(components).find((d) => d.name === 'wocHudNearDist');
+    assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => nearDesc.rows[0][k].value), [0, HUD_NEAR_STEPS, HUD_NEAR_STEPS],
+        'the near-turn distance: one step for each 200 m, 200 m to 2 km');
+    assert.strictEqual(HUD_NEAR_STEPS, 9);
     const fadeDesc = Object.values(components).find((d) => d.name === 'wocHudFade');
     assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => fadeDesc.rows[0][k].value), [0, HUD_FADE_STEPS, HUD_FADE_STEPS],
         'the edge fade: one step for each 10 px');
@@ -411,14 +419,14 @@ async function main() {
         /* Android Auto next to CarPlay: its line, Patch, then Remove patch, the zoom and the card. */
         const aaRow = () => ['wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard'].map((n) => byName[n].enabled);
         await until('Android Auto off, Patch enabled', () => byName.wocAaStatus.text === 'Status: Not patched' &&
-            JSON.stringify(aaRow()) === JSON.stringify([true, false, false, false, false]) && byName.wocAaZoom.text === 'Zoom: —' &&
+            JSON.stringify(aaRow()) === JSON.stringify([true, false, false, false, false]) && byName.wocAaZoom.text === 'Cluster map zoom: —' &&
             byName.wocAaCard.text === "Hide phone's turn card" && byName.wocAaCard.selected === false);
         byName.wocAaEnable.emit('action');
         await until('Android Auto on', () => byName.wocAaStatus.text === 'Status: Patched' &&
             JSON.stringify(aaRow()) === JSON.stringify([false, true, true, true, true]));
         byName.wocAaZoomOut.emit('action');
         await until('zoomed out', () => patch.received.some((m) => m.cmd === 'aa-density' && m.value === 170) &&
-            byName.wocAaZoom.text === 'Zoom: 170 dpi');
+            byName.wocAaZoom.text === 'Cluster map zoom: 170 dpi');
         assert(status.text !== '' && !/Android Auto/.test(status.text), 'CarPlay\'s line is its own');
         await until('the card shown', () => byName.wocAaCard.enabled === true && byName.wocAaCard.selected === false);
         const card = byName.wocAaCard;
@@ -431,7 +439,7 @@ async function main() {
         assert(card.ticks.every((t) => t === true), `ticked from the press on, never unticked meanwhile: ${JSON.stringify(card.ticks)}`);
         patch.aa = Object.assign({}, patch.aa, { state: 'unknown', pending: 'apply', aapd: 'deferred', dpi: 160, density: 160, runDpi: 170, runCard: 'shown' });
         patch.announce('patched', 'high', null);
-        await until('waiting for a restart', () => byName.wocAaZoom.text === 'Zoom: 160 dpi (after restart)' &&
+        await until('waiting for a restart', () => byName.wocAaZoom.text === 'Cluster map zoom: 160 dpi (after restart)' &&
             byName.wocAaCard.text === "Hide phone's turn card (after restart)" && byName.wocAaCard.selected === true &&
             byName.wocAaStatus.text === 'Status: Patched after restart' && byName.wocRestart.visible === true);
         patch.aa = { state: 'original', density: 160, densities: [150, 400, 10], conflict: 'not supported on this car (KI_KOMBI_VARIANT 9)' };
@@ -477,8 +485,8 @@ async function main() {
         const hudRows = () => ['wocHudKeep', 'wocHudNearTurn', 'wocHudSize', 'wocHudZoom', 'wocHudFade', 'wocHudLeft', 'wocHudRight', 'wocHudUp',
             'wocHudDown', 'wocHudClear'].concat(clearMoves).map((n) => byName[n].enabled);
         await until('the cluster, the HUD off', () => showOn.shown() === 'Show on: Cluster' && showOn.enabled === true &&
-            byName.wocHud.text === 'HUD map: Off' && size.text === 'Size: Standard' && size.cells['0:Value'] === 5 &&
-            byName.wocHudPos.text === 'Position: Centre');
+            byName.wocHud.text === 'HUD map: Off' && size.text === 'Map size: Standard' && size.cells['0:Value'] === 5 &&
+            byName.wocHudPos.text === 'Map position: Centre');
         assert(hudRows().every((e) => e === false) && byName.wocHudCentre.enabled === false, 'the size and position greyed while off');
         render.received.length = 0;
         size.turn(1);
@@ -491,13 +499,13 @@ async function main() {
         assert.deepStrictEqual(render.received, [{ cmd: 'hud', on: '1' }, { cmd: 'cluster', on: '0' }], 'the HUD on, then the cluster off');
         await until('saved', () => patch.count('hud') === 1 && patch.count('cluster') === 1);
         size.turn(1);
-        await until('larger', () => size.text === 'Size: 60 %' && render.hudWidth === 60 && size.cells['0:Value'] === 6);
+        await until('larger', () => size.text === 'Map size: 60 %' && render.hudWidth === 60 && size.cells['0:Value'] === 6);
         await until('saved', () => patch.received.some((m) => m.cmd === 'hud-size' && m.hud_width_pct === 60));
         size.turn(-1);
         size.turn(-1);
-        await until('smaller', () => size.text === 'Size: 50 %' && render.hudWidth === 50);
+        await until('smaller', () => size.text === 'Map size: 50 %' && render.hudWidth === 50);
         byName.wocHudLeft.emit('action');
-        await until('moved', () => byName.wocHudPos.text === 'Position: 10 px left' && byName.wocHudCentre.enabled === true);
+        await until('moved', () => byName.wocHudPos.text === 'Map position: 10 px left' && byName.wocHudCentre.enabled === true);
         /* the HUD map over BMW's pop-ups: gives way by default; a press keeps it shown, the render's answer ticks it, patchd saves it */
         const keep = byName.wocHudKeep;
         await until('the move at the render', () => render.hudX === -10);
@@ -523,11 +531,15 @@ async function main() {
         render.announce(render.state, render.reason);
         await until('enabled again', () => keep.enabled === true);
         /* the HUD map only near turns and its zoom */
-        const nearBox = byName.wocHudNearTurn, zoom = byName.wocHudZoom;
-        assert(nearBox.enabled === true && nearBox.selected === false && nearBox.text === 'Only near turns', 'always by default');
-        assert(zoom.text === 'HUD zoom: 240 %' && zoom.cells['0:Value'] === 15, 'the zoom at the cluster\'s scale by default');
+        const nearBox = byName.wocHudNearTurn, zoom = byName.wocHudZoom, nearDist = byName.wocHudNearDist;
+        assert(nearBox.enabled === true && nearBox.selected === false && nearBox.text === 'Show HUD map only near turns', 'always by default');
+        assert(nearDist.enabled === false && nearDist.text === 'Show from 1 km before a turn' && nearDist.cells['0:Value'] === 4,
+            'the distance 1 km by default, greyed while the map shows always');
+        nearDist.turn(-1);
+        await until('a greyed distance turned: back where it was', () => nearDist.cells['0:Value'] === 4);
+        assert(zoom.text === 'Map zoom: 240 %' && zoom.cells['0:Value'] === 15, 'the zoom at the cluster\'s scale by default');
         zoom.turn(-1);
-        await until('zoomed out a step', () => render.hudZoom === 240 && zoom.text === 'HUD zoom: 240 %' && zoom.cells['0:Value'] === 14);
+        await until('zoomed out a step', () => render.hudZoom === 240 && zoom.text === 'Map zoom: 240 %' && zoom.cells['0:Value'] === 14);
         await until('the zoom saved', () => patch.map.hud_zoom_pct === 240);
         assert.strictEqual(guidanceQueries, 0, 'the turn list not read while always');
         guidanceFails = true;
@@ -536,7 +548,7 @@ async function main() {
         await until('near turns, no turn list: says so', () => render.hudNearTurn === 1 && nearBox.selected === true &&
             patch.map.hud_near_turn === 1 && byName.wocHud.text === 'HUD map: No turn data');
         guidanceFails = false;
-        guidance = turnReply(900);
+        guidance = turnReply(1500);
         await sleep(450);
         nearBox.press();
         await until('always again', () => render.hudNearTurn === 0 && nearBox.selected === false && byName.wocHud.text === 'HUD map: Showing');
@@ -544,8 +556,29 @@ async function main() {
         nearBox.press();
         await until('near turns, the next turn far: waiting for a turn', () => render.hudNearTurn === 1 && guidanceQueries > 0 &&
             byName.wocHud.text === 'HUD map: Waiting for a turn');
+        assert.strictEqual(nearDist.enabled, true, 'the distance enabled while only near turns');
+        render.received.length = 0;
+        nearDist.turn(-1);
+        nearDist.turn(-1);
+        nearDist.turn(-1);
+        await until('400 m: told to the render, saved', () => render.hudNearM === 400 && nearDist.text === 'Show from 400 m before a turn' &&
+            nearDist.cells['0:Value'] === 1 && patch.map.hud_near_m === 400);
+        assert.deepStrictEqual(render.received.filter((m) => m.hud_near_m !== undefined).map((m) => m.hud_near_m), ['800', '600', '400'],
+            'one command to the render a step');
+        await until('the watch at 400 m', () => OnlineApp.instance._turns._gate.showM === 400);
+        guidance = turnReply(600);
+        await sleep(150);
+        assert(render.turnNear === false && byName.wocHud.text === 'HUD map: Waiting for a turn', '600 m: not near at 400 m');
+        nearDist.turn(1);
+        nearDist.turn(1);
+        await until('800 m: the turn at 600 m near, told to the render, the HUD map shows', () => render.hudNearM === 800 &&
+            nearDist.text === 'Show from 800 m before a turn' && render.turnNear === true && byName.wocHud.text === 'HUD map: Showing');
+        for (let i = 0; i < 6; i++) nearDist.turn(1);
+        await until('2 km at the top', () => render.hudNearM === 2000 && nearDist.text === 'Show from 2 km before a turn' && nearDist.cells['0:Value'] === 9);
+        nearDist.turn(1);
+        await sleep(100);
+        assert(render.hudNearM === 2000 && nearDist.cells['0:Value'] === 9, 'no step past 2 km');
         guidance = turnReply(300);
-        await until('a turn near: told to the render, the HUD map shows', () => render.turnNear === true && byName.wocHud.text === 'HUD map: Showing');
         render.received.length = 0;
         render.dropClients();
         await until('the render again: told at once that the turn is near', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
@@ -569,27 +602,29 @@ async function main() {
         await sleep(450);
         nearBox.press();
         await until('always again: the turn taken back', () => render.hudNearTurn === 0 && render.turnNear === false && nearBox.selected === false);
+        await until('the distance greyed again', () => nearDist.enabled === false && nearDist.text === 'Show from 2 km before a turn');
         const queries = guidanceQueries;
         await sleep(150);
         assert.strictEqual(guidanceQueries, queries, 'the turn list not read once always again');
         console.log('ok   only near turns: the turn list read while ticked with the HUD on, the near turn told to the render (again when it ' +
-            'reconnects, and with the page hidden), No turn data without the list; the zoom a slider saved like the size');
+            'reconnects, and with the page hidden), No turn data without the list; the distance a slider saved like the size, taken by ' +
+            'the turn watch at once and greyed while the map shows always; the zoom a slider saved like the size');
         /* the edge fade and the speed patch */
         const fade = byName.wocHudFade, clear = byName.wocHudClear, clearRect = byName.wocHudClearRect;
-        assert(fade.text === 'Edge fade: 30 px' && fade.cells['0:Value'] === 3, 'the fade 30 px by default');
+        assert(fade.text === 'Fade map edges: 30 px' && fade.cells['0:Value'] === 3, 'the fade 30 px by default');
         fade.turn(1);
-        await until('faded wider', () => render.hudFade === 40 && fade.text === 'Edge fade: 40 px' && fade.cells['0:Value'] === 4);
+        await until('faded wider', () => render.hudFade === 40 && fade.text === 'Fade map edges: 40 px' && fade.cells['0:Value'] === 4);
         await until('the fade saved', () => patch.map.hud_edge_fade_px === 40);
-        assert(clear.enabled === true && clear.selected === true && clear.text === 'Clear behind speed', 'on by default');
-        assert.strictEqual(clearRect.text, 'Speed patch: 250x90 at 110,320');
+        assert(clear.enabled === true && clear.selected === true && clear.text === "Hide map behind BMW's speed", 'on by default');
+        assert.strictEqual(clearRect.text, 'Speed area: 250x90 at 110,320');
         assert(clearMoves.every((n) => byName[n].enabled === true), 'its place and size enabled');
-        assert.deepStrictEqual(clearMoves.map((n) => byName[n].text), ['Move left', 'Move right', 'Move up', 'Move down', 'Wider', 'Narrower',
-            'Taller', 'Shorter']);
+        assert.deepStrictEqual(clearMoves.map((n) => byName[n].text), ['Move speed area left', 'Move speed area right', 'Move speed area up', 'Move speed area down', 'Speed area wider', 'Speed area narrower',
+            'Speed area taller', 'Speed area shorter']);
         render.received.length = 0;
         byName.wocHudClearRight.emit('action');
-        await until('moved', () => clearRect.text === 'Speed patch: 250x90 at 120,320' && render.hudClearRect[0] === 120);
+        await until('moved', () => clearRect.text === 'Speed area: 250x90 at 120,320' && render.hudClearRect[0] === 120);
         byName.wocHudClearWider.emit('action');
-        await until('wider', () => clearRect.text === 'Speed patch: 260x90 at 120,320' && patch.map.hud_clear_w === 260);
+        await until('wider', () => clearRect.text === 'Speed area: 260x90 at 120,320' && patch.map.hud_clear_w === 260);
         assert.deepStrictEqual(render.received, [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '250', hud_clear_h: '90' },
             { cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '260', hud_clear_h: '90' }], 'one command to the render a press');
         clear.press();
@@ -602,7 +637,7 @@ async function main() {
         await sleep(450);
         clear.press();
         await until('on again', () => render.hudClear === 1 && clear.selected === true && clearMoves.every((n) => byName[n].enabled === true));
-        console.log('ok   the edge fade a slider saved like the size; Clear behind speed a checkbox, the speed patch moved and sized ' +
+        console.log('ok   the edge fade a slider saved like the size; Hide map behind BMW\'s speed a checkbox, the speed area moved and sized ' +
             '10 px a press, greyed while unticked');
         await sleep(450);
         showOn.pick(2);
@@ -793,7 +828,8 @@ async function main() {
         Object.values(components).filter((d) => !/^(wocRestart|wocWifi)/.test(d.name) && d.type !== 'title')
             .forEach((d) => assert.strictEqual(byName[d.name].visible, true, `${d.name} stays on the page`));
         ['wocEnable', 'wocDisable', 'wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard', 'wocGuide', 'wocShowOn', 'wocProfile', 'wocHudSize',
-            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudNearTurn', 'wocHudZoom', 'wocHudFade', 'wocHudClear', 'wocHudClearLeft', 'wocHudClearShorter']
+            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudNearTurn', 'wocHudNearDist', 'wocHudZoom', 'wocHudFade', 'wocHudClear', 'wocHudClearLeft',
+            'wocHudClearShorter']
             .forEach((n) => assert.deepStrictEqual([...byName[n].enabledSeen].sort(), [false, true], `${n} greyed and enabled in place`));
         const valueRow = /^[A-Z][A-Za-z ]+: [A-Z0-9\u2014]/;
         ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudZoom', 'wocHudFade', 'wocHudPos', 'wocHudClearRect',
@@ -890,7 +926,7 @@ async function main() {
         const deWords = de.words;
         de.words = { Patch: 'Patchen', 'Remove patch': 'Patch entfernen', General: 'Allgemein', 'Save logs': 'Logs speichern',
             'Status: {0}': 'Zustand: {0}', 'Saved logs: {0}': 'Gespeicherte Logs: {0}', "Hide BMW's turn box": 'BMW-Abbiegebox ausblenden',
-            'HUD map: {0}': 'Karte im HUD: {0}', 'Show on': 'Anzeigen auf', 'HUD (experimental)': 'HUD (experimentell)', 'Move left': 'Nach links' };
+            'HUD map: {0}': 'Karte im HUD: {0}', 'Show on': 'Anzeigen auf', 'HUD (experimental)': 'HUD (experimentell)', 'Move map left': 'Karte nach links' };
         const before = ['wocStatus', 'wocAaStatus', 'wocMap', 'wocLogsStatus', 'wocHud'].map((n) => byName[n].text);
         displayLanguage('DEUTSCH');
         await until('German', () => byName.wocEnable.text === 'Patchen' && byName.wocAaDisable.text === 'Patch entfernen' &&
@@ -899,13 +935,13 @@ async function main() {
             byName.wocAaStatus.text === before[1].replace(/^Status:/, 'Zustand:') && byName.wocLogsStatus.text.startsWith('Gespeicherte Logs: ') &&
             byName.wocHud.text === before[4].replace(/^HUD map:/, 'Karte im HUD:') && byName.wocShowOn.cells.HeaderText === 'Anzeigen auf' &&
             byName.wocShowOn.cells['1:ItemText'] === 'HUD (experimentell)' && byName.wocShowOn.cells['0:ItemText'] === 'Cluster' &&
-            byName.wocHudLeft.text === 'Nach links');
+            byName.wocHudLeft.text === 'Karte nach links');
         assert.strictEqual(byName.wocMap.text, before[2], 'a word German lacks: its English');
         assert.strictEqual(byName.wocAaZoomIn.text, 'Zoom in', 'a word German lacks: its English');
         displayLanguage('ENGLISCH__US');
         await until('English again', () => byName.wocEnable.text === 'Patch' && byName.wocHeadGeneral.text === 'General' &&
             byName.wocLogsSave.text === 'Save logs' && byName.wocGuide.text === "Hide BMW's turn box" && byName.wocStatus.text === before[0] &&
-            byName.wocHud.text === before[4] && byName.wocHudLeft.text === 'Move left');
+            byName.wocHud.text === before[4] && byName.wocHudLeft.text === 'Move map left');
         de.words = deWords;
         console.log('ok   a display language change writes every row again in its words, English for a word it lacks');
         await lserver.close();

@@ -98,6 +98,7 @@ int main()
        shipped.str("hud_edge_fade_px") == "30" && shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" &&
            shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
     ok("shipped: no local_conf, no target", !sets("waze-on-cluster.conf", "local_conf") && !sets("waze-on-cluster.conf", "target"));
+    ok("shipped: the HUD map near turns shown from 1000 m before the turn", shipped.str("hud_near_m") == "1000");
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);
     return failures ? 1 : 0;
 }
