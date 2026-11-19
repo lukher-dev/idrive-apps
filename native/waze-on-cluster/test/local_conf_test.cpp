@@ -122,6 +122,7 @@ int main()
     ok("shipped: the HUD map's edges faded over 30 px, black behind the speed readout (250x90 at 110,320)",
        shipped.str("hud_edge_fade_px") == "30" && shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" &&
            shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
+    ok("shipped: the HUD map near turns shown from 1000 m before the turn", shipped.str("hud_near_m") == "1000");
     /* the new HUD keys are ones this version knows: a local conf's are taken as any other's */
     std::ofstream(local) << "hud_edge_fade_px = 12\nhud_clear = 0\nhud_clear_w = 300\n";
     cld::Config m;

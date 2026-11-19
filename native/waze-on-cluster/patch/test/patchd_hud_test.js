@@ -3,7 +3,7 @@
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings ({"cmd":"cluster"}, "hud", "hud-size", "hud-pos",
  * "hud-keep-shown", "hud-near-turn", "hud-zoom", "hud-fade", "hud-clear",
- * "hud-clear-rect"):
+ * "hud-clear-rect", "hud-near-dist"):
  * each saved in map.state.conf for the render's next start, replacing an
  * earlier value and keeping the other lines, waze-on-cluster.local.conf
  * untouched; a bad value is refused and nothing written. A burst of changes
@@ -89,7 +89,7 @@ function ask(obj) {
             buf.split('\n').forEach(function (l) {
                 var m = null;
                 try { m = JSON.parse(l); } catch (e) {}
-                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
+                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect|hud-near-dist)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
             });
         });
         s.on('error', reject);
@@ -205,6 +205,23 @@ function ok(name, cond) {
     var refused = [];
     for (var i = 0; i < bad.length; i++) refused.push(await ask(Object.assign({ cmd: 'hud-clear-rect' }, bad[i])));
     ok('a rectangle with a side out of range, missing or not a whole number is refused, nothing written',
+        refused.every(function (x) { return !x.ok && !!x.reason; }) && fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
+    r = await ask({ cmd: 'hud-near-dist', m: 400 });
+    ok('how far before a turn the HUD map shows is saved next to them', r.ok && r.hud_near_m === 400 &&
+        /hud_clear_h = 10\nhud_near_m = 400\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-near-dist', m: 200 });
+    r2 = await ask({ cmd: 'hud-near-dist', m: 2000 });
+    ok('its ends of range, 200 and 2000 m, are saved', r.ok && r2.ok && r.hud_near_m === 200 && r2.hud_near_m === 2000 &&
+        /hud_near_m = 2000\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r2));
+    r = await ask({ cmd: 'hud-near-dist', m: 1100 });
+    ok('a whole number between the steps, 1100 m, is saved', r.ok && r.hud_near_m === 1100 &&
+        /hud_near_m = 1100\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    state = fs.readFileSync(STATE, 'utf8');
+    refused = [];
+    var badM = [199, 2001, 0, -200, 600.5, '600', null];
+    for (i = 0; i < badM.length; i++) refused.push(await ask({ cmd: 'hud-near-dist', m: badM[i] }));
+    refused.push(await ask({ cmd: 'hud-near-dist' }));
+    ok('a distance outside 200-2000, missing or not a whole number is refused, nothing written',
         refused.every(function (x) { return !x.ok && !!x.reason; }) && fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
     ok('the local conf untouched by every setting', fs.readFileSync(CONF, 'utf8') === conf);
     /* A burst: one write SAVE_MS after the last change, every reply after it. */

@@ -11,19 +11,22 @@
  * settings for this driver checkbox (profile_sync.js; greyed while no driver
  * profile is detected), Cluster map (the shared render's map), the Hide
  * BMW's turn box checkbox (the render's setting; a press asks the render to
- * flip it), Logs. HUD: HUD map (the map
- * on the HUD), the Keep HUD map over BMW's pop-ups and Only near turns
- * checkboxes, the Size, HUD zoom and Edge fade sliders, Position with Move
- * left, Move right, Move up, Move down and Centre, then the Clear behind
- * speed checkbox (the map blacked out behind BMW's speed) and the Speed
- * patch row with Move left, Move right, Move up, Move down, Wider,
- * Narrower, Taller and Shorter for its rectangle; the checkboxes, the
- * sliders and the buttons are greyed while the HUD is off or disabled
- * after errors, the speed patch's buttons also while it is unticked. CarPlay and Android Auto
- * have the same rows: Status, Patch, Remove patch; CarPlay adds CarPlay
- * Wi-Fi (the band, 5 GHz or 2.4 GHz) and, on 2.4 GHz, the line under it;
- * Android Auto adds Zoom with Zoom out and Zoom in, and the Hide phone's
- * turn card checkbox. Info rows read "Name: Value"; every on/off setting is
+ * flip it), Logs. HUD: HUD map (the map on the HUD), the Keep HUD map over
+ * BMW's pop-ups and Show HUD map only near turns checkboxes, the Show from
+ * ... before a turn slider (200 m to 2 km, the distance the turn watch
+ * opens at), the Map size, Map zoom and Fade map edges sliders, Map
+ * position with Move map left, Move map right, Move map up, Move map down
+ * and Centre map, then the Hide map behind BMW's speed checkbox (the map
+ * blacked out behind BMW's speed) and the Speed area row with Move speed
+ * area left, right, up and down and Speed area wider, narrower, taller and
+ * shorter for its rectangle; the checkboxes, the sliders and the buttons
+ * are greyed while the HUD is off or disabled after errors, the distance
+ * slider also while the map shows always, the speed area's buttons also
+ * while it is unticked. CarPlay and Android Auto have the same rows:
+ * Status, Patch, Remove patch; CarPlay adds CarPlay Wi-Fi (the band, 5 GHz
+ * or 2.4 GHz) and, on 2.4 GHz, the line under it; Android Auto adds Cluster
+ * map zoom with Zoom out and Zoom in, and the Hide phone's turn card
+ * checkbox. Info rows read "Name: Value"; every on/off setting is
  * a checkbox. One that cannot act now is greyed, and while patchd runs any
  * operation every operation is. Every row stays on the page but four, the
  * only rows shown and hidden: CarPlay Wi-Fi while CarPlay runs over Wi-Fi
@@ -96,6 +99,7 @@ const HUD_NAME = 'wocHud';
 const HUD_KEEP_NAME = 'wocHudKeep';
 const HUD_NEAR_NAME = 'wocHudNearTurn';
 const HUD_ZOOM_NAME = 'wocHudZoom';
+const HUD_NEAR_DIST_NAME = 'wocHudNearDist';
 /* The render's status, written once a second (world-readable): where the
  * map shows while the page, the render's one owner, is closed. */
 const STATUS_FILE = '/run/waze-on-cluster/status.json';
@@ -165,7 +169,7 @@ class WazeClusterApp extends OnlineApp {
             sender: this._sender });
         this._profiles.on('change', () => this._render());
         /* the HUD map only near turns: the turn list read, page shown or not, while the HUD shows the map with
-         * Only near turns ticked (the render's status, or its status file while the page is closed) */
+         * Show HUD map only near turns ticked (the render's status, or its status file while the page is closed) */
         this._turns = new TurnWatch({ builders: someipBuilders, log: logger, send: (m) => this._sender.send([m]) });
         this._turns.on('change', () => this._render());
         this._control.render.on('connect', () => this._turns.resend());
@@ -237,7 +241,7 @@ class WazeClusterApp extends OnlineApp {
         }
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
             AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, CP_ETA_NAME, RESTART_NAME, GUIDE_NAME,
-            HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_SIZE_NAME,
+            HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_NEAR_DIST_NAME, HUD_SIZE_NAME,
             HUD_ZOOM_NAME, HUD_FADE_NAME, HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
             .concat(Object.values(HUD_MOVE_NAMES), Object.values(HUD_CLEAR_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
                 LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES);
@@ -316,6 +320,14 @@ class WazeClusterApp extends OnlineApp {
                 logger.info(`SLIDER ${HUD_ZOOM_NAME} ${step}`);
                 delete this._written[`cell:${HUD_ZOOM_NAME}:0:Value`];
                 this._control.setHudZoomStep(step);
+                setImmediate(() => this._render());
+            }
+        });
+        this._components[HUD_NEAR_DIST_NAME].on('changed', (step) => {
+            if (step !== this._written[`cell:${HUD_NEAR_DIST_NAME}:0:Value`]) {
+                logger.info(`SLIDER ${HUD_NEAR_DIST_NAME} ${step}`);
+                delete this._written[`cell:${HUD_NEAR_DIST_NAME}:0:Value`];
+                this._control.setHudNearDistStep(step);
                 setImmediate(() => this._render());
             }
         });
@@ -529,10 +541,11 @@ class WazeClusterApp extends OnlineApp {
             logger.warn(`app status report failed: ${err && err.message}`)));
     }
 
-    /* The turn watch on while the HUD shows the map only near turns: as the
-     * render says while the page holds its socket, else as its status file
-     * says (the page closed, or never opened since the head unit started,
-     * or a status without the field: the render answering busy). */
+    /* The turn watch on while the HUD shows the map only near turns, at the
+     * distance before a turn the render says (1 km while it says none): as
+     * the render says while the page holds its socket, else as its status
+     * file says (the page closed, or never opened since the head unit
+     * started, or a status without the field: the render answering busy). */
     _followTurnMode() {
         let rs = this._control.renderStatus;
         if (!rs || rs.hud_near_turn === undefined) {
@@ -542,6 +555,7 @@ class WazeClusterApp extends OnlineApp {
                 rs = null;
             }
         }
+        this._turns.setDistance(rs ? rs.hud_near_m : undefined);
         this._turns.setActive(!!rs && rs.hud === 1 && rs.hud_near_turn === 1);
     }
 
@@ -609,11 +623,12 @@ class WazeClusterApp extends OnlineApp {
         [[ENABLE_NAME, t('Patch')], [DISABLE_NAME, t('Remove patch')], [AA_ENABLE_NAME, t('Patch')], [AA_DISABLE_NAME, t('Remove patch')],
             [AA_ZOOM_OUT_NAME, t('Zoom out')], [AA_ZOOM_IN_NAME, t('Zoom in')], [HEAD_GENERAL_NAME, t('General')], [LOGS_NAME, t('Logs')],
             [HEAD_HUD_NAME, t('HUD')],
-            [HUD_MOVE_NAMES.left, t('Move left')], [HUD_MOVE_NAMES.right, t('Move right')], [HUD_MOVE_NAMES.up, t('Move up')],
-            [HUD_MOVE_NAMES.down, t('Move down')], [HUD_CENTRE_NAME, t('Centre')],
-            [HUD_CLEAR_NAMES.left, t('Move left')], [HUD_CLEAR_NAMES.right, t('Move right')], [HUD_CLEAR_NAMES.up, t('Move up')],
-            [HUD_CLEAR_NAMES.down, t('Move down')], [HUD_CLEAR_NAMES.wider, t('Wider')], [HUD_CLEAR_NAMES.narrower, t('Narrower')],
-            [HUD_CLEAR_NAMES.taller, t('Taller')], [HUD_CLEAR_NAMES.shorter, t('Shorter')],
+            [HUD_MOVE_NAMES.left, t('Move map left')], [HUD_MOVE_NAMES.right, t('Move map right')], [HUD_MOVE_NAMES.up, t('Move map up')],
+            [HUD_MOVE_NAMES.down, t('Move map down')], [HUD_CENTRE_NAME, t('Centre map')],
+            [HUD_CLEAR_NAMES.left, t('Move speed area left')], [HUD_CLEAR_NAMES.right, t('Move speed area right')],
+            [HUD_CLEAR_NAMES.up, t('Move speed area up')], [HUD_CLEAR_NAMES.down, t('Move speed area down')],
+            [HUD_CLEAR_NAMES.wider, t('Speed area wider')], [HUD_CLEAR_NAMES.narrower, t('Speed area narrower')],
+            [HUD_CLEAR_NAMES.taller, t('Speed area taller')], [HUD_CLEAR_NAMES.shorter, t('Speed area shorter')],
             [RESTART_NAME, t('Restart head unit')]].forEach(([name, text]) => this._write(name, text));
         this._write(STATUS_NAME, c.statusText());
         this._write(MAP_NAME, c.mapText());
@@ -661,9 +676,15 @@ class WazeClusterApp extends OnlineApp {
         this._write(HUD_KEEP_NAME, t("Keep HUD map over BMW's pop-ups"));
         this._setSelected(HUD_KEEP_NAME, c.hudKeepShown() === true);
         this._setEnabled(HUD_KEEP_NAME, c.canKeepHud());
-        this._write(HUD_NEAR_NAME, t('Only near turns'));
+        this._write(HUD_NEAR_NAME, t('Show HUD map only near turns'));
         this._setSelected(HUD_NEAR_NAME, c.hudNearTurn() === true);
         this._setEnabled(HUD_NEAR_NAME, c.canNearTurn());
+        /* how far before a turn: greyed also while the map shows always */
+        this._writeCell(HUD_NEAR_DIST_NAME, 'TextDescription', c.hudNearDistText(), 'Text', 0);
+        if (c.hudNearDistStep() !== null) {
+            this._writeCell(HUD_NEAR_DIST_NAME, 'Value', c.hudNearDistStep(), 'SInt', 0);
+        }
+        this._setEnabled(HUD_NEAR_DIST_NAME, c.canChangeHudNearDist());
         this._writeCell(HUD_ZOOM_NAME, 'TextDescription', c.hudZoomText(), 'Text', 0);
         if (c.hudZoomStep() !== null) {
             this._writeCell(HUD_ZOOM_NAME, 'Value', c.hudZoomStep(), 'SInt', 0);
@@ -686,7 +707,7 @@ class WazeClusterApp extends OnlineApp {
         Object.values(HUD_MOVE_NAMES).forEach((n) => this._setEnabled(n, adjust));
         this._setEnabled(HUD_CENTRE_NAME, c.canCentreHud());
         /* the speed patch: its place and size greyed also while it is off */
-        this._write(HUD_CLEAR_NAME, t('Clear behind speed'));
+        this._write(HUD_CLEAR_NAME, t("Hide map behind BMW's speed"));
         this._setSelected(HUD_CLEAR_NAME, c.hudClear() === true);
         this._setEnabled(HUD_CLEAR_NAME, c.canHudClear());
         this._write(HUD_CLEAR_RECT_NAME, c.hudClearText());

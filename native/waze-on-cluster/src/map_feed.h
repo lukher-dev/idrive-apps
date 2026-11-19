@@ -102,6 +102,9 @@ struct FeedConfig {
      * turn is past or has not said so again for hud_near_expire_ms. */
     bool hud_near_turn = false;
     int64_t hud_near_expire_ms = 90000;
+    /* How many metres before a turn the app says it is near (200-2000): the
+     * app's own gate, kept and reported here for it to read back. */
+    unsigned hud_near_m = 1000;
     /* On the HUD: the zoom, 100-250 % (hud_crop.h), centred on a point in
      * per mille of the picture; used at most at the box's cap (the default,
      * 250, is the cluster's own scale at any box 435 px wide or more). */
@@ -156,6 +159,7 @@ struct FeedStatus {
     bool hud_keep_shown = false;   /* the HUD map kept shown over the stock HMI's pop-ups */
     bool hud_near_turn = false;    /* the HUD map only near turns */
     bool hud_gate = true;          /* and whether a turn is near (always, with hud_near_turn off) */
+    unsigned hud_near_m = 1000;    /* and how many metres before a turn the app shows it */
     unsigned hud_zoom_pct = 250;   /* the HUD map's zoom setting */
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
     unsigned hud_edge_fade_px = 30;   /* the HUD map's edges' fade */

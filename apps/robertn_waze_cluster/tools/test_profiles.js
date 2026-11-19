@@ -468,6 +468,18 @@ async function main() {
         assert(['hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].every((k) => !(k in old)),
             'a patchd before them: not told');
     });
+    await check('ProfileSync: how far before a turn the HUD map shows goes to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_near_turn: 1, hud_near_m: 600 }));
+        const hud = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(hud.hud_near_m, '600');
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0));
+        const old = got.filter((m) => m.cmd === 'hud').pop();
+        assert(!('hud_near_m' in old), 'a patchd before it: not told');
+    });
     await check('ProfileSync: settings go to the render through its RenderSender', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,

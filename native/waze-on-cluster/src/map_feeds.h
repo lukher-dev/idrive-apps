@@ -71,6 +71,9 @@ public:
     void set_guide_hold(bool hold);
     /* The HUD map only near turns (FeedConfig::hud_near_turn), at once. */
     void set_hud_near_turn(bool on);
+    /* How many metres before a turn the app shows it (FeedConfig::hud_near_m),
+     * kept for the status; the app gates on it, not this. */
+    void set_hud_near_m(unsigned m) { base_.hud_near_m = m; }
     /* The app's word that a turn is near or not ({"cmd":"turn"}); near
      * holds for hud_near_expire_ms after it was last said (poll). */
     void set_turn_near(bool near, int64_t now_ms);

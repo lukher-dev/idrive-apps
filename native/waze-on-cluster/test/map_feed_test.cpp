@@ -508,6 +508,14 @@ static void near_turns()
     st = feeds.status("decode");
     ok("near turns on again, no turn near: hidden again", !hud_up() && !st.hud_gate && st.hud_state == "turn_wait");
 
+    /* How far before a turn the HUD map shows: the app's to gate on, kept and reported, the gate as it was. */
+    ok("near turns: 1000 m before a turn by default", feeds.status("decode").hud_near_m == 1000);
+    feeds.set_hud_near_m(400);
+    pump(1000, &f1);
+    st = feeds.status("decode");
+    ok("400 m before a turn: in the status, the gate as it was", st.hud_near_m == 400 && feeds.hud_settings().hud_near_m == 400 &&
+                                                                 !hud_up() && !st.hud_gate && st.hud_state == "turn_wait");
+
     feeds.set_stream(false, false, Picture::None);
     pump(500, nullptr);
     ok("no stream: the HUD's state is the stream's, not waiting for a turn", feeds.status("decode").hud_state != "turn_wait");

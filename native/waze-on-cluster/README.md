@@ -101,13 +101,13 @@ the cluster is hidden (cluster-render README, "Guide hold"). The app's
 
 **Where the map shows.** The app's **Show on** sets the cluster, the HUD,
 both or neither (**Off**), at once. On the HUD the frames are scaled on the
-head unit to the size shown (**Size**, 30 % to 135 % of the HUD's width, 100 %
-by default, or Standard, about 57 %), moved by **Position** (40 px down by
+head unit to the size shown (**Map size**, 30 % to 135 % of the HUD's width, 100 %
+by default, or Standard, about 57 %), moved by **Map position** (40 px down by
 default, which on a G30 takes the phone's arrival-time card below what the
 HUD shows), and a
 night map's background made black, which the HUD shows as nothing. Above
 100 % the map keeps its shape and its sides are cut by the HUD's edges; at
-135 % it fills the HUD's height. There left and right **Position** slides
+135 % it fills the HUD's height. There left and right **Map position** slides
 which part of the map shows instead of moving it. With
 both, the HUD gets up to half the upload budget, only what it uses. The
 HUD map steps aside while BMW's HUD lists show (never for route guidance),
@@ -115,17 +115,18 @@ unless **Keep HUD map over BMW's pop-ups** is ticked. **Own settings for
 this driver** gives the driver profile in use its own copy of these
 settings.
 
-**Only near turns** (`hud_near_turn`) keeps the HUD map hidden, its slot
+**Show HUD map only near turns** (`hud_near_turn`) keeps the HUD map hidden, its slot
 let go, until the app says a turn is near. The app reads the maneuvers
 BMW navigation keeps for its own HUD view (`GuidanceEventList`, view
 `HUD.RB.Main`, which the phone's navigation feeds) and sends
-`{"cmd":"turn","near":"1"|"0"}`: near from 400 m before a turn (1 km
-before a motorway exit), past 10 s after the next maneuver is further
+`{"cmd":"turn","near":"1"|"0"}`: near from **Show from** before a turn
+(`hud_near_m`, 200 to 2000 m, 1000 by default; at least 1 km before a
+motorway exit), past 10 s after the next maneuver is further
 than that plus 400 m, or gone. It says so again every 30 s; a near not
 said again for `hud_near_expire_ms` (90 s) counts as past. The cluster's
 map does not follow it.
 
-**HUD zoom** (`hud_zoom_pct`, 100 to 250 %) shows the picture's middle
+**Map zoom** (`hud_zoom_pct`, 100 to 250 %) shows the picture's middle
 100/zoom of each side, centred on `hud_crop_cx_pm`, `hud_crop_cy_pm`
 (per mille of the picture, 500 and 500 by default; opt-in keys in
 `features.conf`) and held inside it, scaled to the HUD map's size. A size
@@ -135,9 +136,9 @@ use. The default, 100 %, shows the whole picture, the phone's turn card
 and arrival-time card with it. `make hud-preview` builds a host tool that runs the same crop and
 scaling on a 1088x480 BMP, to choose the centre.
 
-**Edge fade** (`hud_edge_fade_px`, 0 to 60 px, 30 by default) fades the HUD
+**Fade map edges** (`hud_edge_fade_px`, 0 to 60 px, 30 by default) fades the HUD
 map's four edges to black over that many pixels, so the map has no hard
-square edge. **Clear behind speed** (`hud_clear`, on by default) makes the
+square edge. **Hide map behind BMW's speed** (`hud_clear`, on by default) makes the
 map black in a rectangle of the HUD (`hud_clear_x`, `hud_clear_y`,
 `hud_clear_w`, `hud_clear_h`, HUD pixels from its top left, 250x90 at
 110,320 by default), feathered at its edges, so BMW's speed readout stays

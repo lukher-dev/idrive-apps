@@ -289,6 +289,7 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     s.hud_keep_shown = base_.hud_keep_shown;
     s.hud_near_turn = base_.hud_near_turn;
     s.hud_gate = gate_open();
+    s.hud_near_m = base_.hud_near_m;
     s.hud_zoom_pct = base_.hud_zoom_pct;
     s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
     s.hud_edge_fade_px = base_.hud_edge_fade_px;

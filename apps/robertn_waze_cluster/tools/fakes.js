@@ -147,6 +147,8 @@ class FakeRender extends LineServer {
         this.hudZoom = 250;
         this.hudZoomCap = 240;
         this.turnNear = false;
+        /* how far before a turn the HUD map shows, in metres (null: a tool without it) */
+        this.hudNearM = 1000;
         /* the HUD map's edge fade, and the speed patch and its rectangle in HUD pixels (null: a tool without them) */
         this.hudFade = 30;
         this.hudClear = 1;
@@ -182,6 +184,7 @@ class FakeRender extends LineServer {
                     hud_zoom_used: Math.min(this.hudZoom, this.hudZoomCap) });
                 if (this.hud && !gate && !this.hudState && this.state === 'showing') s.hud_state = 'turn_wait';
             }
+            if (this.hudNearM !== null) s.hud_near_m = this.hudNearM;
             if (this.hudFade !== null) s.hud_edge_fade_px = this.hudFade;
             if (this.hudClear !== null) {
                 const [x, y, w, h] = this.hudClearRect;
@@ -252,6 +255,7 @@ class FakeRender extends LineServer {
             if (msg.hud_keep_shown !== undefined && this.hudKeep !== null) this.hudKeep = Number(msg.hud_keep_shown);
             if (msg.hud_near_turn !== undefined && this.hudNearTurn !== null) this.hudNearTurn = Number(msg.hud_near_turn);
             if (msg.hud_zoom_pct !== undefined && this.hudNearTurn !== null) this.hudZoom = Number(msg.hud_zoom_pct);
+            if (msg.hud_near_m !== undefined && this.hudNearM !== null) this.hudNearM = Number(msg.hud_near_m);
             if (msg.hud_edge_fade_px !== undefined && this.hudFade !== null) this.hudFade = Number(msg.hud_edge_fade_px);
             if (msg.hud_clear !== undefined && this.hudClear !== null) this.hudClear = Number(msg.hud_clear);
             if (msg.hud_clear_x !== undefined && this.hudClear !== null) {
@@ -291,7 +295,7 @@ class FakePatch extends LineServer {
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
         this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 250,
-            hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
+            hud_near_m: 1000, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
         this.shared = null;
         this.own = {};
         this.active = null;
@@ -371,10 +375,11 @@ class FakePatch extends LineServer {
         }
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
             'hud-keep-shown': ['hud_keep_shown'], 'hud-near-turn': ['hud_near_turn'], 'hud-zoom': ['hud_zoom_pct'],
-            'hud-fade': ['hud_edge_fade_px'], 'hud-clear': ['hud_clear'], 'hud-clear-rect': ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'] };
+            'hud-near-dist': ['hud_near_m'], 'hud-fade': ['hud_edge_fade_px'], 'hud-clear': ['hud_clear'], 'hud-clear-rect': ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'] };
         if (MAP[msg.cmd]) {
             const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y] : msg.cmd === 'hud-clear-rect' ? [msg.x, msg.y, msg.w, msg.h]
-                : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-zoom' ? msg.pct : msg.cmd === 'hud-fade' ? msg.px : msg.on];
+                : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-zoom' ? msg.pct : msg.cmd === 'hud-fade' ? msg.px
+                : msg.cmd === 'hud-near-dist' ? msg.m : msg.on];
             this.map = Object.assign({}, this.map);
             MAP[msg.cmd].forEach((k, i) => { this.map[k] = v[i]; });
             return;

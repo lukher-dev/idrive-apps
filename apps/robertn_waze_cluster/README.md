@@ -70,28 +70,30 @@ The app is in the head unit's display language.
 - **Keep HUD map over BMW's pop-ups:** unticked (the default), the map steps
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
-- **Only near turns:** ticked, the HUD map shows only while a turn is close
-  (about 400 m ahead, 1 km for a motorway exit) and goes about 10 s after
-  it. It reads the turns your navigation app sends the car, as BMW's own
+- **Show HUD map only near turns:** ticked, the HUD map shows only while a
+  turn is close (from **Show from**, 1 km by default, and at least 1 km for
+  a motorway exit) and goes about 10 s after it. It reads the turns your navigation app sends the car, as BMW's own
   HUD arrow does. Google Maps sends them; Apple Maps should too, though it
   is untried. With an app that sends none, such as Waze, the map never
   shows.
-- **HUD zoom:** a closer part of the map on the HUD, 100 % (the whole map)
+- **Show from … before a turn:** how far before a turn the map appears with
+  the option above, 200 m to 2 km.
+- **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map)
   to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
   the row shows the zoom in use. By default it is as close as the HUD map's
   size allows, which is the cluster's own scale.
-- **Edge fade:** how far the HUD map's edges fade out, 0 px (a hard edge)
+- **Fade map edges:** how far the HUD map's edges fade out, 0 px (a hard edge)
   to 60 px.
-- **Size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
+- **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
   HUD's edges cut the map's sides.
-- **Move left / Move right / Move up / Move down** and **Centre:** where the
+- **Move map left / right / up / down** and **Centre map:** where the
   map sits on the HUD. Above 100 %, left and right slide the map inside the
   HUD.
-- **Clear behind speed:** ticked (the default), the map is hidden in a
-  patch of the HUD, so BMW's speed readout stays readable. **Speed patch**
-  shows the patch's size and place in HUD pixels; its **Move left / Move
-  right / Move up / Move down** and **Wider / Narrower / Taller / Shorter**
-  move and size it 10 px a press.
+- **Hide map behind BMW's speed:** ticked (the default), the map is hidden
+  in an area of the HUD, so BMW's speed readout stays readable. **Speed
+  area** shows that area's size and place in HUD pixels; **Move speed area
+  left / right / up / down** and **Speed area wider / narrower / taller /
+  shorter** move and size it 10 px a press.
 
 **CarPlay** and **Android Auto**
 
@@ -129,8 +131,8 @@ apply the change.
 | The map never shows on the cluster | Set **Instrument cluster > Central display area** to **Map view**. With Route preview or Assisted Driving View the cluster's own content takes the centre. |
 | `Cluster map: Error` or `Unavailable` | [Report it](#logs-and-reporting-a-problem). |
 | `HUD map: Disabled after errors` | Update **Cluster renderer** in the Store. The cluster map keeps working. |
-| `HUD map: Waiting for a turn` | Normal with **Only near turns**: the map shows as the next turn gets close. |
-| `HUD map: No turn data` | The car's turn list isn't available to the app. Untick **Only near turns** to have the map always, and [report it](#logs-and-reporting-a-problem). |
+| `HUD map: Waiting for a turn` | Normal with **Show HUD map only near turns**: the map shows as the next turn gets close. |
+| `HUD map: No turn data` | The car's turn list isn't available to the app. Untick **Show HUD map only near turns** to have the map always, and [report it](#logs-and-reporting-a-problem). |
 | CarPlay audio cuts out and `CarPlay Wi-Fi: 2.4 GHz` | On your iPhone, turn Wi-Fi off and on. |
 
 ## Logs and reporting a problem

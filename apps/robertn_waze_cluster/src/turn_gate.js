@@ -11,7 +11,11 @@
  * (null when the HUD shows none or one toMetres cannot read) and its text.
  *
  * TurnGate.update(maneuver, nowMs) opens at a turn (TRIGGER_KINDS) within
- * showM, or branchShowM for a motorway exit. Once open it stays open while
+ * showM (1000 m by default), or branchShowM (1000 m) for a motorway exit.
+ * setDistance(m), the distance the driver chose, sets showM to m and
+ * branchShowM to m but at least BRANCH_MIN_M, so a motorway exit still
+ * shows from 1 km; it leaves the gate open or closed as it is, and the
+ * next update measures against the new distance. Once open it stays open while
  * the next maneuver is a turn within that distance plus extraHideM, or a
  * turn whose distance does not read (the HUD blanks it at the junction)
  * for at most blankMaxMs; it closes after holdMs in a row of anything
@@ -33,6 +37,8 @@ const UNITS = {
     yd: 0.9144, yard: 0.9144, yards: 0.9144
 };
 const FRACTIONS = { '¼': '1/4', '½': '1/2', '¾': '3/4' };
+/* The distance a motorway exit opens the gate from at least, in metres. */
+const BRANCH_MIN_M = 1000;
 
 /* A shown distance in metres: "350" m, "1,500" ft, "1,5" km, "¼" or
  * "1 1/2" mi; null for no number, a unit not known here or none. */
@@ -108,14 +114,20 @@ function parseManeuver(reply) {
 class TurnGate {
     constructor(options) {
         const o = options || {};
-        this.showM = o.showM === undefined ? 400 : o.showM;
-        this.branchShowM = o.branchShowM === undefined ? 1000 : o.branchShowM;
+        this.showM = o.showM === undefined ? 1000 : o.showM;
+        this.branchShowM = o.branchShowM === undefined ? BRANCH_MIN_M : o.branchShowM;
         this.extraHideM = o.extraHideM === undefined ? 400 : o.extraHideM;
         this.holdMs = o.holdMs === undefined ? 10000 : o.holdMs;
         this.blankMaxMs = o.blankMaxMs === undefined ? 60000 : o.blankMaxMs;
         this.open = false;
         this._leavingAt = null;
         this._blankSince = null;
+    }
+
+    /* The distance the map shows from before a turn, in metres; a motorway exit's at least BRANCH_MIN_M. */
+    setDistance(m) {
+        this.showM = m;
+        this.branchShowM = Math.max(m, BRANCH_MIN_M);
     }
 
     /* maneuver: parseManeuver's, or null. Returns whether the map shows. */
@@ -149,4 +161,4 @@ class TurnGate {
     }
 }
 
-module.exports = { parseManeuver, toMetres, TurnGate, TRIGGER_KINDS, KINDS };
+module.exports = { parseManeuver, toMetres, TurnGate, TRIGGER_KINDS, KINDS, BRANCH_MIN_M };

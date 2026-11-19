@@ -109,6 +109,7 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_edge_fade_px\":" + std::to_string(s.hud_edge_fade_px) + ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
            ",\"hud_clear_x\":" + std::to_string(s.hud_clear_x) + ",\"hud_clear_y\":" + std::to_string(s.hud_clear_y) +
            ",\"hud_clear_w\":" + std::to_string(s.hud_clear_w) + ",\"hud_clear_h\":" + std::to_string(s.hud_clear_h) +
+           ",\"hud_near_m\":" + std::to_string(s.hud_near_m) +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -132,7 +133,7 @@ public:
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
         auto near_turn = msg.find("hud_near_turn"), near = msg.find("near"), zoom = msg.find("hud_zoom_pct");
-        auto fade = msg.find("hud_edge_fade_px"), clear = msg.find("hud_clear");
+        auto fade = msg.find("hud_edge_fade_px"), clear = msg.find("hud_clear"), near_m = msg.find("hud_near_m");
         auto cx = msg.find("hud_clear_x"), cy = msg.find("hud_clear_y"), cw = msg.find("hud_clear_w"), ch = msg.find("hud_clear_h");
         if (cmd == "start" && it != msg.end()) {
             log_info("start %s", it->second.c_str());
@@ -149,7 +150,7 @@ public:
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
                                     keep != msg.end() || near_turn != msg.end() || zoom != msg.end() ||
                                     fade != msg.end() || clear != msg.end() || cx != msg.end() || cy != msg.end() ||
-                                    cw != msg.end() || ch != msg.end())) {
+                                    cw != msg.end() || ch != msg.end() || near_m != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -189,6 +190,14 @@ public:
                     feeds_->set_hud_near_turn(near_turn->second == "1");
                 else
                     log_warn("hud: hud_near_turn must be 0 or 1, not %s", near_turn->second.c_str());
+            }
+            /* and how many metres before a turn the app shows it */
+            if (near_m != msg.end()) {
+                long v = 0;
+                if (whole(near_m->second, 200, 2000, &v))
+                    feeds_->set_hud_near_m((unsigned)v);
+                else
+                    log_warn("hud: hud_near_m must be 200-2000, not %s", near_m->second.c_str());
             }
             /* and its zoom */
             if (zoom != msg.end()) {
@@ -293,6 +302,7 @@ int serve(Config cfg)
         {"hud_width_pct", 0, 135},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_near_turn", 0, 1},       {"hud_near_expire_ms", 10000, 600000},
+        {"hud_near_m", 200, 2000},
         {"hud_zoom_pct", 100, 250}, {"hud_crop_cx_pm", 0, 1000},     {"hud_crop_cy_pm", 0, 1000},
         {"hud_edge_fade_px", 0, 60}, {"hud_clear", 0, 1},            {"hud_clear_x", 0, 799},
         {"hud_clear_y", 0, 479},    {"hud_clear_w", 10, 800},        {"hud_clear_h", 10, 480},
@@ -342,6 +352,7 @@ int serve(Config cfg)
     fc.hud_keep_shown = cfg.num("hud_keep_shown") != 0;
     fc.hud_near_turn = cfg.num("hud_near_turn") != 0;
     fc.hud_near_expire_ms = cfg.num("hud_near_expire_ms");
+    fc.hud_near_m = (unsigned)cfg.num("hud_near_m");
     fc.hud_zoom_pct = (unsigned)cfg.num("hud_zoom_pct");
     fc.hud_crop_cx_pm = (unsigned)cfg.num("hud_crop_cx_pm");
     fc.hud_crop_cy_pm = (unsigned)cfg.num("hud_crop_cy_pm");
@@ -634,6 +645,7 @@ void define_keys(Config *cfg)
     cfg->define("hud_keep_shown", "0");
     cfg->define("hud_near_turn", "0");
     cfg->define("hud_near_expire_ms", "90000");
+    cfg->define("hud_near_m", "1000");
     cfg->define("hud_zoom_pct", "100");
     cfg->define("hud_crop_cx_pm", "500");
     cfg->define("hud_crop_cy_pm", "500");

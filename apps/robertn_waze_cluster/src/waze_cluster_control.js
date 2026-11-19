@@ -13,14 +13,15 @@
  *   Render control socket (RENDER_PATH)
  *     app  -> tool  {"cmd":"guide","hide":0|1}  BMW's turn box hidden while the map shows, or not
  *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"|
- *                    "hud_near_turn"|"hud_zoom_pct"|"hud_edge_fade_px"|"hud_clear"|
+ *                    "hud_near_turn"|"hud_near_m"|"hud_zoom_pct"|"hud_edge_fade_px"|"hud_clear"|
  *                    "hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
  *                    the map's settings (patchd saves them)
  *     tool -> app   {"ev":"status","state":"idle"|"starting"|"showing"|"frozen"|"error"|"unsupported",
  *                    "target","page","reason","hide_bmw_guidance","guide_disabled","cluster","hud",
- *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_edge_fade_px",
+ *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_near_m","hud_edge_fade_px",
  *                    "hud_clear","hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
- *                   (hud_keep_shown 0|1, absent from a tool before it; hud_edge_fade_px 0..60, 0 off;
+ *                   (hud_keep_shown 0|1, absent from a tool before it; hud_near_m 200..2000, how far
+ *                    before a turn the HUD map shows only near turns; hud_edge_fade_px 0..60, 0 off;
  *                    hud_clear 0|1, the speed patch, the map blacked out in the rectangle
  *                    hud_clear_x,_y,_w,_h in the HUD's 800x480 px; each absent from a tool before it)
  *                   (unsupported: the head unit refuses the tool, which stays idle)
@@ -121,6 +122,9 @@ const HUD_ZOOM_STEPS = (HUD_ZOOM_MAX - HUD_ZOOM_MIN) / HUD_ZOOM_STEP_PCT;
 /* The HUD map's edges faded to black over HUD_FADE_STEP_PX steps from 0 (off) to HUD_FADE_MAX_PX. */
 const HUD_FADE_MAX_PX = 60, HUD_FADE_STEP_PX = 10;
 const HUD_FADE_STEPS = HUD_FADE_MAX_PX / HUD_FADE_STEP_PX;
+/* How far before a turn the HUD map shows only near turns: HUD_NEAR_STEP_M steps from HUD_NEAR_MIN_M to HUD_NEAR_MAX_M. */
+const HUD_NEAR_MIN_M = 200, HUD_NEAR_MAX_M = 2000, HUD_NEAR_STEP_M = 200;
+const HUD_NEAR_STEPS = (HUD_NEAR_MAX_M - HUD_NEAR_MIN_M) / HUD_NEAR_STEP_M;
 /* The speed patch: the map blacked out in a rectangle of the HUD's scene (HUD_W x HUD_H px) so BMW's speed
  * stays readable, moved or sized HUD_CLEAR_PX a press, at least HUD_CLEAR_MIN_PX each way and held inside. */
 const HUD_W = 800, HUD_H = 480, HUD_CLEAR_PX = 10, HUD_CLEAR_MIN_PX = 10;
@@ -328,6 +332,17 @@ function shownOnOf(rs) {
     return cluster && hud ? 'both' : cluster ? 'cluster' : hud ? 'hud' : 'off';
 }
 
+/* A distance in the language's words: whole metres below 1 km ("800 m"),
+ * kilometres to a tenth from it ("1 km", "1.2 km", the decimal separator
+ * the language's own). */
+function distanceText(m) {
+    const tenths = Math.round(m / 100);
+    if (tenths < 10) {
+        return t('{0} m', Math.round(m));
+    }
+    return tenths % 10 ? t('{0}.{1} km', Math.floor(tenths / 10), tenths % 10) : t('{0} km', tenths / 10);
+}
+
 /* After a zoom or turn-card value that waits for the next head-unit start. */
 function afterRestart(waits) {
     return waits ? ` ${t('(after restart)')}` : '';
@@ -528,7 +543,7 @@ class WazeClusterControl extends EventEmitter {
 
     hudSizeText() {
         const w = this.hudWidth();
-        return t('Size: {0}', w == null ? '—' : w === 0 ? t('Standard') : t('{0} %', w));
+        return t('Map size: {0}', w == null ? '—' : w === 0 ? t('Standard') : t('{0} %', w));
     }
 
     /* The size and place change only while the HUD is on and not disabled. */
@@ -572,6 +587,8 @@ class WazeClusterControl extends EventEmitter {
         this._askedZoom = null;
         clearTimeout(this._askedFadeTimer);
         this._askedFade = null;
+        clearTimeout(this._askedNearTimer);
+        this._askedNear = null;
     }
 
     /* ---- where the HUD map is: moved from its centre, in HUD pixels ---- */
@@ -652,6 +669,48 @@ class WazeClusterControl extends EventEmitter {
         }
     }
 
+    /* ---- how far before a turn the HUD map shows, only near turns ---- */
+    /* The distance in metres, as just asked until the render shows it; null while it has not said. */
+    hudNearDist() {
+        if (this._askedNear != null) {
+            return this._askedNear;
+        }
+        const v = this.renderStatus && this.renderStatus.hud_near_m;
+        return typeof v === 'number' ? v : null;
+    }
+    hudNearDistText() {
+        const m = this.hudNearDist();
+        return t('Show from {0} before a turn', m == null ? '—' : distanceText(m));
+    }
+    /* The distance as a slider position, 0 (HUD_NEAR_MIN_M) to HUD_NEAR_STEPS (HUD_NEAR_MAX_M); null while unknown. */
+    hudNearDistStep() {
+        const m = this.hudNearDist();
+        if (m == null) {
+            return null;
+        }
+        return Math.round((Math.max(HUD_NEAR_MIN_M, Math.min(HUD_NEAR_MAX_M, m)) - HUD_NEAR_MIN_M) / HUD_NEAR_STEP_M);
+    }
+    /* Changes as the size and place do, and only while the map shows only near turns. */
+    canChangeHudNearDist() {
+        return this.canNearTurn() && this.hudNearTurn() === true && this.hudNearDist() !== null;
+    }
+    /* The distance at a slider position: the render at once, patchd saves it. */
+    setHudNearDistStep(step) {
+        if (!Number.isInteger(step) || step < 0 || step > HUD_NEAR_STEPS || !this.canChangeHudNearDist() || step === this.hudNearDistStep()) {
+            return;
+        }
+        const m = HUD_NEAR_MIN_M + step * HUD_NEAR_STEP_M;
+        this._askedNear = m;
+        clearTimeout(this._askedNearTimer);
+        this._askedNearTimer = setTimeout(() => {
+            this._askedNear = null;
+            this.emit('change');
+        }, HUD_ASKED_MS);
+        this.render.send({ cmd: 'hud', hud_near_m: String(m) });
+        this.patch.send({ cmd: 'hud-near-dist', m });
+        this.emit('change');
+    }
+
     /* ---- the HUD map's zoom ---- */
     /* The zoom asked, as just asked until the render shows it; null while it has not said. */
     hudZoom() {
@@ -666,7 +725,7 @@ class WazeClusterControl extends EventEmitter {
         const asked = this.hudZoom();
         const used = this.renderStatus && this.renderStatus.hud_zoom_used;
         const shown = this._askedZoom == null && typeof used === 'number' ? used : asked;
-        return t('HUD zoom: {0}', shown == null ? '—' : t('{0} %', shown));
+        return t('Map zoom: {0}', shown == null ? '—' : t('{0} %', shown));
     }
     /* The zoom as a slider position, 0 (100 %) to HUD_ZOOM_STEPS (250 %); null while unknown. */
     hudZoomStep() {
@@ -707,7 +766,7 @@ class WazeClusterControl extends EventEmitter {
     }
     hudEdgeFadeText() {
         const px = this.hudEdgeFade();
-        return t('Edge fade: {0}', px == null ? '—' : t('{0} px', px));
+        return t('Fade map edges: {0}', px == null ? '—' : t('{0} px', px));
     }
     /* The fade as a slider position, 0 (off) to HUD_FADE_STEPS; null while unknown. */
     hudEdgeFadeStep() {
@@ -766,7 +825,7 @@ class WazeClusterControl extends EventEmitter {
     }
     hudClearText() {
         const r = this.hudClearRect();
-        return t('Speed patch: {0}', r ? t('{0}x{1} at {2},{3}', r[2], r[3], r[0], r[1]) : '—');
+        return t('Speed area: {0}', r ? t('{0}x{1} at {2},{3}', r[2], r[3], r[0], r[1]) : '—');
     }
     /* Its place and size change while it is on. */
     canAdjustHudClear() {
@@ -802,15 +861,15 @@ class WazeClusterControl extends EventEmitter {
     hudPositionText() {
         const at = this.hudOffset();
         if (!at) {
-            return t('Position: {0}', '—');
+            return t('Map position: {0}', '—');
         }
         const [x, y] = at;
         if (!x && !y) {
-            return t('Position: {0}', t('Centre'));
+            return t('Map position: {0}', t('Centre'));
         }
         const h = x > 0 ? t('{0} px right', x) : x < 0 ? t('{0} px left', -x) : '';
         const v = y > 0 ? t('{0} px down', y) : y < 0 ? t('{0} px up', -y) : '';
-        return t('Position: {0}', h && v ? t('{0}, {1}', h, v) : h || v);
+        return t('Map position: {0}', h && v ? t('{0}, {1}', h, v) : h || v);
     }
 
     /* CarPlay's Patch button is offered for an original (never patched, or reverted), an
@@ -1042,9 +1101,9 @@ class WazeClusterControl extends EventEmitter {
     zoomText() {
         const aa = this.aa();
         if (!aa || aa.dpi == null) {
-            return t('Zoom: {0}', '—');
+            return t('Cluster map zoom: {0}', '—');
         }
-        return t('Zoom: {0}', t('{0} dpi', aa.dpi)) + afterRestart(aa.pending === 'apply' && aa.runDpi !== aa.dpi);
+        return t('Cluster map zoom: {0}', t('{0} dpi', aa.dpi)) + afterRestart(aa.pending === 'apply' && aa.runDpi !== aa.dpi);
     }
 
     cardText() {
@@ -1322,6 +1381,10 @@ class WazeClusterControl extends EventEmitter {
             if (this._askedPos && msg.hud_x === this._askedPos[0] && msg.hud_y === this._askedPos[1]) {
                 this._askedPos = null;
             }
+            if (this._askedNear != null && msg.hud_near_m === this._askedNear) {
+                clearTimeout(this._askedNearTimer);
+                this._askedNear = null;
+            }
             const ac = this._askedClear;
             if (ac && msg.hud_clear_x === ac[0] && msg.hud_clear_y === ac[1] && msg.hud_clear_w === ac[2] && msg.hud_clear_h === ac[3]) {
                 clearTimeout(this._askedClearTimer);
@@ -1345,7 +1408,7 @@ class WazeClusterControl extends EventEmitter {
             this._noteEtaAsked(msg);
             this._wake();
             this.emit('change');
-        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect)-reply$/.test(msg.ev)) {
+        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-near-dist|hud-zoom|hud-fade|hud-clear|hud-clear-rect)-reply$/.test(msg.ev)) {
             if (!msg.ok) {
                 this._log.info(`patchd did not save the setting: ${msg.reason || 'refused'}`);
             }
@@ -1374,5 +1437,6 @@ class WazeClusterControl extends EventEmitter {
 module.exports = {
     WazeClusterControl, LineSocket,
     RENDER_PATH, PATCH_PATH, PENDING_PATH, AA_PENDING_PATH, BOOT_ID_PATH,
-    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS, HUD_FADE_STEPS
+    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS, HUD_FADE_STEPS,
+    HUD_NEAR_STEPS
 };
