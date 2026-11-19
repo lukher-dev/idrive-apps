@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.18
+
 The HUD map's corners are no longer rounded; Edge fade softens its edges
 instead. New HUD defaults, tuned on a G30: the map 100 % wide, the whole
 picture (zoom 100 %), 40 px down, which takes the arrival-time card off the
