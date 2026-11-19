@@ -136,14 +136,6 @@ void AtlasScaler::scale(const uint8_t *src, std::vector<uint8_t> *dst)
     plane(sv, w_, crop_h_ / 2, dv, dw_, cx_, cy_);
     if (black_bg_)
         key_background(d);
-    if (radius_) {
-        const uint32_t cr = radius_ / 2;
-        corners(d, dw_, dw_, dh_, radius_, ycov_, 16);
-        if (cr) {
-            corners(du, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
-            corners(dv, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
-        }
-    }
     if (mask_due_)
         make_mask();
     if (!ymask_.empty()) {
@@ -214,60 +206,6 @@ void AtlasScaler::key_background(uint8_t *d)
                 continue;
             u[c] = (uint8_t)(128 + ((int)u[c] - 128) * (int)kc / 256);
             v[c] = (uint8_t)(128 + ((int)v[c] - 128) * (int)kc / 256);
-        }
-}
-
-/* Each pixel of the r x r top-left corner square: how much of it (0-256) lies
- * inside the circle of radius r centred at (r, r), from 4 x 4 samples. */
-void AtlasScaler::coverage(uint32_t r, std::vector<uint16_t> *cov)
-{
-    cov->assign((size_t)r * r, 256);
-    const double rr = (double)r * r;
-    for (uint32_t y = 0; y < r; y++)
-        for (uint32_t x = 0; x < r; x++) {
-            int in = 0;
-            for (int sy = 0; sy < 4; sy++)
-                for (int sx = 0; sx < 4; sx++) {
-                    const double dx = r - (x + (sx + 0.5) / 4), dy = r - (y + (sy + 0.5) / 4);
-                    in += dx * dx + dy * dy <= rr;
-                }
-            (*cov)[(size_t)y * r + x] = (uint16_t)(in * 16);
-        }
-}
-
-void AtlasScaler::set_corner_radius(uint32_t r)
-{
-    if (dw_ && (r * 2 > dw_ || r * 2 > dh_))
-        r = (dw_ < dh_ ? dw_ : dh_) / 2;
-    if (r == radius_)
-        return;
-    radius_ = r;
-    ycov_.clear();
-    ccov_.clear();
-    if (r) {
-        coverage(r, &ycov_);
-        if (r / 2)
-            coverage(r / 2, &ccov_);
-    }
-}
-
-void AtlasScaler::corners(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, uint32_t r, const std::vector<uint16_t> &cov,
-                          uint8_t black)
-{
-    if (r * 2 > pw || r * 2 > ph)
-        return;
-    for (uint32_t y = 0; y < r; y++)
-        for (uint32_t x = 0; x < r; x++) {
-            const uint32_t c = cov[(size_t)y * r + x];
-            if (c >= 256)
-                continue;
-            /* the same coverage, mirrored into each corner */
-            const uint32_t xs[2] = {x, pw - 1 - x}, ys[2] = {y, ph - 1 - y};
-            for (uint32_t yi = 0; yi < 2; yi++)
-                for (uint32_t xi = 0; xi < 2; xi++) {
-                    uint8_t &v = p[(size_t)ys[yi] * dp + xs[xi]];
-                    v = (uint8_t)(black + (((int)v - black) * (int)c) / 256);
-                }
         }
 }
 
@@ -442,7 +380,6 @@ void ScaleWorker::run(std::shared_ptr<State> s)
             s->made = ScaleShape();
             if (s->scaler.configure(s->shape.w, s->shape.h, s->shape.dw, s->shape.dh, s->shape.level_bits,
                                     s->shape.crop_x, s->shape.crop_y, s->shape.crop_w, s->shape.crop_h)) {
-                s->scaler.set_corner_radius(s->shape.radius);
                 /* the background followed on through a move (the window, the patch), anew for another size */
                 if (!was.dw || was.black != s->shape.black || was.dw != s->shape.dw || was.dh != s->shape.dh)
                     s->scaler.set_black_background(s->shape.black);

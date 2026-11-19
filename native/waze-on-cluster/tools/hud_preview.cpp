@@ -4,7 +4,7 @@
  * HUD feed's own code: the HUD box (MapFeed's quad, the size setting and the
  * offset), the zoom's part (hud_crop.h, at the map's cap) and, above 100 %,
  * its window (hud_window, panned by the x offset), the scaler (atlas_scale.h,
- * rounded corners, the night map's background made black, the edges' fade,
+ * the night map's background made black, the edges' fade,
  * the speed patch), drawn on the 800x480 HUD scene's black. For choosing
  * hud_crop_cx_pm / hud_crop_cy_pm and the HUD settings from a picture of the
  * phone's cluster map.
@@ -14,7 +14,7 @@
  *       a red marker at the middle (544, 240)
  *   hud-preview in.bmp out.bmp [--zoom 100..250] [--cx-pm N] [--cy-pm N]
  *               [--width-pct 0|20..135] [--x N] [--y N] [--fade 0..60]
- *               [--clear X,Y,W,H | --no-clear] [--no-round] [--no-black]
+ *               [--clear X,Y,W,H | --no-clear] [--no-black]
  *       in: a 24-bit 1088x480 BMP (macOS: sips -s format bmp in.png --out
  *       in.bmp); out: the 800x480 HUD scene. Prints the box, the zoom used,
  *       the part shown and where the red marker landed (its centroid).
@@ -199,14 +199,14 @@ int main(int argc, char **argv)
         return grid(argv[2]);
     if (argc < 3) {
         std::fprintf(stderr, "usage: hud-preview --grid out.bmp | in.bmp out.bmp [--zoom N] [--cx-pm N] [--cy-pm N] "
-                             "[--width-pct N] [--x N] [--y N] [--fade N] [--clear X,Y,W,H | --no-clear] [--no-round] "
+                             "[--width-pct N] [--x N] [--y N] [--fade N] [--clear X,Y,W,H | --no-clear] "
                              "[--no-black]\n");
         return 2;
     }
     unsigned zoom = 100, cx = 500, cy = 500, pct = 0, fade = 30;
     unsigned clear[4] = {110, 320, 220, 90};
     int dx = 0, dy = 0;
-    bool round = true, black = true, clear_on = true;
+    bool black = true, clear_on = true;
     for (int i = 3; i < argc; i++) {
         const std::string a = argv[i];
         const auto num = [&]() { return i + 1 < argc ? (unsigned)std::strtoul(argv[++i], nullptr, 10) : 0u; };
@@ -220,7 +220,6 @@ int main(int argc, char **argv)
         else if (a == "--no-clear") clear_on = false;
         else if (a == "--clear" && i + 1 < argc &&
                  std::sscanf(argv[++i], "%u,%u,%u,%u", &clear[0], &clear[1], &clear[2], &clear[3]) == 4) clear_on = true;
-        else if (a == "--no-round") round = false;
         else if (a == "--no-black") black = false;
         else { std::fprintf(stderr, "hud-preview: unknown option %s\n", a.c_str()); return 2; }
     }
@@ -247,7 +246,6 @@ int main(int argc, char **argv)
         return 1;
     }
     const uint32_t x0 = q.x + (q.w - dw) / 2, y0 = q.y + (q.h - dh) / 2;
-    scaler.set_corner_radius(round ? (dh / 12 > 6 ? dh / 12 : 6) : 0);
     scaler.set_black_background(black);
     scaler.set_edge_fade(fade);
     if (clear_on)

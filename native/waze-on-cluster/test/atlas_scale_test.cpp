@@ -98,28 +98,6 @@ int main()
     ok("and copies exactly", out == g);
 
     {
-        /* rounded corners: a white frame, its corners black (Y 16, U and V
-         * 128), the edges' middles and the inside untouched */
-        AtlasScaler rc;
-        rc.configure(1088, 480, 452, 200, 0);
-        rc.set_corner_radius(16);
-        std::vector<uint8_t> white(1088 * 720, 235);
-        for (size_t i = 1088 * 480; i < white.size(); i++) white[i] = 200;
-        rc.scale(white.data(), &out);
-        const uint8_t *y = out.data(), *u = y + 452 * 200;
-        ok("corners: the four corner pixels black", y[0] == 16 && y[451] == 16 && y[199 * 452] == 16 && y[199 * 452 + 451] == 16);
-        ok("corners: the chroma corner neutral", u[0] == 128 && u[99 * 452 + 225] == 128);
-        ok("corners: the edges' middles and the inside untouched", y[226] == 235 && y[100 * 452] == 235 && y[100 * 452 + 226] == 235 &&
-                                                                       y[16 * 452 + 16] == 235);
-        bool aa = false;
-        for (uint32_t x = 0; x < 16; x++) aa = aa || (y[x] > 16 && y[x] < 235);
-        ok("corners: anti-aliased along the curve", aa);
-        rc.set_corner_radius(0);
-        rc.scale(white.data(), &out);
-        ok("radius 0: square again", out[0] == 235);
-    }
-
-    {
         /* black background: a night map (navy field Y 60, a road Y 120, a
          * label Y 220): the field goes black with neutral chroma, the road
          * and label stay; a day map (field Y 200) is left alone */
@@ -235,16 +213,6 @@ int main()
         fs.set_edge_fade(0);
         fs.scale(white.data(), &out);
         ok("fade 0: off", out[238 * 800] == 235);
-        /* combined with the rounded corners: both, multiplied */
-        AtlasScaler fc;
-        fc.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
-        fc.set_edge_fade(30);
-        fc.set_corner_radius(39);
-        fc.scale(white.data(), &out);
-        const uint8_t c_both = out[11 * 800 + 11];
-        fc.set_corner_radius(0);
-        fc.scale(white.data(), &out);
-        ok("fade: with the rounded corners both apply (darker than the fade alone)", c_both < out[11 * 800 + 11] && out[0] == 16);
     }
 
     {
@@ -298,17 +266,16 @@ int main()
                     each, t.dst_bytes(), 783360.0 / t.dst_bytes());
     }
     {
-        /* 135 %: 804x480 of the picture to 800x476, rounded corners, the edges' fade and the speed patch */
+        /* 135 %: 804x480 of the picture to 800x476, the edges' fade and the speed patch */
         AtlasScaler t;
         t.configure(1088, 480, 800, 476, 2, 142, 0, 804, 480);
-        t.set_corner_radius(39);
         t.set_edge_fade(30);
         t.set_clear(110, 320, 220, 90);
         t.scale(ramp.data(), &out);
         const auto t0 = std::chrono::steady_clock::now();
         for (int i = 0; i < 20; i++) t.scale(ramp.data(), &out);
         const double each = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / 20;
-        std::printf("     1088x480 (804x480 of it) -> 800x476, corners, fade and patch: %.2f ms a frame on this machine\n", each);
+        std::printf("     1088x480 (804x480 of it) -> 800x476, fade and patch: %.2f ms a frame on this machine\n", each);
     }
 
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);

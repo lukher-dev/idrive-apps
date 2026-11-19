@@ -581,7 +581,7 @@ test('Clear behind speed: on by default; a flip goes to the render and patchd, t
     render.stream(true);
     await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
     assert.deepStrictEqual([c.hudClear(), c.canHudClear(), c.canAdjustHudClear(), c.hudClearText()],
-        [true, false, false, 'Speed patch: 220x90 at 110,320'], 'on, greyed while the HUD is off');
+        [true, false, false, 'Speed patch: 250x90 at 110,320'], 'on, greyed while the HUD is off');
     c.toggleHudClear();
     c.adjustHudClear('left');
     assert.strictEqual(render.received.filter((m) => m.hud_clear !== undefined || m.hud_clear_x !== undefined).length, 0, 'nothing sent while greyed');
@@ -612,35 +612,35 @@ test('the speed patch\'s place and size: 10 px a press, held inside the HUD; the
     render.stream(true);
     await until('on', () => c.renderStatus && c.canAdjustHudClear());
     c.adjustHudClear('right');
-    assert.strictEqual(c.hudClearText(), 'Speed patch: 220x90 at 120,320', 'shown at once');
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 250x90 at 120,320', 'shown at once');
     c.adjustHudClear('up');
     c.adjustHudClear('wider');
     c.adjustHudClear('shorter');
     await until('moved and sized', () => c.renderStatus.hud_clear_x === 120 && c.renderStatus.hud_clear_y === 310 &&
-        c.renderStatus.hud_clear_w === 230 && c.renderStatus.hud_clear_h === 80);
-    assert.strictEqual(c.hudClearText(), 'Speed patch: 230x80 at 120,310');
+        c.renderStatus.hud_clear_w === 260 && c.renderStatus.hud_clear_h === 80);
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 260x80 at 120,310');
     assert.deepStrictEqual(render.received.filter((m) => m.hud_clear_x !== undefined).slice(-1),
-        [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '310', hud_clear_w: '230', hud_clear_h: '80' }], 'the whole rectangle each time');
+        [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '310', hud_clear_w: '260', hud_clear_h: '80' }], 'the whole rectangle each time');
     await until('saved', () => { const p = patch.received.filter((m) => m.cmd === 'hud-clear-rect').slice(-1)[0];
-        return p && p.x === 120 && p.y === 310 && p.w === 230 && p.h === 80; });
-    assert.deepStrictEqual([patch.map.hud_clear_x, patch.map.hud_clear_y, patch.map.hud_clear_w, patch.map.hud_clear_h], [120, 310, 230, 80]);
+        return p && p.x === 120 && p.y === 310 && p.w === 260 && p.h === 80; });
+    assert.deepStrictEqual([patch.map.hud_clear_x, patch.map.hud_clear_y, patch.map.hud_clear_w, patch.map.hud_clear_h], [120, 310, 260, 80]);
     c.adjustHudClear('left');
     c.adjustHudClear('down');
     c.adjustHudClear('narrower');
     c.adjustHudClear('taller');
-    await until('back', () => c.hudClearText() === 'Speed patch: 220x90 at 110,320' && c.renderStatus.hud_clear_x === 110 &&
-        c.renderStatus.hud_clear_w === 220);
+    await until('back', () => c.hudClearText() === 'Speed patch: 250x90 at 110,320' && c.renderStatus.hud_clear_x === 110 &&
+        c.renderStatus.hud_clear_w === 250);
     /* held inside the HUD's 800x480: the corner and the far edges */
     for (let i = 0; i < 20; i++) c.adjustHudClear('left');
     for (let i = 0; i < 40; i++) c.adjustHudClear('up');
     await until('the top left corner', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_y === 0);
     for (let i = 0; i < 70; i++) c.adjustHudClear('right');
     for (let i = 0; i < 50; i++) c.adjustHudClear('down');
-    await until('the bottom right corner', () => c.renderStatus.hud_clear_x === 580 && c.renderStatus.hud_clear_y === 390);
+    await until('the bottom right corner', () => c.renderStatus.hud_clear_x === 550 && c.renderStatus.hud_clear_y === 390);
     c.adjustHudClear('wider');
     c.adjustHudClear('taller');
     await sleep(50);
-    assert.strictEqual(c.hudClearText(), 'Speed patch: 220x90 at 580,390', 'no wider or taller past the edges');
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 250x90 at 550,390', 'no wider or taller past the edges');
     for (let i = 0; i < 30; i++) c.adjustHudClear('narrower');
     for (let i = 0; i < 12; i++) c.adjustHudClear('shorter');
     await until('the smallest', () => c.renderStatus.hud_clear_w === 10 && c.renderStatus.hud_clear_h === 10);
@@ -650,7 +650,7 @@ test('the speed patch\'s place and size: 10 px a press, held inside the HUD; the
     c.adjustHudClear('sideways');
     assert.strictEqual(render.received.length, sent, 'nothing sent past the smallest or for no direction');
     for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
-    await until('as wide as the HUD from where it is', () => c.renderStatus.hud_clear_w === 220);
+    await until('as wide as the HUD from where it is', () => c.renderStatus.hud_clear_w === 250);
     for (let i = 0; i < 100; i++) c.adjustHudClear('left');
     for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
     await until('the HUD\'s whole width', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_w === 800);

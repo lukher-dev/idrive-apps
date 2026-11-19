@@ -112,7 +112,7 @@ function profiles() { var t = fs.readFileSync(PROFILES, 'utf8'); try { return JS
 function settings(cluster, hud, pct, x, y, keep, near, zoom) {
     return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
         hud_near_turn: near || 0, hud_zoom_pct: zoom || 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
-        hud_clear_w: 220, hud_clear_h: 90 };
+        hud_clear_w: 250, hud_clear_h: 90 };
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 /* A line of map.state.conf: one of the map keys, a whole number. */
@@ -429,7 +429,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
      * earlier version wrote) is what the render takes for it, its default */
     var sameKeys = function (a, b) {
         a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
-            hud_clear_w: 220, hud_clear_h: 90 }, a);
+            hud_clear_w: 250, hud_clear_h: 90 }, a);
         return Object.keys(b).length === Object.keys(a).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
     };
     fs.writeFileSync(STATE, 'cluster = 1\nhud = 0\nhud_width_pct = 0\nhud_offset_x = 0\nhud_offset_y = 0\nhud_keep_shown = 0\n');
@@ -527,8 +527,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
         await when(function () { return state().hud_near_turn === 1 && state().hud_zoom_pct === 180; }), JSON.stringify(r));
 
     /* The edge fade, the clear behind the speed and its rectangle, per profile; a profiles.json from before
-     * them: 30 px, cleared, 110, 320, 220 by 90. */
-    var CLEAR_DEFAULTS = { hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 220, hud_clear_h: 90 };
+     * them: 30 px, cleared, 110, 320, 250 by 90. */
+    var CLEAR_DEFAULTS = { hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
     var hasAll = function (o, want) { return Object.keys(want).every(function (k) { return o[k] === want[k]; }); };
     ok('a profiles.json from before the fade and the clear: A\'s set read with their defaults', hasAll(r.settings, CLEAR_DEFAULTS),
         JSON.stringify(r));

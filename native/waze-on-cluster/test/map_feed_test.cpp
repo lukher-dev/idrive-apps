@@ -527,7 +527,6 @@ static void hud_zoom()
     FeedConfig fc;
     fc.socket = b.path;
     fc.video.level_bits = 0;
-    fc.hud_round_corners = false;
     fc.hud_black_background = false;
     fc.hud_edge_fade_px = 0;
     fc.hud_clear = false;
@@ -622,7 +621,6 @@ static void hud_wide()
     FeedConfig fc;
     fc.socket = b.path;
     fc.video.level_bits = 0;
-    fc.hud_round_corners = false;
     fc.hud_black_background = false;
     fc.hud_edge_fade_px = 0;
     fc.hud_clear = false;
@@ -1699,7 +1697,6 @@ int main()
     AtlasScaler ref;
     std::vector<uint8_t> f1_hud;
     ref.configure(1088, 480, 452, 200, 2);   /* FeedConfig::scaled_level_bits */
-    ref.set_corner_radius(200 / 12);         /* FeedConfig::hud_round_corners */
     ref.set_black_background(true);          /* FeedConfig::hud_black_background */
     ref.scale(f1.data(), &f1_hud);
     const crs::Layer *bh = layer_on(2);

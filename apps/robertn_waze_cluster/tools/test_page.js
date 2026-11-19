@@ -581,17 +581,17 @@ async function main() {
         await until('faded wider', () => render.hudFade === 40 && fade.text === 'Edge fade: 40 px' && fade.cells['0:Value'] === 4);
         await until('the fade saved', () => patch.map.hud_edge_fade_px === 40);
         assert(clear.enabled === true && clear.selected === true && clear.text === 'Clear behind speed', 'on by default');
-        assert.strictEqual(clearRect.text, 'Speed patch: 220x90 at 110,320');
+        assert.strictEqual(clearRect.text, 'Speed patch: 250x90 at 110,320');
         assert(clearMoves.every((n) => byName[n].enabled === true), 'its place and size enabled');
         assert.deepStrictEqual(clearMoves.map((n) => byName[n].text), ['Move left', 'Move right', 'Move up', 'Move down', 'Wider', 'Narrower',
             'Taller', 'Shorter']);
         render.received.length = 0;
         byName.wocHudClearRight.emit('action');
-        await until('moved', () => clearRect.text === 'Speed patch: 220x90 at 120,320' && render.hudClearRect[0] === 120);
+        await until('moved', () => clearRect.text === 'Speed patch: 250x90 at 120,320' && render.hudClearRect[0] === 120);
         byName.wocHudClearWider.emit('action');
-        await until('wider', () => clearRect.text === 'Speed patch: 230x90 at 120,320' && patch.map.hud_clear_w === 230);
-        assert.deepStrictEqual(render.received, [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '220', hud_clear_h: '90' },
-            { cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '230', hud_clear_h: '90' }], 'one command to the render a press');
+        await until('wider', () => clearRect.text === 'Speed patch: 260x90 at 120,320' && patch.map.hud_clear_w === 260);
+        assert.deepStrictEqual(render.received, [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '250', hud_clear_h: '90' },
+            { cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '260', hud_clear_h: '90' }], 'one command to the render a press');
         clear.press();
         await until('off: its place and size greyed', () => render.hudClear === 0 && clear.selected === false && patch.map.hud_clear === 0 &&
             clear.enabled === true && clearMoves.every((n) => byName[n].enabled === false));

@@ -150,7 +150,7 @@ class FakeRender extends LineServer {
         /* the HUD map's edge fade, and the speed patch and its rectangle in HUD pixels (null: a tool without them) */
         this.hudFade = 30;
         this.hudClear = 1;
-        this.hudClearRect = [110, 320, 220, 90];
+        this.hudClearRect = [110, 320, 250, 90];
         this._showTimer = null;
     }
 
@@ -291,7 +291,7 @@ class FakePatch extends LineServer {
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
         this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 250,
-            hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 220, hud_clear_h: 90 };
+            hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
         this.shared = null;
         this.own = {};
         this.active = null;

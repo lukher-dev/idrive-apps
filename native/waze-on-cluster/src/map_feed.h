@@ -113,8 +113,6 @@ struct FeedConfig {
      * bits. */
     bool scale_down = true;
     unsigned scaled_level_bits = 2;
-    /* the HUD map's corners rounded (a twelfth of its height, at least 6 px) */
-    bool hud_round_corners = true;
     /* the HUD map's dark background made black (see-through on a HUD) */
     bool hud_black_background = true;
     /* the HUD map's edges faded to black over this many pixels (0: none) */
@@ -124,7 +122,7 @@ struct FeedConfig {
      * so BMW's speed readout there stays clear; fixed to the scene, not to
      * the map. */
     bool hud_clear = true;
-    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 220, hud_clear_h = 90;
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
     /* hosted_vpp_scale: hosted, the host's part is made by the decoder's VPP
      * (MapFeed::part) rather than scaled by the worker */
     bool vpp_scale = false;
@@ -162,7 +160,7 @@ struct FeedStatus {
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
     unsigned hud_edge_fade_px = 30;   /* the HUD map's edges' fade */
     bool hud_clear = true;            /* and its speed patch, in the HUD scene's pixels */
-    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 220, hud_clear_h = 90;
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs

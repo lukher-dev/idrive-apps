@@ -101,10 +101,10 @@ the cluster is hidden (cluster-render README, "Guide hold"). The app's
 
 **Where the map shows.** The app's **Show on** sets the cluster, the HUD,
 both or neither (**Off**), at once. On the HUD the frames are scaled on the
-head unit to the size shown (**Size**, 30 % to 135 % of the HUD's width, 85 %
-by default, or Standard, about 57 %), moved by **Position** (40 px up by
-default, which lifts the phone's arrival-time card above BMW's HUD speed
-readout), the corners rounded and a
+head unit to the size shown (**Size**, 30 % to 135 % of the HUD's width, 100 %
+by default, or Standard, about 57 %), moved by **Position** (40 px down by
+default, which on a G30 takes the phone's arrival-time card below what the
+HUD shows), and a
 night map's background made black, which the HUD shows as nothing. Above
 100 % the map keeps its shape and its sides are cut by the HUD's edges; at
 135 % it fills the HUD's height. There left and right **Position** slides
@@ -139,7 +139,7 @@ scaling on a 1088x480 BMP, to choose the centre.
 map's four edges to black over that many pixels, so the map has no hard
 square edge. **Clear behind speed** (`hud_clear`, on by default) makes the
 map black in a rectangle of the HUD (`hud_clear_x`, `hud_clear_y`,
-`hud_clear_w`, `hud_clear_h`, HUD pixels from its top left, 220x90 at
+`hud_clear_w`, `hud_clear_h`, HUD pixels from its top left, 250x90 at
 110,320 by default), feathered at its edges, so BMW's speed readout stays
 readable over the map. The rectangle belongs to the HUD, not the map: moving
 or resizing the map leaves it in place. Both need `hud_scale_down`.

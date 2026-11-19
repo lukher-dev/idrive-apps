@@ -119,9 +119,9 @@ int main()
     ok("shipped: the opt-in keys off", shipped.str("hosted_vpp_scale") == "0" && shipped.str("always_packed") == "0");
     ok("shipped: the HUD zoom's centre the picture's middle", shipped.str("hud_crop_cx_pm") == "500" &&
                                                                shipped.str("hud_crop_cy_pm") == "500");
-    ok("shipped: the HUD map's edges faded over 30 px, black behind the speed readout (220x90 at 110,320)",
+    ok("shipped: the HUD map's edges faded over 30 px, black behind the speed readout (250x90 at 110,320)",
        shipped.str("hud_edge_fade_px") == "30" && shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" &&
-           shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "220" && shipped.str("hud_clear_h") == "90");
+           shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
     /* the new HUD keys are ones this version knows: a local conf's are taken as any other's */
     std::ofstream(local) << "hud_edge_fade_px = 12\nhud_clear = 0\nhud_clear_w = 300\n";
     cld::Config m;

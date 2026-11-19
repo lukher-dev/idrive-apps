@@ -307,7 +307,6 @@ void MapFeed::hud_shape(crk::QuadRect *q)
         shape_.crop_h = crop.h;
     }
     shape_.level_bits = cfg_.scaled_level_bits;
-    shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
     shape_.black = cfg_.hud_black_background;
     shape_.fade = cfg_.hud_edge_fade_px;
     const int64_t cx = (int64_t)cfg_.hud_clear_x - q->x, cy = (int64_t)cfg_.hud_clear_y - q->y;
