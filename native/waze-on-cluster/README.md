@@ -74,7 +74,10 @@ restores the original binary before CarPlay (or aapd) starts: after one
 failed start for a patch not yet proven on that car, after two for a proven
 one. CarPlay comes back without the map, its Status reads `Removed — head
 unit kept restarting`, and its Patch button applies the patch again
-(PATCH.md "Boot recovery").
+(PATCH.md "Boot recovery"). Android Auto's patch is removed at the first
+crash of the patched aapd, and aapd is started again after every end, so
+Android Auto comes back without the cluster map; the patch stays off until
+its Patch button applies it or an update brings a newer patch.
 
 To break a loop by hand: keep the phone from connecting (unplug it, or turn
 off its Wi-Fi and Bluetooth), then over SSH run
@@ -144,9 +147,6 @@ map black in a rectangle of the HUD (`hud_clear_x`, `hud_clear_y`,
 readable over the map. The rectangle belongs to the HUD, not the map: moving
 or resizing the map leaves it in place. Both need `hud_scale_down`.
 
-From a shell, `waze-on-cluster -c <conf> run map|panel` sets the cluster
-target until the service restarts and prints the status.
-
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md
 "Hosting another target"): the map is then drawn only in the rect it
@@ -156,12 +156,16 @@ hosted_vpp_scale and always_packed" below).
 
 ### Settings
 
-Settings are in `waze-on-cluster.conf` (documented inline). Overrides go in
-`/var/opt/waze-on-cluster/waze-on-cluster.local.conf`, which updates keep;
-the app's map settings are in `/var/opt/waze-on-cluster/map.state.conf`, and
-the opt-in settings in `/var/opt/waze-on-cluster/features.conf`. A key the
-local conf has that this version does not know is left out with a warning
-in the log.
+Settings are in `waze-on-cluster.conf` (documented inline), which each
+install writes anew. Besides it and the command line (the Android Auto
+crop, PATCH.md), the service reads only the app's saved choices
+(`/var/opt/waze-on-cluster/map.state.conf` and the turn-box setting) and
+the opt-in settings in `/var/opt/waze-on-cluster/features.conf`. On the
+cluster the map goes on its map slot, or into a hosting app's scene.
+
+`/var/opt/waze-on-cluster/waze-on-cluster.local.conf`, which versions up to
+0.10.9 read, is not read; it stays on the unit for a downgrade, and the log
+names it at each start.
 
 ### Map size and upload
 
@@ -174,7 +178,7 @@ The map covers the cluster's central map area, 1088x480 on the 1920x720
 panel. The patch advertises exactly that, so `tex_size` must equal it.
 `src_crop` takes part of a picture of one size and scales it to `tex_size`
 (Android Auto's 1280x720 stream has its map in the top 1280x564).
-`map_rect` draws the map stretched into a rect of the current target.
+`map_rect` draws the map stretched into a rect of the map slot.
 `target_fps` (30) caps the frame rate; `picture_fps` (0: every frame) makes
 at most that many pictures a second, which saves CPU when the phone sends
 more than the cluster takes (set it to `target_fps` then).
@@ -206,8 +210,8 @@ They take effect when waze-on-cluster next starts (the next head-unit
 start). A restart of the service applies them at once, but the map stays
 blank until the phone connects again.
 
-Not in `waze-on-cluster.local.conf`: there they are left out, and patchd
-moves them to `features.conf`.
+patchd moves any it finds in `waze-on-cluster.local.conf` to
+`features.conf`, so a downgrade never meets them there.
 
 **What they need.**
 - Both: a waze-on-cluster whose `waze-on-cluster.conf` has the key. An older
@@ -270,15 +274,23 @@ sources are left out.
   (and `.log.1`), in UTC.
 - Its status, once a second: `/run/waze-on-cluster/status.json` (what the
   app shows) and `probe.txt` (the sources, the decoder, losses, timing).
-- The journal service keeps in `/var/opt/waze-on-cluster/journal/` (10
-  files of 384 KiB, across restarts) the tools' journal, the lines of
-  carplay, recmgr and the crash handler, systemd's lines about any unit
-  that starts, stops, is killed or fails, and the kernel's, without the
-  high-volume lines that explain nothing (the firewall's blocked packets,
-  Wi-Fi scans, audit records) and with a short summary of each boot's
-  kernel log. Every 30 s it adds a load line: the load averages,
-  MemAvailable, the processes in D state and the 5 processes that used the
-  most CPU.
+- The journal service keeps in RAM, in `/run/waze-on-cluster-journal/`
+  (10 files of 384 KiB), the tools' journal, the lines of carplay, aapd,
+  recmgr and the crash handler, systemd's lines about any unit that starts,
+  stops, is killed or fails, and the kernel's, without the high-volume
+  lines that explain nothing (the firewall's blocked packets, Wi-Fi scans,
+  audit records) and with a short summary of each boot's kernel log. Every
+  30 s it adds a load line: the load averages, MemAvailable, the processes
+  in D state and the 5 processes that used the most CPU.
+- It writes the newest of those lines to `/var/opt/waze-on-cluster/journal/`
+  only when they are worth keeping across a restart: shortly after a
+  failure (an `INCIDENT` line, a crash or failure of carplay, aapd or one
+  of the tools, a segfault or out-of-memory kill, a boot recovery step, a
+  patch removed) and a minute later, and at each head-unit shutdown. Each
+  write is one file `journal-<UTC>-<reason>.log` of at most 256 KiB: the
+  last 10 minutes not written yet, lines that repeat with other numbers
+  kept only 3 times. It keeps 16 files, 2 MiB at most, and removes the
+  oldest of a shutdown before the oldest of a failure.
 - **Save logs** keeps at most 5 archives in `/var/opt/waze-on-cluster/saved`.
   The Logs page serves them to a phone on the car's Wi-Fi hotspot, at the
   address it shows, while the page is open and for 15 minutes after a save.
@@ -299,6 +311,7 @@ for experiments and for undoing the patches without the app:
 |---|---|
 | `status`, `aa-status` | what is on disk |
 | `probe` | where the edit sites are in a carplay binary and whether it is patchable, without writing |
+| `aa-probe [<file>]` | the same for aapd (`/usr/bin/aapd` by default) |
 | `verify` | whether carplay's patch is complete |
 | `revert [--force]` | restores the original carplay; `--force` over another build (a firmware update) |
 | `aa-revert [--force]` | restores the original aapd and aapd.conf |

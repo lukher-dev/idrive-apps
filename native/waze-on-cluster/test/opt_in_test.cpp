@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Robert Nisipeanu
-/* Host test of the unit's own settings (local_conf.h): local_conf's known
- * keys over the shipped configuration's, a key this version does not know
- * and a line that does not read left out with a warning, the opt-in keys
- * left out there with a warning, a missing local_conf none; features_file's
- * valid opt-in values over the configuration's, any other line left out; the
- * shipped waze-on-cluster.conf loads, names the file patchd writes and has
- * the opt-in keys off. */
+/* Host test of the opt-in settings (opt_in.h): features_file's valid
+ * opt-in values over the configuration's, any other line left out, a
+ * missing file none; the HUD zoom's centre, 0-1000 per mille; the shipped
+ * waze-on-cluster.conf loads, names the file patchd writes, has the opt-in
+ * keys off and the HUD defaults, and sets neither local_conf nor target. */
 #include <unistd.h>
 
 #include <cstdio>
 #include <fstream>
+#include <sstream>
 #include <string>
-#include <vector>
 
 #include "config.h"
-#include "local_conf.h"
+#include "opt_in.h"
 
 using namespace woc;
 
@@ -31,7 +29,6 @@ static cld::Config conf()
 {
     cld::Config c;
     c.define("target_fps", "30");
-    c.define("src_crop", "");
     c.define("hosted_vpp_scale", "0");
     c.define("always_packed", "0");
     c.define("hud_crop_cx_pm", "500");
@@ -39,42 +36,27 @@ static cld::Config conf()
     return c;
 }
 
-static bool has(const std::vector<std::string> &w, const std::string &s)
+/* A key some line of the file sets, as Config::load reads it. */
+static bool sets(const std::string &path, const std::string &key)
 {
-    for (const std::string &l : w)
-        if (l.find(s) != std::string::npos)
+    std::ifstream f(path);
+    std::string line;
+    while (std::getline(f, line)) {
+        line = line.substr(0, line.find('#'));
+        std::istringstream words(line);
+        std::string first;
+        if (words >> first && (first == key || first.rfind(key + "=", 0) == 0 || first.rfind(key + "+=", 0) == 0))
             return true;
+    }
     return false;
 }
 
 int main()
 {
-    const std::string base = "/tmp/woc-local-conf-test-" + std::to_string(getpid());
-    const std::string local = base + ".local.conf", feat = base + ".features.conf";
-    unlink(local.c_str());
+    const std::string feat = "/tmp/woc-opt-in-test-" + std::to_string(getpid()) + ".conf";
     unlink(feat.c_str());
 
     cld::Config c = conf();
-    std::vector<std::string> w;
-    load_local_conf(&c, local, &w);
-    ok("no local conf: the configuration's, nothing to warn", c.str("target_fps") == "30" && w.empty());
-
-    std::ofstream(local) << "# mine\ntarget_fps = 20\nsome_later_key = 7\nhosted_vpp_scale = 1\nalways_packed += 1\n"
-                            "garbage\n  \nsrc_crop = 1280x564+0+0 # AA\n";
-    c = conf();
-    w.clear();
-    load_local_conf(&c, local, &w);
-    ok("an unknown key does not stop the rest: the known keys taken", c.str("target_fps") == "20" &&
-                                                                         c.str("src_crop") == "1280x564+0+0");
-    ok("the unknown key left out with a warning naming it and its line",
-       has(w, local + ":3: unknown setting some_later_key"));
-    ok("a line that does not read left out with a warning", has(w, local + ":6: expected key=value"));
-    ok("the opt-in keys left out of the local conf, each with a warning",
-       c.str("hosted_vpp_scale") == "0" && c.str("always_packed") == "0" &&
-           has(w, ":4: hosted_vpp_scale is left out") && has(w, ":5: always_packed is left out"));
-    ok("four warnings, one a line", w.size() == 4);
-
-    c = conf();
     load_features(&c, feat);
     ok("no features file: the opt-in keys off", c.str("hosted_vpp_scale") == "0" && c.str("always_packed") == "0");
     std::ofstream(feat) << "hosted_vpp_scale = 1\nalways_packed += 1 # on\n";
@@ -96,16 +78,9 @@ int main()
     load_features(&c, feat);
     ok("the HUD zoom's centre outside 0-1000, or not whole: left out", c.str("hud_crop_cx_pm") == "500" &&
                                                                          c.str("hud_crop_cy_pm") == "500");
-    std::ofstream(local) << "hud_crop_cx_pm = 700\n";
-    c = conf();
-    w.clear();
-    load_local_conf(&c, local, &w);
-    ok("the HUD zoom's centre in local_conf: left out (an opt-in key)", c.str("hud_crop_cx_pm") == "500" &&
-                                                                          has(w, ":1: hud_crop_cx_pm is left out"));
-    unlink(local.c_str());
     unlink(feat.c_str());
 
-    /* The shipped conf: what main() loads strictly before local_conf. */
+    /* The shipped conf: the only configuration file main() loads. */
     cld::Config shipped;
     shipped.define("hosted_vpp_scale", "");
     shipped.define("always_packed", "");
@@ -122,17 +97,7 @@ int main()
     ok("shipped: the HUD map's edges faded over 30 px, black behind the speed readout (250x90 at 110,320)",
        shipped.str("hud_edge_fade_px") == "30" && shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" &&
            shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
-    /* the new HUD keys are ones this version knows: a local conf's are taken as any other's */
-    std::ofstream(local) << "hud_edge_fade_px = 12\nhud_clear = 0\nhud_clear_w = 300\n";
-    cld::Config m;
-    m.define("hud_edge_fade_px", "30");
-    m.define("hud_clear", "1");
-    m.define("hud_clear_w", "220");
-    w.clear();
-    load_local_conf(&m, local, &w);
-    ok("the edges' fade and the speed patch from a local conf", m.str("hud_edge_fade_px") == "12" && m.str("hud_clear") == "0" &&
-                                                                  m.str("hud_clear_w") == "300" && w.empty());
-    unlink(local.c_str());
+    ok("shipped: no local_conf, no target", !sets("waze-on-cluster.conf", "local_conf") && !sets("waze-on-cluster.conf", "target"));
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);
     return failures ? 1 : 0;
 }

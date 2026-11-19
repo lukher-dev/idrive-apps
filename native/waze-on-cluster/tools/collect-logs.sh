@@ -8,11 +8,16 @@
 #
 # It writes woc-logs-<UTC date and time>.tar.gz into the folder (/tmp by
 # default) and prints its path: both tools' log files (with their .1), the
-# journal lines the journal service keeps (journal.log and its rotations),
+# journal lines the journal service keeps (in RAM: journal.log and its
+# rotations; on /var/opt: the journal-*.log written around failures and at
+# shutdowns),
 # the renderer's and the capture's status files, this boot's journal of the
 # tools and of carplay (what the journal still holds), the list of boots,
 # the carplay patch probe (where its edit sites are in this carplay), the
 # tools' folders, their local settings, the time and the uptime,
+# this boot's journal of aapd and the Android Auto boot step, the aapd
+# patch's site report (aapd_patch.js probe: each edit's offset and bytes,
+# the backup's and the running copy's SHA-256, the patch record),
 # wifi.txt: CarPlay's Wi-Fi band as patchd last read it, each P2P
 # interface's /proc/net/dev counters and the kernel's last 802.1X and DHCP
 # lines for them, the aapd patch's status (aapd_patch.js status: its build,
@@ -73,7 +78,7 @@ for tool in cluster-render waze-on-cluster; do
     done
     copy "$ROOT/var/opt/$tool/$tool.local.conf" "$tool.local.conf"
 done
-for f in "$ROOT"/var/opt/waze-on-cluster/journal/journal.log*; do
+for f in "$ROOT"/run/waze-on-cluster-journal/journal.log* "$ROOT"/var/opt/waze-on-cluster/journal/journal-*.log; do
     copy "$f" "kept-${f##*/}"
 done
 copy "$ROOT/var/opt/waze-on-cluster/boot-recovery.json" boot-recovery.json
@@ -89,7 +94,7 @@ done
 if command -v journalctl >/dev/null 2>&1; then
     for unit in cluster-render waze-on-cluster waze-on-cluster-patchd waze-on-cluster-boot waze-on-cluster-recovery \
             waze-on-cluster-capture waze-on-cluster-journal waze-on-cluster-journal.timer waze-on-cluster-logs \
-            waze-on-cluster-logs-fw carplay; do
+            waze-on-cluster-logs-fw waze-on-cluster-aa-boot carplay aapd; do
         journalctl -b -o short-precise --no-pager -u "$unit" 2>/dev/null |
             grep -v -E '\] (Intercepting function|Blocked function|Notice in function: findThreadByName)' > "$DIR/journal-$unit.txt"
     done
@@ -103,6 +108,7 @@ if [ -f "$HERE/carplay_patch.js" ]; then
 fi
 if [ -f "$HERE/aapd_patch.js" ]; then
     "$NODE" "$HERE/aapd_patch.js" status > "$DIR/aapd-status.txt" 2>&1
+    "$NODE" "$HERE/aapd_patch.js" probe > "$DIR/aapd-probe.txt" 2>&1
 fi
 if [ -f "$HERE/logs_extra.js" ]; then
     "$NODE" "$HERE/logs_extra.js" report "$DIR" > /dev/null 2>&1
@@ -116,7 +122,8 @@ if [ -f "$HERE/logs_extra.js" ]; then
     "$NODE" "$HERE/logs_extra.js" patchd "$DIR" > /dev/null 2>&1
 fi
 
-ls -l /var/opt/cluster-render /var/opt/waze-on-cluster /var/opt/waze-on-cluster/journal /var/opt/waze-on-cluster/saved > "$DIR/ls.txt" 2>&1
+ls -l /var/opt/cluster-render /var/opt/waze-on-cluster /var/opt/waze-on-cluster/journal /var/opt/waze-on-cluster/saved \
+    /run/waze-on-cluster-journal > "$DIR/ls.txt" 2>&1
 
 # The kernel's lines for the P2P interfaces: the journal's (the logs
 # service's group reads it), else dmesg's.

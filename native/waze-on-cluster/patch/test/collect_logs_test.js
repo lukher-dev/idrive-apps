@@ -137,6 +137,21 @@ mk('var/opt/public/sin/crashhandler/coredumps/20261108204714_000_carplay/core.gz
 mk('var/opt/public/sin/crashhandler/coredumps/20261108204714_000_carplay/context_WBA8E9C50GK123456.txt', 'CORE-DUMP-BYTES');
 mk('var/opt/public/sin/dlt-cdh/core.1794170822.carplay.4222.gz', 'CORE-DUMP-BYTES');
 for (i = 0; i < 130; i++) mk('var/opt/kerneldump/dump-' + i, 'CORE-DUMP-BYTES');
+/* the crash handler's records of aapd's crashes, the newest 3 of 4 kept */
+function aapdContext(t, pid) {
+    return 'ProcName:aapd\nThreadName:aapd\nPID:' + pid + '\nsignal:6\n\n' +
+        '==== Dumping file </proc/' + pid + '/cmdline> ====\n/usr/bin/aapd\n\n' +
+        '==== Dumping file </proc/' + pid + '/stack> ====\n[<0>] do_exit+0x74/0x468\n\n' +
+        '==== Dumping file </proc/' + pid + '/environ> ====\nSECRET_ENV=WBA8E9C50GK123456\n\n' +
+        '==== Dumping file </proc/' + pid + '/maps> ====\n555555554000-555555c31000 r-xp 00000000 00:46 578286 /usr/bin/aapd\n' +
+        '555555e5a000-555555e5b000 rw-p 00706000 00:46 578286 /usr/bin/aapd\n\n' +
+        '==== Listing directory </proc/' + pid + '/fd> ====\n0 -> /dev/null\n===========================\n\n' +
+        '==== Dumping file </proc/' + pid + '/smaps> ====\nRss: 4 kB\n\n' +
+        '==== Crash ID ====\n7F86D72813C6DB0D\n\n==== Summary ====\nCrash in "aapd", thread="aapd", pid=' + pid + ', sigid=6, RIP=0x7ffff78cea40\n';
+}
+[[1794170000, 11], [1794170100, 12], [1794170200, 13], [1794170300, 14]].forEach(function (c) {
+    mk('var/opt/public/sin/dlt-cdh/context.' + c[0] + '.aapd.' + c[1] + '.txt', aapdContext(c[0], c[1]));
+});
 /* sqlite3: records its arguments; rows as the firmware's would print them */
 var SQL_ARGS = path.join(dir, 'sqlite-args');
 fs.writeFileSync(path.join(bin, 'sqlite3'), '#!/bin/sh\nprintf "%s\\n" "$@" > ' + SQL_ARGS + '\n' +
@@ -160,6 +175,7 @@ assert.strictEqual(get('patch-record-aapd.json'), fs.readFileSync(path.join(U, '
 assert.strictEqual(get('aa-boot-recovery.json'), fs.readFileSync(path.join(U, 'var/opt/waze-on-cluster/aa-boot-recovery.json'), 'utf8'));
 assert.strictEqual(get('coding.txt'), 'KI_KOMBI_VARIANT 7\n');
 assert(/^target: +\/usr\/bin\/aapd$|^error: /m.test(get('aapd-status.txt')), get('aapd-status.txt'));
+assert(/^file: +\/usr\/bin\/aapd$|^error: /m.test(get('aapd-probe.txt')), get('aapd-probe.txt'));
 assert.strictEqual(get('deploy.txt'), 'mgu-deploy 0.8.9\ntools installed (/var/opt/<id>/current):\n  tool cluster-render 0.4.3\n' +
     '  tool waze-on-cluster 0.9.7\nstate.json:\n  tool waze-on-cluster 0.9.7 firmware S18A-23-07-550\n  app robertn_store 1.4.0\n' +
     '  pending restart: waze-on-cluster - new units\n  last bounce: 2026-11-08T20:33:20Z\n');
@@ -183,6 +199,11 @@ assert(dumps.some(function (l) { return /Z  20261108204714_000_carplay\/context_
 assert(dumps.some(function (l) { return /Z  core\.1794170822\.carplay\.4222\.gz$/.test(l); }));
 assert(dumps.indexOf('-- /var/opt/kerneldump (the newest 100 of 130)') >= 0, 'at most 100 a folder');
 assert.strictEqual(dumps.filter(function (l) { return / {2}dump-\d+$/.test(l); }).length, 100);
+var ac = get('aapd-crashes.txt');
+assert(/^-- the newest 3 of 4\n-- context\.1794170300\.aapd\.14\.txt \(2026-11-08T20:38:20Z\)\nProcName:aapd\n/.test(ac), ac);
+assert(ac.indexOf('aapd.11.txt') < 0 && /signal:6/.test(ac) && /do_exit/.test(ac) && / r-xp .*\/usr\/bin\/aapd/.test(ac) &&
+    /==== Summary ====\nCrash in "aapd".*RIP=0x7ffff78cea40/.test(ac) && /7F86D72813C6DB0D/.test(ac), ac);
+assert(ac.indexOf('SECRET_ENV') < 0 && ac.indexOf(' rw-p ') < 0 && ac.indexOf('/dev/null') < 0 && ac.indexOf('Rss:') < 0 && ac.indexOf('cmdline') < 0, ac);
 /* a VIN across the cap is scrubbed whole before the cut */
 var edge = path.join(dir, 'edge');
 fs.mkdirSync(edge);
@@ -200,7 +221,7 @@ assert(shrunk.length < 30000 && shrunk.indexOf('WBA') < 0 && /\n\.\.\. \(cut at 
 var everything = fs.readdirSync(A).map(get).join('\n');
 SECRETS.forEach(function (x) { assert(everything.indexOf(x) < 0, 'the archive holds ' + x); });
 console.log('ok   the archive adds the patch records, aapd recovery, coding, aapd status, deploy state, restart records, ' +
-    'recmgr crashes and core-dump names (' + (asRoot ? 'as root' : 'from the snapshot') + '), capped, no secret or VIN');
+    'recmgr crashes, aapd\'s crash records and core-dump names (' + (asRoot ? 'as root' : 'from the snapshot') + '), capped, no secret or VIN');
 
 /* sqlite3 that hangs is killed at 2 s; a missing database or folder is left out */
 fs.writeFileSync(path.join(bin, 'sqlite3'), '#!/bin/sh\nexec sleep 30\n', { mode: 0o755 });
@@ -214,7 +235,7 @@ cp.execFileSync('rm', ['-rf', path.join(U, 'var/opt/public/sin/recmgr'), path.jo
 var snap3 = path.join(dir, 'snap3');
 fs.mkdirSync(snap3);
 cp.execFileSync(process.execPath, [path.join(CUR, 'logs_extra.js'), 'snapshot', snap3], { env: XENV });
-assert.deepStrictEqual(fs.readdirSync(snap3).sort(), ['core-dumps.txt', 'restartInfo-crashhandler.xml']);
+assert.deepStrictEqual(fs.readdirSync(snap3).sort(), ['aapd-crashes.txt', 'core-dumps.txt', 'restartInfo-crashhandler.xml']);
 assert(fs.readFileSync(path.join(snap3, 'core-dumps.txt'), 'utf8').indexOf('kerneldump') < 0);
 console.log('ok   a hung sqlite3 is killed at 2 s; what is absent is left out');
 
@@ -290,11 +311,13 @@ var lx = require(path.join(CUR, 'logs_extra.js'));
     fs.writeFileSync(path.join(d, 'kept-journal.log.1'), '2026-11-14T17:50:10.000000Z waze-on-cluster-journal.service node[900]: journal-keep: boot 0a1b2c3d, up 10 s\n' +
         '2026-11-14T19:00:00.000000Z waze-on-cluster-journal.service node[901]: journal-keep: boot 0a1b2c3d, up 4210 s\n');
     fs.writeFileSync(path.join(d, 'kept-journal.log'), '2026-11-14T20:59:12.500000Z waze-on-cluster-journal.service node[700]: journal-keep: boot 99ffee00, up 12 s\n');
+    fs.writeFileSync(path.join(d, 'kept-journal-20261114T160000Z-shutdown.log'), '2026-11-14T16:00:00.000000Z journal-keep: boot 5e5e5e5e, up 600 s\n' +
+        '2026-11-14T16:00:00.000000Z journal-keep: kept for shutdown: 1 of the last 1 lines; 0 repeated lines (0 KiB) and 0 older lines left out\n');
     fs.writeFileSync(path.join(d, 'other.log'), '2026-11-14 20:00:00.000 W INCIDENT not a tool log\n');
     var t = lx.incidentsText(d, Date.UTC(2026, 10, 14, 21, 10));
     assert.strictEqual(t, '-- INCIDENT lines of cluster-render.log* and waze-on-cluster.log*, the boots the kept journal saw and this export; ' +
         'oldest first, UTC (~: no time)\n' +
-        '2026-11-14 17:49:50.000 -- boot 0a1b2c3d\n2026-11-14 18:00:00.000 cluster-render: W INCIDENT map lost: render restarted\n' +
+        '2026-11-14 15:50:00.000 -- boot 5e5e5e5e\n2026-11-14 17:49:50.000 -- boot 0a1b2c3d\n2026-11-14 18:00:00.000 cluster-render: W INCIDENT map lost: render restarted\n' +
         '2026-11-14 20:59:00.500 -- boot 99ffee00\n2026-11-14 21:04:59.900 waze-on-cluster: W INCIDENT no frames for 5 s\n' +
         '2026-11-14 21:05:00.100 cluster-render: W INCIDENT map lost: slot unmapped\n~ waze-on-cluster: no time INCIDENT odd\n' +
         '2026-11-14 21:10:00.000 -- this export\n', t);
@@ -310,10 +333,18 @@ var lx = require(path.join(CUR, 'logs_extra.js'));
     var IDS = ['WBA5R1C50KAB12345', 'AB12345', '4e:56:8d:d6:ba:f4', 'Alex Home WiFi', '203.0.113.77', 'Alex\'s iPhone', 'ghp_FAKEtoken0123456789abcdefghijklmnop'];
     put('var/opt/cluster-render/log/cluster-render.log', '2026-11-14 21:05:00.100 W INCIDENT map lost for WBA5R1C50KAB12345\n');
     put('var/opt/waze-on-cluster/log/waze-on-cluster.log', '2026-11-14 21:04:59.900 W INCIDENT peer 4e:56:8d:d6:ba:f4 gone\n');
-    put('var/opt/waze-on-cluster/journal/journal.log', '2026-11-14T20:59:12.500000Z waze-on-cluster-journal.service node[700]: journal-keep: boot 99ffee00, up 12 s\n' +
+    put('run/waze-on-cluster-journal/journal.log', '2026-11-14T20:59:12.500000Z waze-on-cluster-journal.service node[700]: journal-keep: boot 99ffee00, up 12 s\n' +
         '2026-11-14T21:00:00.000000Z kernel: connecting with4e:56:8d:d6:ba:f4 ssid "Alex Home WiFi", len (14)\n' +
         '2026-11-14T21:00:01.000000Z carplay.service carplay[812]: device name: Alex\'s iPhone\n');
-    put('var/opt/waze-on-cluster/journal/journal.log.1', '2026-11-14T20:00:00.000000Z recmgr.service recmgr[600]: AB12345 restart, gw 203.0.113.77\n');
+    put('run/waze-on-cluster-journal/journal.log.1', '2026-11-14T20:00:00.000000Z recmgr.service recmgr[600]: AB12345 restart, gw 203.0.113.77\n');
+    /* kept on /var/opt at an earlier boot's shutdown; a write a power cut
+     * left as a temporary file, and an older version's rolling file, not
+     * taken */
+    put('var/opt/waze-on-cluster/journal/journal-20261114T195000Z-shutdown.log', '2026-11-14T19:50:00.000000Z journal-keep: boot 5e5e5e5e, up 600 s\n' +
+        '2026-11-14T19:50:00.000000Z journal-keep: kept for shutdown: 1 of the last 1 lines; 0 repeated lines (0 KiB) and 0 older lines left out\n' +
+        '2026-11-14T19:49:59.000000Z aapd.service aapd[812]: phone Alex\'s iPhone gone\n');
+    put('var/opt/waze-on-cluster/journal/.journal-20261114T195500Z-crash.99.tmp', 'half\n');
+    put('var/opt/waze-on-cluster/journal/journal.log', 'old\n');
     put('var/opt/waze-on-cluster/waze-on-cluster.local.conf', 'token = ghp_FAKEtoken0123456789abcdefghijklmnop\n');
     /* the car's VIN known from the coding image only, its last 7 glued to a name in a log */
     var codingImage = Buffer.alloc(0x1030);
@@ -349,14 +380,18 @@ var lx = require(path.join(CUR, 'logs_extra.js'));
     var srv = serve('answer'), r;
     try { r = run(); } finally { srv.kill(); }
     var f = r.files;
-    ['cluster-render.log', 'waze-on-cluster.log', 'kept-journal.log', 'kept-journal.log.1', 'waze-on-cluster.local.conf', 'patchd-logs.json',
-        'incidents.txt', 'wifi.txt', 'time.txt'].forEach(function (n) { assert(f[n] !== undefined, n + ' in the archive: ' + Object.keys(f)); });
+    ['cluster-render.log', 'waze-on-cluster.log', 'kept-journal.log', 'kept-journal.log.1', 'kept-journal-20261114T195000Z-shutdown.log',
+        'waze-on-cluster.local.conf', 'patchd-logs.json', 'incidents.txt', 'wifi.txt', 'time.txt'].forEach(function (n) {
+        assert(f[n] !== undefined, n + ' in the archive: ' + Object.keys(f));
+    });
+    assert(!Object.keys(f).some(function (n) { return /tmp|^kept-\.|^journal\.log/.test(n); }), 'no temporary or older file: ' + Object.keys(f));
+    assert(/aapd\[812\]: phone <DEVICE> gone/.test(f['kept-journal-20261114T195000Z-shutdown.log']), f['kept-journal-20261114T195000Z-shutdown.log']);
     Object.keys(f).forEach(function (n) {
         IDS.forEach(function (x) { assert(f[n].indexOf(x) < 0, n + ' holds ' + x + ':\n' + f[n]); });
     });
     var pl = JSON.parse(f['patchd-logs.json']);
     assert(pl.ev === 'logs' && pl.dlt.state === 'receiving' && /CarPlay session with <DEVICE> \(<MAC-[0-9a-f]{6}>\)/.test(pl.carplay[0].msg), f['patchd-logs.json']);
-    assert(/^2026-11-14 20:59:00\.500 -- boot 99ffee00\n2026-11-14 21:04:59\.900 waze-on-cluster: W INCIDENT peer <MAC-[0-9a-f]{6}> gone\n2026-11-14 21:05:00\.100 cluster-render: W INCIDENT map lost for <VIN>\n\S+ \S+ -- this export\n$/m
+    assert(/^2026-11-14 19:40:00\.000 -- boot 5e5e5e5e\n2026-11-14 20:59:00\.500 -- boot 99ffee00\n2026-11-14 21:04:59\.900 waze-on-cluster: W INCIDENT peer <MAC-[0-9a-f]{6}> gone\n2026-11-14 21:05:00\.100 cluster-render: W INCIDENT map lost for <VIN>\n\S+ \S+ -- this export\n$/m
         .test(f['incidents.txt'].split('\n').slice(1).join('\n')), f['incidents.txt']);
     assert(f['left-out.txt'] === undefined, 'nothing left out: ' + f['left-out.txt']);
     console.log('ok   the export: patchd\'s diagnostics, incidents.txt, every file scrubbed (' + r.ms + ' ms)');

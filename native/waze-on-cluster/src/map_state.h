@@ -6,8 +6,7 @@
  * hud_width_pct, hud_offset_x, hud_offset_y, hud_keep_shown, hud_near_turn,
  * hud_zoom_pct, hud_edge_fade_px, hud_clear, hud_clear_x, hud_clear_y,
  * hud_clear_w and hud_clear_h, which patchd saves in map_state_file (key =
- * value lines), a file of its own so that waze-on-cluster.local.conf stays
- * one an earlier version of this tool starts with. Each valid value replaces the configuration's; one out of
+ * value lines). Each valid value replaces the configuration's; one out of
  * range, another key or a line that does not read is left out with a
  * warning, as is a file that cannot be read. */
 #ifndef WOC_MAP_STATE_H
