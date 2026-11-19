@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.19
+
 Every HUD row now says what it changes: Map size, Map zoom, Fade map edges,
 Map position with Move map left and the rest, Hide map behind BMW's speed
 with its Speed area buttons. Show from, a new slider under Show HUD map only

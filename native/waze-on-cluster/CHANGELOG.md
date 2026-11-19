@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.18
+
 Fork build with upstream's changes up to 0.10.12. On the HUD: the map can
 show only near turns, from a set distance (1 km by default); it can be
 zoomed; its size goes up to 135 %; its edges fade out instead of having
