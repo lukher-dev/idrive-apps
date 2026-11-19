@@ -47,27 +47,36 @@
  *                                   and answers with the lines and health only
  *                  {"cmd":"cluster","on":0|1}
  *                  {"cmd":"hud","on":0|1}
- *                  {"cmd":"hud-size","hud_width_pct":0|20..100}   (over 85 saved as 85)
+ *                  {"cmd":"hud-size","hud_width_pct":0|20..135}
  *                  {"cmd":"hud-pos","hud_x":-800..800,"hud_y":-800..800}
  *                  {"cmd":"hud-keep-shown","on":0|1}
  *                  {"cmd":"hud-near-turn","on":0|1}
  *                  {"cmd":"hud-zoom","pct":100..250}
+ *                  {"cmd":"hud-fade","px":0..60}
+ *                  {"cmd":"hud-clear","on":0|1}
+ *                  {"cmd":"hud-clear-rect","x":0..799,"y":0..479,"w":10..800,"h":10..480}
  *                                   the map on the cluster on or off, on the HUD on
  *                                   or off, the HUD's size
  *                                   (0: the default box), where it is moved from
  *                                   the centre (HUD pixels), whether it stays
  *                                   shown over BMW's pop-ups, whether it shows only
- *                                   near turns and its zoom, saved for the render's
- *                                   next start as "cluster", "hud", "hud_width_pct",
- *                                   "hud_offset_x", "hud_offset_y",
- *                                   "hud_keep_shown", "hud_near_turn" and
- *                                   "hud_zoom_pct" in MAP_STATE
+ *                                   near turns, its zoom, how many pixels its edges
+ *                                   fade to black over (0: none), whether it is
+ *                                   blacked out behind the speed and where (a
+ *                                   rectangle in HUD scene pixels), saved for the
+ *                                   render's next start as "cluster", "hud",
+ *                                   "hud_width_pct", "hud_offset_x", "hud_offset_y",
+ *                                   "hud_keep_shown", "hud_near_turn",
+ *                                   "hud_zoom_pct", "hud_edge_fade_px", "hud_clear",
+ *                                   "hud_clear_x", "hud_clear_y", "hud_clear_w" and
+ *                                   "hud_clear_h" in MAP_STATE
  *                                   (the app changes the running render itself).
  *                                   Changes are written together MAP_SAVE_MS
  *                                   after the last one; the reply (cluster-reply,
  *                                   hud-reply, hud-size-reply, hud-pos-reply,
  *                                   hud-keep-shown-reply, hud-near-turn-reply,
- *                                   hud-zoom-reply)
+ *                                   hud-zoom-reply, hud-fade-reply, hud-clear-reply,
+ *                                   hud-clear-rect-reply)
  *                                   follows the write and carries ok, the values
  *                                   saved and reason.
  *                  {"cmd":"profile","id":"<id>"|null}
@@ -171,7 +180,7 @@ var FIFO = process.env.WOC_FIFO || '/run/waze-on-cluster/alt.h264';
 /* The local UDP sink for udp mode. Must match the render's udp_port
  * (waze-on-cluster.conf); the render listens on 127.0.0.1:UDP_PORT. */
 var UDP_PORT = process.env.WOC_UDP_PORT || '20557';
-var HUD_MAX_PCT = 85;   /* the widest HUD map size: wider is cut off at the HUD's edges */
+var HUD_MAX_PCT = 135;   /* the widest HUD map size, % of the HUD's width: past 100 it runs off the HUD's sides */
 var SOCK = process.env.WOC_PATCH_SOCK || '/dev/shm/waze-on-cluster/patch.sock';
 var SOCK_GROUP = process.env.WOC_PATCH_GROUP || 'tm_oap_app';
 var LOGS_SOCK = process.env.WOC_PATCH_LOGS_SOCK || path.join(path.dirname(SOCK), 'patch-logs.sock');
@@ -254,9 +263,15 @@ var LOCAL_CONF = process.env.WOC_LOCAL_CONF || '/var/opt/waze-on-cluster/waze-on
  * configuration. Not in LOCAL_CONF, which waze-on-cluster 0.8 refuses to
  * start with any of MAP_KEYS in. */
 var MAP_STATE = path.join(STATE_DIR, 'map.state.conf');
-var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct'];
+var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct',
+    'hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'];
 /* Keys added after the first sets were saved: one missing from a saved set is its default. */
-var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct'];
+var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct', 'hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y',
+    'hud_clear_w', 'hud_clear_h'];
+/* The map settings' ranges (the commands' below); hud_width_pct is 0 or
+ * within its range, any other key not here 0 or 1. */
+var MAP_RANGES = { hud_width_pct: [20, HUD_MAX_PCT], hud_offset_x: [-800, 800], hud_offset_y: [-800, 800], hud_zoom_pct: [100, 250],
+    hud_edge_fade_px: [0, 60], hud_clear_x: [0, 799], hud_clear_y: [0, 479], hud_clear_w: [10, 800], hud_clear_h: [10, 480] };
 /* The opt-in settings: the render reads this file (its features_file) over
  * its configuration. Not in LOCAL_CONF, which every release up to 0.10.7
  * refuses to start with any of FEATURE_KEYS in; no release before this one
@@ -295,12 +310,15 @@ function rewriteConf(file, set, drop) {
     saveFile(file, lines.length ? lines.join('\n') + '\n' : '');
 }
 
-/* A map setting's value as a file holds it: a whole number in the key's
- * range (the commands' below). */
+/* A map setting's value as a command gives it: a whole number in the
+ * key's range (MAP_RANGES). */
+function mapNumberOk(k, n) {
+    var r = MAP_RANGES[k] || [0, 1];
+    return typeof n === 'number' && n === Math.floor(n) && ((k === 'hud_width_pct' && n === 0) || (n >= r[0] && n <= r[1]));
+}
+/* A map setting's value as a file holds it: the same, as text. */
 function mapValueOk(k, v) {
-    var n = Number(v);
-    return /^-?\d+$/.test(v) && (k === 'hud_width_pct' ? n === 0 || (n >= 20 && n <= 100)
-        : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : k === 'hud_zoom_pct' ? n >= 100 && n <= 250 : n === 0 || n === 1);
+    return /^-?\d+$/.test(v) && mapNumberOk(k, Number(v));
 }
 
 /* Moves any of MAP_KEYS found in LOCAL_CONF into MAP_STATE, a value already
@@ -434,7 +452,7 @@ var PROFILES_FILE = path.join(STATE_DIR, 'profiles.json');
 var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
 var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 85, hud_offset_x: 0, hud_offset_y: -40, hud_keep_shown: 0, hud_near_turn: 0,
-    hud_zoom_pct: 100 };
+    hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 220, hud_clear_h: 90 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
 var restored = false;         /* MAP_STATE written from PROFILES_FILE at the start, not yet told to the app */
@@ -1827,11 +1845,11 @@ function handle(line, sock) {
     }
     if (msg.cmd === 'hud-size') {
         var pct = msg.hud_width_pct;
-        if (!(pct === 0 || (typeof pct === 'number' && pct >= 20 && pct <= 100 && pct === Math.floor(pct)))) {
-            reply(sock, { ev: 'hud-size-reply', ok: false, reason: 'HUD width must be 0 or 20-100 %' });
+        if (!mapNumberOk('hud_width_pct', pct)) {
+            reply(sock, { ev: 'hud-size-reply', ok: false, reason: 'HUD width must be 0 or 20-' + HUD_MAX_PCT + ' %' });
             return;
         }
-        saveMapSettings(sock, 'hud-size-reply', { hud_width_pct: Math.min(pct, HUD_MAX_PCT) }, 'the HUD map size');
+        saveMapSettings(sock, 'hud-size-reply', { hud_width_pct: pct }, 'the HUD map size');
         return;
     }
     if (msg.cmd === 'hud-pos') {
@@ -1859,6 +1877,29 @@ function handle(line, sock) {
             return;
         }
         saveMapSettings(sock, 'hud-zoom-reply', { hud_zoom_pct: zoom }, 'the HUD map zoom');
+        return;
+    }
+    if (msg.cmd === 'hud-fade') {
+        if (!mapNumberOk('hud_edge_fade_px', msg.px)) {
+            reply(sock, { ev: 'hud-fade-reply', ok: false, reason: 'the HUD edge fade must be a whole number from 0 to 60 px' });
+            return;
+        }
+        saveMapSettings(sock, 'hud-fade-reply', { hud_edge_fade_px: msg.px }, 'the HUD map edge fade');
+        return;
+    }
+    if (msg.cmd === 'hud-clear') {
+        if (msg.on !== 0 && msg.on !== 1) { reply(sock, { ev: 'hud-clear-reply', ok: false, reason: 'on must be 0 or 1' }); return; }
+        saveMapSettings(sock, 'hud-clear-reply', { hud_clear: msg.on }, 'the HUD map cleared behind the speed');
+        return;
+    }
+    if (msg.cmd === 'hud-clear-rect') {
+        var rect = { hud_clear_x: msg.x, hud_clear_y: msg.y, hud_clear_w: msg.w, hud_clear_h: msg.h };
+        if (!Object.keys(rect).every(function (k) { return mapNumberOk(k, rect[k]); })) {
+            reply(sock, { ev: 'hud-clear-rect-reply', ok: false,
+                reason: 'the cleared rectangle must be whole numbers: x 0-799, y 0-479, w 10-800, h 10-480 (HUD pixels)' });
+            return;
+        }
+        saveMapSettings(sock, 'hud-clear-rect-reply', rect, 'the HUD map\'s cleared rectangle');
         return;
     }
     /* The driver profile and its own settings: not operations on carplay either. */

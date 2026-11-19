@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 lukher-dev
 /* hud-preview: what the HUD shows of a map picture, on the host, with the
- * HUD feed's own code: the HUD box (MapFeed's quad, the size setting), the
- * zoom's part (hud_crop.h, at the box's cap), the scaler (atlas_scale.h,
- * rounded corners, the night map's background made black), drawn on the
- * 800x480 HUD scene's black. For choosing hud_crop_cx_pm / hud_crop_cy_pm
- * from a picture of the phone's cluster map.
+ * HUD feed's own code: the HUD box (MapFeed's quad, the size setting and the
+ * offset), the zoom's part (hud_crop.h, at the map's cap) and, above 100 %,
+ * its window (hud_window, panned by the x offset), the scaler (atlas_scale.h,
+ * rounded corners, the night map's background made black, the edges' fade,
+ * the speed patch), drawn on the 800x480 HUD scene's black. For choosing
+ * hud_crop_cx_pm / hud_crop_cy_pm and the HUD settings from a picture of the
+ * phone's cluster map.
  *
  *   hud-preview --grid out.bmp
  *       writes a 1088x480 test picture: a grid every 64 px on dark grey,
  *       a red marker at the middle (544, 240)
  *   hud-preview in.bmp out.bmp [--zoom 100..250] [--cx-pm N] [--cy-pm N]
- *               [--width-pct 0|20..85] [--no-round] [--no-black]
+ *               [--width-pct 0|20..135] [--x N] [--y N] [--fade 0..60]
+ *               [--clear X,Y,W,H | --no-clear] [--no-round] [--no-black]
  *       in: a 24-bit 1088x480 BMP (macOS: sips -s format bmp in.png --out
  *       in.bmp); out: the 800x480 HUD scene. Prints the box, the zoom used,
- *       the part shown and where the red marker landed (its centroid). */
+ *       the part shown and where the red marker landed (its centroid).
+ *       The defaults are the shipped ones but the size (0) and the offset
+ *       (0,0): fade 30, the speed patch 220x90 at 110,320 of the scene. */
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -140,18 +145,31 @@ void atlas_rgb(const std::vector<uint8_t> &a, uint32_t w, uint32_t h, Rgb *out, 
         }
 }
 
-/* MapFeed::quad without an offset: the HUD box for a size setting. */
-crk::QuadRect hud_box(unsigned pct)
+/* MapFeed::quad with the scaler: the HUD box for a size setting, moved by the
+ * offset and held inside the scene; *virt_w: the map's width (wider than
+ * the box above 100 %, whose x offset pans the picture instead). */
+crk::QuadRect hud_box(unsigned pct, int dx, int dy, uint32_t *virt_w)
 {
-    if (!pct)
-        return crk::map_quad(kHudW, kHudH, kW, kH);
-    uint64_t w = (uint64_t)kHudW * (pct > 85 ? 85 : pct) / 100;
-    uint64_t h = (w * kH + kW / 2) / kW;
-    if (h > kHudH) {
-        h = kHudH;
-        w = (h * kW + kH / 2) / kH;
+    crk::QuadRect q;
+    if (!pct) {
+        q = crk::map_quad(kHudW, kHudH, kW, kH);
+        *virt_w = q.w;
+    } else {
+        uint64_t w = (uint64_t)kHudW * (pct > 135 ? 135 : pct) / 100;
+        uint64_t h = (w * kH + kW / 2) / kW;
+        if (h > kHudH) {
+            h = kHudH;
+            w = (h * kW + kH / 2) / kH;
+        }
+        *virt_w = (uint32_t)w;
+        w = w > kHudW ? kHudW : w;
+        q = crk::QuadRect{(uint32_t)((kHudW - w) / 2), (uint32_t)((kHudH - h) / 2), (uint32_t)w, (uint32_t)h};
     }
-    return crk::QuadRect{(uint32_t)((kHudW - w) / 2), (uint32_t)((kHudH - h) / 2), (uint32_t)w, (uint32_t)h};
+    const long x = (long)q.x + (*virt_w > q.w ? 0 : dx), y = (long)q.y + dy;
+    const long xmax = (long)kHudW - (long)q.w, ymax = (long)kHudH - (long)q.h;
+    q.x = (uint32_t)(x < 0 ? 0 : x > xmax ? xmax : x);
+    q.y = (uint32_t)(y < 0 ? 0 : y > ymax ? ymax : y);
+    return q;
 }
 
 int grid(const char *path)
@@ -181,11 +199,14 @@ int main(int argc, char **argv)
         return grid(argv[2]);
     if (argc < 3) {
         std::fprintf(stderr, "usage: hud-preview --grid out.bmp | in.bmp out.bmp [--zoom N] [--cx-pm N] [--cy-pm N] "
-                             "[--width-pct N] [--no-round] [--no-black]\n");
+                             "[--width-pct N] [--x N] [--y N] [--fade N] [--clear X,Y,W,H | --no-clear] [--no-round] "
+                             "[--no-black]\n");
         return 2;
     }
-    unsigned zoom = 100, cx = 500, cy = 500, pct = 0;
-    bool round = true, black = true;
+    unsigned zoom = 100, cx = 500, cy = 500, pct = 0, fade = 30;
+    unsigned clear[4] = {110, 320, 220, 90};
+    int dx = 0, dy = 0;
+    bool round = true, black = true, clear_on = true;
     for (int i = 3; i < argc; i++) {
         const std::string a = argv[i];
         const auto num = [&]() { return i + 1 < argc ? (unsigned)std::strtoul(argv[++i], nullptr, 10) : 0u; };
@@ -193,6 +214,12 @@ int main(int argc, char **argv)
         else if (a == "--cx-pm") cx = num();
         else if (a == "--cy-pm") cy = num();
         else if (a == "--width-pct") pct = num();
+        else if (a == "--x") dx = i + 1 < argc ? std::atoi(argv[++i]) : 0;
+        else if (a == "--y") dy = i + 1 < argc ? std::atoi(argv[++i]) : 0;
+        else if (a == "--fade") fade = num();
+        else if (a == "--no-clear") clear_on = false;
+        else if (a == "--clear" && i + 1 < argc &&
+                 std::sscanf(argv[++i], "%u,%u,%u,%u", &clear[0], &clear[1], &clear[2], &clear[3]) == 4) clear_on = true;
         else if (a == "--no-round") round = false;
         else if (a == "--no-black") black = false;
         else { std::fprintf(stderr, "hud-preview: unknown option %s\n", a.c_str()); return 2; }
@@ -202,27 +229,35 @@ int main(int argc, char **argv)
         std::fprintf(stderr, "hud-preview: %s is not a 24-bit %ux%u BMP\n", argv[1], kW, kH);
         return 1;
     }
-    /* as MapFeed's HUD branch */
-    const crk::QuadRect q = hud_box(pct);
+    /* as MapFeed's HUD branch (hud_shape) */
+    uint32_t virt = 0;
+    const crk::QuadRect q = hud_box(pct, dx, dy, &virt);
     const uint32_t sw = q.w & ~3u, sh = q.h & ~3u;
-    const unsigned used = std::min(std::max(zoom, kHudZoomMin), hud_zoom_cap(kW, sw));
-    const MapRect crop = hud_crop(kW, kH, used, cx, cy);
+    const bool wide = virt > q.w;
+    const unsigned used = std::min(std::max(zoom, kHudZoomMin), hud_zoom_cap(kW, wide ? virt : sw));
+    const MapRect part = hud_crop(kW, kH, used, cx, cy);
+    int pan = 0;
+    const MapRect crop = wide ? hud_window(part, kW, sw, virt, dx, &pan) : part;
     const uint32_t dw = std::min(sw, crop.w) & ~3u, dh = std::min(sh, crop.h) & ~3u;
     AtlasScaler scaler;
-    const bool zoomed = used > kHudZoomMin;
-    if (!scaler.configure(kW, kH, dw, dh, 2, zoomed ? crop.x : 0, zoomed ? crop.y : 0, zoomed ? crop.w : 0, zoomed ? crop.h : 0)) {
+    const bool cropped = used > kHudZoomMin || wide;
+    if (!scaler.configure(kW, kH, dw, dh, 2, cropped ? crop.x : 0, cropped ? crop.y : 0, cropped ? crop.w : 0,
+                          cropped ? crop.h : 0)) {
         std::fprintf(stderr, "hud-preview: the scaler refuses %ux%u from %ux%u\n", dw, dh, crop.w, crop.h);
         return 1;
     }
+    const uint32_t x0 = q.x + (q.w - dw) / 2, y0 = q.y + (q.h - dh) / 2;
     scaler.set_corner_radius(round ? (dh / 12 > 6 ? dh / 12 : 6) : 0);
     scaler.set_black_background(black);
+    scaler.set_edge_fade(fade);
+    if (clear_on)
+        scaler.set_clear((int32_t)clear[0] - (int32_t)x0, (int32_t)clear[1] - (int32_t)y0, clear[2], clear[3]);
     std::vector<uint8_t> out;
     scaler.scale(to_atlas(in).data(), &out);
     Rgb hud;
     hud.w = kHudW;
     hud.h = kHudH;
     hud.px.assign((size_t)kHudW * kHudH * 3, 0);
-    const uint32_t x0 = q.x + (q.w - dw) / 2, y0 = q.y + (q.h - dh) / 2;
     atlas_rgb(out, dw, dh, &hud, x0, y0);
     if (!write_bmp(argv[2], hud))
         return 1;
@@ -236,8 +271,11 @@ int main(int argc, char **argv)
                 n++;
             }
         }
-    std::printf("box %ux%u at %u,%u; zoom %u%% (asked %u%%); part %ux%u at %u,%u; shown %ux%u at %u,%u, its middle %u,%u\n", q.w,
-                q.h, q.x, q.y, used, zoom, crop.w, crop.h, crop.x, crop.y, dw, dh, x0, y0, x0 + dw / 2, y0 + dh / 2);
+    std::printf("box %ux%u at %u,%u (map %u wide%s); zoom %u%% (asked %u%%); part %ux%u at %u,%u; shown %ux%u at %u,%u, its "
+                "middle %u,%u\n", q.w, q.h, q.x, q.y, virt, wide ? ", wider than the HUD" : "", used, zoom, crop.w, crop.h, crop.x, crop.y,
+                dw, dh, x0, y0, x0 + dw / 2, y0 + dh / 2);
+    if (wide)
+        std::printf("pan %+d (asked %+d)\n", pan, dx);
     if (n)
         std::printf("marker %.1f,%.1f\n", mx / n, my / n);
     else

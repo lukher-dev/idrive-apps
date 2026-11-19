@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "HUD nagyítás: {0}",
     "Waiting for a turn": "Várakozás kanyarra",
     "No turn data": "Nincs kanyaradat",
-    "Arrival time on the cluster": "Érkezési idő a műszerfalon"
+    "Arrival time on the cluster": "Érkezési idő a műszerfalon",
+    "Edge fade: {0}": "Szélek elhalványítása: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Sebesség mögötti terület törlése",
+    "Speed patch: {0}": "Sebességmező: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} itt: {2},{3}",
+    "Wider": "Szélesebb",
+    "Narrower": "Keskenyebb",
+    "Taller": "Magasabb",
+    "Shorter": "Alacsonyabb"
   }
 }

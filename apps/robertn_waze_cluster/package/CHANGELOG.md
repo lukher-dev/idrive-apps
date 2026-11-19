@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+The HUD map's size goes up to 135 %: above 100 % its sides are cut by the
+HUD's edges and left and right Position slide it. Edge fade fades the HUD
+map's edges out (30 px by default, 0 for a hard edge). Clear behind speed
+hides the map in a patch of the HUD, on by default, so BMW's speed readout
+stays readable; its Move and Wider, Narrower, Taller and Shorter buttons
+place it.
+
 ## 0.6.16
 
 CarPlay's Patch button is offered for the cluster area the phone keeps its

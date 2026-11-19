@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Powiększenie HUD: {0}",
     "Waiting for a turn": "Oczekiwanie na skręt",
     "No turn data": "Brak danych o skrętach",
-    "Arrival time on the cluster": "Czas przyjazdu na zegarach"
+    "Arrival time on the cluster": "Czas przyjazdu na zegarach",
+    "Edge fade: {0}": "Wygaszanie krawędzi: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Ukryj mapę pod prędkością",
+    "Speed patch: {0}": "Pole prędkości: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} w {2},{3}",
+    "Wider": "Szersze",
+    "Narrower": "Węższe",
+    "Taller": "Wyższe",
+    "Shorter": "Niższe"
   }
 }

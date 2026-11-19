@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Přiblížení HUD: {0}",
     "Waiting for a turn": "Čeká se na odbočku",
     "No turn data": "Žádná data o odbočkách",
-    "Arrival time on the cluster": "Čas příjezdu na štítu"
+    "Arrival time on the cluster": "Čas příjezdu na štítu",
+    "Edge fade: {0}": "Prolínání okrajů: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Vyčistit za rychlostí",
+    "Speed patch: {0}": "Plocha rychlosti: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+    "Wider": "Širší",
+    "Narrower": "Užší",
+    "Taller": "Vyšší",
+    "Shorter": "Nižší"
   }
 }

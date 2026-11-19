@@ -103,7 +103,16 @@ module.exports = [
    "HUD zoom: {0}": "تكبير HUD: {0}",
    "Waiting for a turn": "بانتظار منعطف",
    "No turn data": "لا توجد بيانات منعطفات",
-   "Arrival time on the cluster": "وقت الوصول على لوحة العدادات"
+   "Arrival time on the cluster": "وقت الوصول على لوحة العدادات",
+   "Edge fade: {0}": "تلاشي الحواف: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "مسح خلف السرعة",
+   "Speed patch: {0}": "منطقة السرعة: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} عند {2},{3}",
+   "Wider": "أعرض",
+   "Narrower": "أضيق",
+   "Taller": "أطول",
+   "Shorter": "أقصر"
   }
  },
  {
@@ -208,7 +217,16 @@ module.exports = [
    "HUD zoom: {0}": "Přiblížení HUD: {0}",
    "Waiting for a turn": "Čeká se na odbočku",
    "No turn data": "Žádná data o odbočkách",
-   "Arrival time on the cluster": "Čas příjezdu na štítu"
+   "Arrival time on the cluster": "Čas příjezdu na štítu",
+   "Edge fade: {0}": "Prolínání okrajů: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Vyčistit za rychlostí",
+   "Speed patch: {0}": "Plocha rychlosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Wider": "Širší",
+   "Narrower": "Užší",
+   "Taller": "Vyšší",
+   "Shorter": "Nižší"
   }
  },
  {
@@ -313,7 +331,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Venter på et sving",
    "No turn data": "Ingen svingdata",
-   "Arrival time on the cluster": "Ankomsttid i instrumentpanel"
+   "Arrival time on the cluster": "Ankomsttid i instrumentpanel",
+   "Edge fade: {0}": "Udtoning af kanter: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Ryd bag hastighed",
+   "Speed patch: {0}": "Hastighedsfelt: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
+   "Wider": "Bredere",
+   "Narrower": "Smallere",
+   "Taller": "Højere",
+   "Shorter": "Lavere"
   }
  },
  {
@@ -418,7 +445,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-Zoom: {0}",
    "Waiting for a turn": "Warten auf Abbiegehinweis",
    "No turn data": "Keine Abbiegedaten",
-   "Arrival time on the cluster": "Ankunftszeit im Kombi"
+   "Arrival time on the cluster": "Ankunftszeit im Kombi",
+   "Edge fade: {0}": "Randverlauf: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Hinter Geschwindigkeit freihalten",
+   "Speed patch: {0}": "Geschwindigkeitsfeld: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} bei {2},{3}",
+   "Wider": "Breiter",
+   "Narrower": "Schmaler",
+   "Taller": "Höher",
+   "Shorter": "Niedriger"
   }
  },
  {
@@ -523,7 +559,16 @@ module.exports = [
    "HUD zoom: {0}": "Ζουμ HUD: {0}",
    "Waiting for a turn": "Αναμονή για στροφή",
    "No turn data": "Δεν υπάρχουν δεδομένα στροφών",
-   "Arrival time on the cluster": "Ώρα άφιξης στα όργανα"
+   "Arrival time on the cluster": "Ώρα άφιξης στα όργανα",
+   "Edge fade: {0}": "Σβήσιμο άκρων: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Καθαρό πίσω από την ταχύτητα",
+   "Speed patch: {0}": "Πεδίο ταχύτητας: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} στο {2},{3}",
+   "Wider": "Φαρδύτερο",
+   "Narrower": "Στενότερο",
+   "Taller": "Ψηλότερο",
+   "Shorter": "Χαμηλότερο"
   }
  },
  {
@@ -628,7 +673,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom del HUD: {0}",
    "Waiting for a turn": "Esperando un giro",
    "No turn data": "Sin datos de giros",
-   "Arrival time on the cluster": "Hora de llegada en el tablero"
+   "Arrival time on the cluster": "Hora de llegada en el tablero",
+   "Edge fade: {0}": "Difuminado de bordes: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Despejar detrás de la velocidad",
+   "Speed patch: {0}": "Zona de velocidad: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} en {2},{3}",
+   "Wider": "Más ancho",
+   "Narrower": "Más angosto",
+   "Taller": "Más alto",
+   "Shorter": "Más bajo"
   }
  },
  {
@@ -733,7 +787,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom del HUD: {0}",
    "Waiting for a turn": "Esperando un giro",
    "No turn data": "Sin datos de giros",
-   "Arrival time on the cluster": "Hora de llegada en el cuadro"
+   "Arrival time on the cluster": "Hora de llegada en el cuadro",
+   "Edge fade: {0}": "Difuminado de bordes: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Despejar detrás de la velocidad",
+   "Speed patch: {0}": "Zona de velocidad: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} en {2},{3}",
+   "Wider": "Más ancho",
+   "Narrower": "Más estrecho",
+   "Taller": "Más alto",
+   "Shorter": "Más bajo"
   }
  },
  {
@@ -838,7 +901,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-zoomaus: {0}",
    "Waiting for a turn": "Odotetaan käännöstä",
    "No turn data": "Ei käännöstietoja",
-   "Arrival time on the cluster": "Saapumisaika mittaristossa"
+   "Arrival time on the cluster": "Saapumisaika mittaristossa",
+   "Edge fade: {0}": "Reunojen häivytys: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Tyhjennä nopeuden takaa",
+   "Speed patch: {0}": "Nopeusalue: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} kohdassa {2},{3}",
+   "Wider": "Leveämpi",
+   "Narrower": "Kapeampi",
+   "Taller": "Korkeampi",
+   "Shorter": "Matalampi"
   }
  },
  {
@@ -943,7 +1015,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom du HUD : {0}",
    "Waiting for a turn": "En attente d'un virage",
    "No turn data": "Aucune donnée de virage",
-   "Arrival time on the cluster": "Heure d'arrivée au combiné"
+   "Arrival time on the cluster": "Heure d'arrivée au combiné",
+   "Edge fade: {0}": "Fondu des bords : {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Dégager derrière la vitesse",
+   "Speed patch: {0}": "Zone de vitesse : {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} à {2},{3}",
+   "Wider": "Plus large",
+   "Narrower": "Plus étroit",
+   "Taller": "Plus haut",
+   "Shorter": "Plus bas"
   }
  },
  {
@@ -1048,7 +1129,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom du HUD : {0}",
    "Waiting for a turn": "En attente d'un virage",
    "No turn data": "Aucune donnée de virage",
-   "Arrival time on the cluster": "Heure d'arrivée au combiné"
+   "Arrival time on the cluster": "Heure d'arrivée au combiné",
+   "Edge fade: {0}": "Fondu des bords : {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Dégager derrière la vitesse",
+   "Speed patch: {0}": "Zone de vitesse : {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} à {2},{3}",
+   "Wider": "Plus large",
+   "Narrower": "Plus étroit",
+   "Taller": "Plus haut",
+   "Shorter": "Plus bas"
   }
  },
  {
@@ -1153,7 +1243,16 @@ module.exports = [
    "HUD zoom: {0}": "זום HUD: {0}",
    "Waiting for a turn": "ממתין לפנייה",
    "No turn data": "אין נתוני פניות",
-   "Arrival time on the cluster": "שעת הגעה בלוח המחוונים"
+   "Arrival time on the cluster": "שעת הגעה בלוח המחוונים",
+   "Edge fade: {0}": "דהייה בשוליים: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "ניקוי מאחורי המהירות",
+   "Speed patch: {0}": "אזור המהירות: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ב-{2},{3}",
+   "Wider": "רחב יותר",
+   "Narrower": "צר יותר",
+   "Taller": "גבוה יותר",
+   "Shorter": "נמוך יותר"
   }
  },
  {
@@ -1258,7 +1357,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD nagyítás: {0}",
    "Waiting for a turn": "Várakozás kanyarra",
    "No turn data": "Nincs kanyaradat",
-   "Arrival time on the cluster": "Érkezési idő a műszerfalon"
+   "Arrival time on the cluster": "Érkezési idő a műszerfalon",
+   "Edge fade: {0}": "Szélek elhalványítása: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Sebesség mögötti terület törlése",
+   "Speed patch: {0}": "Sebességmező: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} itt: {2},{3}",
+   "Wider": "Szélesebb",
+   "Narrower": "Keskenyebb",
+   "Taller": "Magasabb",
+   "Shorter": "Alacsonyabb"
   }
  },
  {
@@ -1363,7 +1471,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom HUD: {0}",
    "Waiting for a turn": "Menunggu belokan",
    "No turn data": "Tidak ada data belokan",
-   "Arrival time on the cluster": "Waktu tiba di panel"
+   "Arrival time on the cluster": "Waktu tiba di panel",
+   "Edge fade: {0}": "Pudar tepi: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Kosongkan di balik kecepatan",
+   "Speed patch: {0}": "Area kecepatan: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} di {2},{3}",
+   "Wider": "Lebih lebar",
+   "Narrower": "Lebih sempit",
+   "Taller": "Lebih tinggi",
+   "Shorter": "Lebih pendek"
   }
  },
  {
@@ -1468,7 +1585,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom dell'HUD: {0}",
    "Waiting for a turn": "In attesa di una svolta",
    "No turn data": "Nessun dato sulle svolte",
-   "Arrival time on the cluster": "Orario di arrivo sul quadro"
+   "Arrival time on the cluster": "Orario di arrivo sul quadro",
+   "Edge fade: {0}": "Sfumatura bordi: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Libera dietro la velocità",
+   "Speed patch: {0}": "Area velocità: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} in {2},{3}",
+   "Wider": "Più largo",
+   "Narrower": "Più stretto",
+   "Taller": "Più alto",
+   "Shorter": "Più basso"
   }
  },
  {
@@ -1573,7 +1699,16 @@ module.exports = [
    "HUD zoom: {0}": "HUDズーム：{0}",
    "Waiting for a turn": "曲がり角待ち",
    "No turn data": "曲がり角データなし",
-   "Arrival time on the cluster": "メーターに到着予定時刻"
+   "Arrival time on the cluster": "メーターに到着予定時刻",
+   "Edge fade: {0}": "端のフェード：{0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "速度表示の背後を消去",
+   "Speed patch: {0}": "速度エリア：{0}",
+   "{0}x{1} at {2},{3}": "{2},{3} に {0}x{1}",
+   "Wider": "幅を広げる",
+   "Narrower": "幅を狭める",
+   "Taller": "高くする",
+   "Shorter": "低くする"
   }
  },
  {
@@ -1678,7 +1813,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD 줌: {0}",
    "Waiting for a turn": "회전 대기 중",
    "No turn data": "회전 데이터 없음",
-   "Arrival time on the cluster": "계기판에 도착 시간"
+   "Arrival time on the cluster": "계기판에 도착 시간",
+   "Edge fade: {0}": "가장자리 페이드: {0}",
+   "{0} px": "{0}px",
+   "Clear behind speed": "속도 표시 뒤 비우기",
+   "Speed patch: {0}": "속도 영역: {0}",
+   "{0}x{1} at {2},{3}": "{2},{3} 위치 {0}x{1}",
+   "Wider": "넓게",
+   "Narrower": "좁게",
+   "Taller": "높게",
+   "Shorter": "낮게"
   }
  },
  {
@@ -1783,7 +1927,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Venter på en sving",
    "No turn data": "Ingen svingdata",
-   "Arrival time on the cluster": "Ankomsttid i instrumentpanel"
+   "Arrival time on the cluster": "Ankomsttid i instrumentpanel",
+   "Edge fade: {0}": "Uttoning av kanter: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Tøm bak hastighet",
+   "Speed patch: {0}": "Hastighetsfelt: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
+   "Wider": "Bredere",
+   "Narrower": "Smalere",
+   "Taller": "Høyere",
+   "Shorter": "Lavere"
   }
  },
  {
@@ -1890,7 +2043,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Wachten op afslag",
    "No turn data": "Geen afslaggegevens",
-   "Arrival time on the cluster": "Aankomsttijd in paneel"
+   "Arrival time on the cluster": "Aankomsttijd in paneel",
+   "Edge fade: {0}": "Randvervaging: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Vrijmaken achter snelheid",
+   "Speed patch: {0}": "Snelheidsvlak: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} op {2},{3}",
+   "Wider": "Breder",
+   "Narrower": "Smaller",
+   "Taller": "Hoger",
+   "Shorter": "Lager"
   }
  },
  {
@@ -1995,7 +2157,16 @@ module.exports = [
    "HUD zoom: {0}": "Powiększenie HUD: {0}",
    "Waiting for a turn": "Oczekiwanie na skręt",
    "No turn data": "Brak danych o skrętach",
-   "Arrival time on the cluster": "Czas przyjazdu na zegarach"
+   "Arrival time on the cluster": "Czas przyjazdu na zegarach",
+   "Edge fade: {0}": "Wygaszanie krawędzi: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Ukryj mapę pod prędkością",
+   "Speed patch: {0}": "Pole prędkości: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} w {2},{3}",
+   "Wider": "Szersze",
+   "Narrower": "Węższe",
+   "Taller": "Wyższe",
+   "Shorter": "Niższe"
   }
  },
  {
@@ -2100,7 +2271,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom do HUD: {0}",
    "Waiting for a turn": "Aguardando uma curva",
    "No turn data": "Sem dados de curvas",
-   "Arrival time on the cluster": "Horário de chegada no painel"
+   "Arrival time on the cluster": "Horário de chegada no painel",
+   "Edge fade: {0}": "Esmaecimento das bordas: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Limpar atrás da velocidade",
+   "Speed patch: {0}": "Área da velocidade: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} em {2},{3}",
+   "Wider": "Mais largo",
+   "Narrower": "Mais estreito",
+   "Taller": "Mais alto",
+   "Shorter": "Mais baixo"
   }
  },
  {
@@ -2205,7 +2385,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom do HUD: {0}",
    "Waiting for a turn": "À espera de uma viragem",
    "No turn data": "Sem dados de viragens",
-   "Arrival time on the cluster": "Hora de chegada no quadrante"
+   "Arrival time on the cluster": "Hora de chegada no quadrante",
+   "Edge fade: {0}": "Esbatimento das margens: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Limpar atrás da velocidade",
+   "Speed patch: {0}": "Área da velocidade: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} em {2},{3}",
+   "Wider": "Mais largo",
+   "Narrower": "Mais estreito",
+   "Taller": "Mais alto",
+   "Shorter": "Mais baixo"
   }
  },
  {
@@ -2310,7 +2499,16 @@ module.exports = [
    "HUD zoom: {0}": "Zoom HUD: {0}",
    "Waiting for a turn": "Se așteaptă un viraj",
    "No turn data": "Fără date despre viraje",
-   "Arrival time on the cluster": "Ora sosirii pe bord"
+   "Arrival time on the cluster": "Ora sosirii pe bord",
+   "Edge fade: {0}": "Estompare margini: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Curăță în spatele vitezei",
+   "Speed patch: {0}": "Zona vitezei: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} la {2},{3}",
+   "Wider": "Mai lat",
+   "Narrower": "Mai îngust",
+   "Taller": "Mai înalt",
+   "Shorter": "Mai scund"
   }
  },
  {
@@ -2415,7 +2613,16 @@ module.exports = [
    "HUD zoom: {0}": "Масштаб HUD: {0}",
    "Waiting for a turn": "Ожидание поворота",
    "No turn data": "Нет данных о поворотах",
-   "Arrival time on the cluster": "Время прибытия на приборах"
+   "Arrival time on the cluster": "Время прибытия на приборах",
+   "Edge fade: {0}": "Затухание краёв: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Очистить под скоростью",
+   "Speed patch: {0}": "Поле скорости: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} в {2},{3}",
+   "Wider": "Шире",
+   "Narrower": "Уже",
+   "Taller": "Выше",
+   "Shorter": "Ниже"
   }
  },
  {
@@ -2520,7 +2727,16 @@ module.exports = [
    "HUD zoom: {0}": "Priblíženie HUD: {0}",
    "Waiting for a turn": "Čaká sa na odbočku",
    "No turn data": "Žiadne údaje o odbočkách",
-   "Arrival time on the cluster": "Čas príchodu na prístrojovej doske"
+   "Arrival time on the cluster": "Čas príchodu na prístrojovej doske",
+   "Edge fade: {0}": "Stmievanie okrajov: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Vyčistiť za rýchlosťou",
+   "Speed patch: {0}": "Plocha rýchlosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Wider": "Širšie",
+   "Narrower": "Užšie",
+   "Taller": "Vyššie",
+   "Shorter": "Nižšie"
   }
  },
  {
@@ -2625,7 +2841,16 @@ module.exports = [
    "HUD zoom: {0}": "Povečava HUD: {0}",
    "Waiting for a turn": "Čakanje na zavoj",
    "No turn data": "Ni podatkov o zavojih",
-   "Arrival time on the cluster": "Čas prihoda na armaturi"
+   "Arrival time on the cluster": "Čas prihoda na armaturi",
+   "Edge fade: {0}": "Zatemnitev robov: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Počisti za hitrostjo",
+   "Speed patch: {0}": "Polje hitrosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Wider": "Širše",
+   "Narrower": "Ožje",
+   "Taller": "Višje",
+   "Shorter": "Nižje"
   }
  },
  {
@@ -2730,7 +2955,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD-zoom: {0}",
    "Waiting for a turn": "Väntar på en sväng",
    "No turn data": "Ingen svängdata",
-   "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet"
+   "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet",
+   "Edge fade: {0}": "Uttoning av kanter: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Rensa bakom hastighet",
+   "Speed patch: {0}": "Hastighetsfält: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} vid {2},{3}",
+   "Wider": "Bredare",
+   "Narrower": "Smalare",
+   "Taller": "Högre",
+   "Shorter": "Lägre"
   }
  },
  {
@@ -2835,7 +3069,16 @@ module.exports = [
    "HUD zoom: {0}": "ซูม HUD: {0}",
    "Waiting for a turn": "กำลังรอทางเลี้ยว",
    "No turn data": "ไม่มีข้อมูลทางเลี้ยว",
-   "Arrival time on the cluster": "เวลาถึงบนหน้าปัด"
+   "Arrival time on the cluster": "เวลาถึงบนหน้าปัด",
+   "Edge fade: {0}": "การจางขอบ: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "ล้างด้านหลังความเร็ว",
+   "Speed patch: {0}": "พื้นที่ความเร็ว: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ที่ {2},{3}",
+   "Wider": "กว้างขึ้น",
+   "Narrower": "แคบลง",
+   "Taller": "สูงขึ้น",
+   "Shorter": "เตี้ยลง"
   }
  },
  {
@@ -2940,7 +3183,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD yakınlaştırma: {0}",
    "Waiting for a turn": "Dönüş bekleniyor",
    "No turn data": "Dönüş verisi yok",
-   "Arrival time on the cluster": "Göstergede varış saati"
+   "Arrival time on the cluster": "Göstergede varış saati",
+   "Edge fade: {0}": "Kenar solması: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Hızın arkasını temizle",
+   "Speed patch: {0}": "Hız alanı: {0}",
+   "{0}x{1} at {2},{3}": "{2},{3} konumunda {0}x{1}",
+   "Wider": "Daha geniş",
+   "Narrower": "Daha dar",
+   "Taller": "Daha yüksek",
+   "Shorter": "Daha alçak"
   }
  },
  {
@@ -3045,7 +3297,16 @@ module.exports = [
    "HUD zoom: {0}": "Масштаб HUD: {0}",
    "Waiting for a turn": "Очікування повороту",
    "No turn data": "Немає даних про повороти",
-   "Arrival time on the cluster": "Час прибуття на приладах"
+   "Arrival time on the cluster": "Час прибуття на приладах",
+   "Edge fade: {0}": "Згасання країв: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Очистити під швидкістю",
+   "Speed patch: {0}": "Поле швидкості: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} у {2},{3}",
+   "Wider": "Ширше",
+   "Narrower": "Вужче",
+   "Taller": "Вище",
+   "Shorter": "Нижче"
   }
  },
  {
@@ -3150,7 +3411,16 @@ module.exports = [
    "HUD zoom: {0}": "Thu phóng HUD: {0}",
    "Waiting for a turn": "Đang chờ chỗ rẽ",
    "No turn data": "Không có dữ liệu chỗ rẽ",
-   "Arrival time on the cluster": "Giờ đến trên bảng đồng hồ"
+   "Arrival time on the cluster": "Giờ đến trên bảng đồng hồ",
+   "Edge fade: {0}": "Làm mờ viền: {0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "Xóa phía sau tốc độ",
+   "Speed patch: {0}": "Vùng tốc độ: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} tại {2},{3}",
+   "Wider": "Rộng hơn",
+   "Narrower": "Hẹp hơn",
+   "Taller": "Cao hơn",
+   "Shorter": "Thấp hơn"
   }
  },
  {
@@ -3257,7 +3527,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD 缩放：{0}",
    "Waiting for a turn": "等待转弯",
    "No turn data": "无转弯数据",
-   "Arrival time on the cluster": "仪表盘显示到达时间"
+   "Arrival time on the cluster": "仪表盘显示到达时间",
+   "Edge fade: {0}": "边缘渐隐：{0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "清空车速后方",
+   "Speed patch: {0}": "车速区域：{0}",
+   "{0}x{1} at {2},{3}": "{0}x{1}，位于 {2},{3}",
+   "Wider": "加宽",
+   "Narrower": "变窄",
+   "Taller": "加高",
+   "Shorter": "变矮"
   }
  },
  {
@@ -3364,7 +3643,16 @@ module.exports = [
    "HUD zoom: {0}": "HUD 縮放：{0}",
    "Waiting for a turn": "等待轉彎",
    "No turn data": "無轉彎資料",
-   "Arrival time on the cluster": "儀表板顯示抵達時間"
+   "Arrival time on the cluster": "儀表板顯示抵達時間",
+   "Edge fade: {0}": "邊緣漸隱：{0}",
+   "{0} px": "{0} px",
+   "Clear behind speed": "清空車速後方",
+   "Speed patch: {0}": "車速區域：{0}",
+   "{0}x{1} at {2},{3}": "{0}x{1}，位於 {2},{3}",
+   "Wider": "加寬",
+   "Narrower": "變窄",
+   "Taller": "加高",
+   "Shorter": "變矮"
   }
  }
 ];

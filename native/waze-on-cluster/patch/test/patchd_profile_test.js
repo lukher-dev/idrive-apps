@@ -19,7 +19,9 @@
  * as a profile's own or the shared settings is switched to and from and kept
  * at the next start. The HUD map kept shown over BMW's pop-ups is a
  * profile's own setting like the others; a profiles.json saved before it is
- * taken, giving way. */
+ * taken, giving way. So are near turns, the zoom, the edge fade and the
+ * map cleared behind the speed: a set saved before them takes their
+ * defaults. */
 'use strict';
 var cp = require('child_process');
 var fs = require('fs');
@@ -109,9 +111,13 @@ function state() {
 function profiles() { var t = fs.readFileSync(PROFILES, 'utf8'); try { return JSON.parse(t); } catch (e) { throw new Error(e.message + ': ' + t); } }
 function settings(cluster, hud, pct, x, y, keep, near, zoom) {
     return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
-        hud_near_turn: near || 0, hud_zoom_pct: zoom || 100 };
+        hud_near_turn: near || 0, hud_zoom_pct: zoom || 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
+        hud_clear_w: 220, hud_clear_h: 90 };
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+/* A line of map.state.conf: one of the map keys, a whole number. */
+var MAP_LINE = new RegExp('^(cluster|hud|hud_width_pct|hud_offset_x|hud_offset_y|hud_keep_shown|hud_near_turn|hud_zoom_pct|' +
+    'hud_edge_fade_px|hud_clear|hud_clear_x|hud_clear_y|hud_clear_w|hud_clear_h) = -?\\d+$');
 /* For a check that nothing is written: past the save's delay. */
 function saved() { return sleep(SAVE_MS + 150); }
 /* For a check that something is written: until it holds, at most 10 s
@@ -225,9 +231,9 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
 
     /* The format a patchd and render without profiles read. */
     var lines = fs.readFileSync(STATE, 'utf8').split('\n').filter(Boolean);
-    ok('map.state.conf: only "key = whole number" lines of the eight map keys (0.9.x reads them, leaving out the later ones)',
-        lines.length === 8 && lines.every(function (l) {
-            return /^(cluster|hud|hud_width_pct|hud_offset_x|hud_offset_y|hud_keep_shown|hud_near_turn|hud_zoom_pct) = -?\d+$/.test(l);
+    ok('map.state.conf: only "key = whole number" lines of the fourteen map keys (0.9.x reads them, leaving out the later ones)',
+        lines.length === 14 && lines.every(function (l) {
+            return MAP_LINE.test(l);
         }), lines.join('|'));
 
     /* Untick: the shared settings back, the copy gone. */
@@ -422,7 +428,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     /* map.state.conf's settings, in whatever order its lines are; a later key it lacks (a file an
      * earlier version wrote) is what the render takes for it, its default */
     var sameKeys = function (a, b) {
-        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100 }, a);
+        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
+            hud_clear_w: 220, hud_clear_h: 90 }, a);
         return Object.keys(b).length === Object.keys(a).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
     };
     fs.writeFileSync(STATE, 'cluster = 1\nhud = 0\nhud_width_pct = 0\nhud_offset_x = 0\nhud_offset_y = 0\nhud_keep_shown = 0\n');
@@ -462,7 +469,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     lines = fs.readFileSync(STATE, 'utf8').split('\n').filter(Boolean);
     ok('started again: the shared Off kept, map.state.conf in the lines an earlier version reads', r.ok && !r.changed && same(r.settings, OFF) &&
         lines.indexOf('cluster = 0') >= 0 && lines.indexOf('hud = 0') >= 0 &&
-        lines.every(function (l) { return /^(cluster|hud|hud_width_pct|hud_offset_x|hud_offset_y|hud_keep_shown|hud_near_turn|hud_zoom_pct) = -?\d+$/.test(l); }),
+        lines.every(function (l) { return MAP_LINE.test(l); }),
         lines.join('|'));
     r = await ask({ cmd: 'cluster', on: 1 });
     ok('the cluster again from Off: saved', r.ok && await when(function () { return sameKeys(state(), ON); }), JSON.stringify(state()));
@@ -518,6 +525,32 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     r = await ask({ cmd: 'profile', id: A });
     ok('back to A: near turns, zoom 180', r.ok && r.own && r.settings.hud_near_turn === 1 && r.settings.hud_zoom_pct === 180 &&
         await when(function () { return state().hud_near_turn === 1 && state().hud_zoom_pct === 180; }), JSON.stringify(r));
+
+    /* The edge fade, the clear behind the speed and its rectangle, per profile; a profiles.json from before
+     * them: 30 px, cleared, 110, 320, 220 by 90. */
+    var CLEAR_DEFAULTS = { hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 220, hud_clear_h: 90 };
+    var hasAll = function (o, want) { return Object.keys(want).every(function (k) { return o[k] === want[k]; }); };
+    ok('a profiles.json from before the fade and the clear: A\'s set read with their defaults', hasAll(r.settings, CLEAR_DEFAULTS),
+        JSON.stringify(r));
+    var MINE = { hud_edge_fade_px: 12, hud_clear: 0, hud_clear_x: 40, hud_clear_y: 300, hud_clear_w: 260, hud_clear_h: 120 };
+    r = await ask({ cmd: 'hud-fade', px: 12 });
+    var rc = await ask({ cmd: 'hud-clear', on: 0 }), rr = await ask({ cmd: 'hud-clear-rect', x: 40, y: 300, w: 260, h: 120 });
+    ok('a fade of 12, not cleared and its own rectangle as A\'s own: in A\'s copy and map.state.conf', r.ok && rc.ok && rr.ok &&
+        await when(function () { return hasAll(state(), MINE) && hasAll(profiles().own[A], MINE); }), JSON.stringify(profiles()));
+    r = await ask({ cmd: 'profile', id: B });
+    ok('B without its own: the defaults', r.ok && !r.own && hasAll(r.settings, CLEAR_DEFAULTS) &&
+        await when(function () { return hasAll(state(), CLEAR_DEFAULTS); }), JSON.stringify(r));
+    r = await ask({ cmd: 'profile', id: A });
+    ok('back to A: its fade, clear and rectangle', r.ok && r.own && hasAll(r.settings, MINE) &&
+        await when(function () { return hasAll(state(), MINE); }), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-size', hud_width_pct: 135 });
+    ok('the widest HUD size, 135 %, as A\'s own', r.ok && r.hud_width_pct === 135 &&
+        await when(function () { return state().hud_width_pct === 135 && profiles().own[A].hud_width_pct === 135; }), JSON.stringify(r));
+    await stop();
+    await start();
+    r = await ask({ cmd: 'profile', id: A });
+    ok('started again: A\'s 135 % kept', r.ok && r.own && r.settings.hud_width_pct === 135 && state().hud_width_pct === 135,
+        JSON.stringify(r));
 })().catch(function (e) {
     ok('no error: ' + e.message, false);
 }).then(function () {

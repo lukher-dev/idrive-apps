@@ -80,9 +80,18 @@ The app is in the head unit's display language.
   to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
   the row shows the zoom in use. By default it is as close as the HUD map's
   size allows, which is the cluster's own scale.
-- **Size:** how wide the map is on the HUD.
+- **Edge fade:** how far the HUD map's edges fade out, 0 px (a hard edge)
+  to 60 px.
+- **Size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
+  HUD's edges cut the map's sides.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
-  map sits on the HUD.
+  map sits on the HUD. Above 100 %, left and right slide the map inside the
+  HUD.
+- **Clear behind speed:** ticked (the default), the map is hidden in a
+  patch of the HUD, so BMW's speed readout stays readable. **Speed patch**
+  shows the patch's size and place in HUD pixels; its **Move left / Move
+  right / Move up / Move down** and **Wider / Narrower / Taller / Shorter**
+  move and size it 10 px a press.
 
 **CarPlay** and **Android Auto**
 

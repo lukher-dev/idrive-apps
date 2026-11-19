@@ -12,12 +12,17 @@
  *
  *   Render control socket (RENDER_PATH)
  *     app  -> tool  {"cmd":"guide","hide":0|1}  BMW's turn box hidden while the map shows, or not
- *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"}
+ *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"|
+ *                    "hud_near_turn"|"hud_zoom_pct"|"hud_edge_fade_px"|"hud_clear"|
+ *                    "hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
  *                    the map's settings (patchd saves them)
  *     tool -> app   {"ev":"status","state":"idle"|"starting"|"showing"|"frozen"|"error"|"unsupported",
  *                    "target","page","reason","hide_bmw_guidance","guide_disabled","cluster","hud",
- *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown"}
- *                   (hud_keep_shown 0|1, absent from a tool before it)
+ *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_edge_fade_px",
+ *                    "hud_clear","hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
+ *                   (hud_keep_shown 0|1, absent from a tool before it; hud_edge_fade_px 0..60, 0 off;
+ *                    hud_clear 0|1, the speed patch, the map blacked out in the rectangle
+ *                    hud_clear_x,_y,_w,_h in the HUD's 800x480 px; each absent from a tool before it)
  *                   (unsupported: the head unit refuses the tool, which stays idle)
  *                   (idle's reason: why a live stream shows no map; hide_bmw_guidance 0|1,
  *                    absent from a tool before the switch; guide_disabled 1: the cluster
@@ -105,14 +110,23 @@ const SIZE = '1088x480';
 /* The safe area CarPlay's Patch button writes: where the phone keeps its guidance UI,
  * inside the part of the map the gauges leave visible. */
 const SAFE = '504x424+286+16';
-/* The HUD map's size: HUD_STEP_PCT steps from HUD_MIN_PCT to HUD_MAX_PCT (85 %, the widest the HUD shows
- * whole), HUD_SIZE_STEPS of them. Standard (0) counts as HUD_STANDARD_PCT, about what the fitted box is. */
-const HUD_MIN_PCT = 30, HUD_MAX_PCT = 85, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
+/* The HUD map's size: HUD_STEP_PCT steps from HUD_MIN_PCT to HUD_MAX_PCT, HUD_SIZE_STEPS of them. Past
+ * 100 % the HUD's edges cut the map's sides, on purpose. Standard (0) counts as HUD_STANDARD_PCT, about what
+ * the fitted box is. */
+const HUD_MIN_PCT = 30, HUD_MAX_PCT = 135, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
 const HUD_SIZE_STEPS = (HUD_MAX_PCT - HUD_MIN_PCT) / HUD_STEP_PCT;
 /* The HUD map's zoom: HUD_ZOOM_STEP_PCT steps from 100 to 250 %; the render uses at most what the box takes. */
 const HUD_ZOOM_MIN = 100, HUD_ZOOM_MAX = 250, HUD_ZOOM_STEP_PCT = 10;
 const HUD_ZOOM_STEPS = (HUD_ZOOM_MAX - HUD_ZOOM_MIN) / HUD_ZOOM_STEP_PCT;
-/* Where the map can show, the choices in their order on the page. */
+/* The HUD map's edges faded to black over HUD_FADE_STEP_PX steps from 0 (off) to HUD_FADE_MAX_PX. */
+const HUD_FADE_MAX_PX = 60, HUD_FADE_STEP_PX = 10;
+const HUD_FADE_STEPS = HUD_FADE_MAX_PX / HUD_FADE_STEP_PX;
+/* The speed patch: the map blacked out in a rectangle of the HUD's scene (HUD_W x HUD_H px) so BMW's speed
+ * stays readable, moved or sized HUD_CLEAR_PX a press, at least HUD_CLEAR_MIN_PX each way and held inside. */
+const HUD_W = 800, HUD_H = 480, HUD_CLEAR_PX = 10, HUD_CLEAR_MIN_PX = 10;
+/* A press's change to the rectangle [x, y, w, h], in HUD_CLEAR_PX. */
+const CLEAR_STEPS = { left: [-1, 0, 0, 0], right: [1, 0, 0, 0], up: [0, -1, 0, 0], down: [0, 1, 0, 0],
+    wider: [0, 0, 1, 0], narrower: [0, 0, -1, 0], taller: [0, 0, 0, 1], shorter: [0, 0, 0, -1] };/* Where the map can show, the choices in their order on the page. */
 const SHOWN_ON = ['cluster', 'hud', 'both', 'off'];
 /* The HUD map moved from its centre, HUD_MOVE_PX a press, within +-HUD_MOVE_MAX; the render holds it inside the
  * HUD and reports the offset as far as it went. An asked size or place shows until the render's status has it,
@@ -373,6 +387,8 @@ class WazeClusterControl extends EventEmitter {
     close() {
         clearTimeout(this._askedPosTimer);
         this._askedPos = null;
+        clearTimeout(this._askedClearTimer);
+        this._askedClear = null;
         this._clearAskedHud();
         this.render.close();
         this.patch.close();
@@ -554,6 +570,8 @@ class WazeClusterControl extends EventEmitter {
         this._askedHud = null;
         clearTimeout(this._askedZoomTimer);
         this._askedZoom = null;
+        clearTimeout(this._askedFadeTimer);
+        this._askedFade = null;
     }
 
     /* ---- where the HUD map is: moved from its centre, in HUD pixels ---- */
@@ -675,6 +693,109 @@ class WazeClusterControl extends EventEmitter {
         }, HUD_ASKED_MS);
         this.render.send({ cmd: 'hud', hud_zoom_pct: String(pct) });
         this.patch.send({ cmd: 'hud-zoom', pct });
+        this.emit('change');
+    }
+
+    /* ---- the HUD map's edge fade ---- */
+    /* The fade in px, as just asked until the render shows it; null while it has not said. */
+    hudEdgeFade() {
+        if (this._askedFade != null) {
+            return this._askedFade;
+        }
+        const v = this.renderStatus && this.renderStatus.hud_edge_fade_px;
+        return typeof v === 'number' ? v : null;
+    }
+    hudEdgeFadeText() {
+        const px = this.hudEdgeFade();
+        return t('Edge fade: {0}', px == null ? '—' : t('{0} px', px));
+    }
+    /* The fade as a slider position, 0 (off) to HUD_FADE_STEPS; null while unknown. */
+    hudEdgeFadeStep() {
+        const px = this.hudEdgeFade();
+        if (px == null) {
+            return null;
+        }
+        return Math.round(Math.max(0, Math.min(HUD_FADE_MAX_PX, px)) / HUD_FADE_STEP_PX);
+    }
+    canChangeHudEdgeFade() {
+        return this.canChangeHudSize() && this.hudEdgeFade() !== null;
+    }
+    /* The fade at a slider position: the render at once, patchd saves it. */
+    setHudEdgeFadeStep(step) {
+        if (!Number.isInteger(step) || step < 0 || step > HUD_FADE_STEPS || !this.canChangeHudEdgeFade() || step === this.hudEdgeFadeStep()) {
+            return;
+        }
+        const px = step * HUD_FADE_STEP_PX;
+        this._askedFade = px;
+        clearTimeout(this._askedFadeTimer);
+        this._askedFadeTimer = setTimeout(() => {
+            this._askedFade = null;
+            this.emit('change');
+        }, HUD_ASKED_MS);
+        this.render.send({ cmd: 'hud', hud_edge_fade_px: String(px) });
+        this.patch.send({ cmd: 'hud-fade', px });
+        this.emit('change');
+    }
+
+    /* ---- the speed patch: the map cleared behind BMW's speed ---- */
+    /* True while the render blacks the map out there, false while not; null while it has not said. */
+    hudClear() {
+        const v = this.renderStatus && this.renderStatus.hud_clear;
+        return v === 0 || v === 1 ? v === 1 : null;
+    }
+    /* Changes as the size and place do. */
+    canHudClear() {
+        return this.canChangeHudSize() && this.hudClear() !== null;
+    }
+    /* Flips it: the render at once, patchd saves it; the render's next status shows it. */
+    toggleHudClear() {
+        if (this.canHudClear()) {
+            const on = !this.hudClear();
+            this.render.send({ cmd: 'hud', hud_clear: on ? '1' : '0' });
+            this.patch.send({ cmd: 'hud-clear', on: on ? 1 : 0 });
+        }
+    }
+    /* Its rectangle [x, y, w, h] in HUD pixels, as just asked until the render shows it; null while unknown. */
+    hudClearRect() {
+        if (this._askedClear) {
+            return this._askedClear;
+        }
+        const s = this.renderStatus;
+        const r = s ? [s.hud_clear_x, s.hud_clear_y, s.hud_clear_w, s.hud_clear_h] : [];
+        return r.length && r.every((v) => typeof v === 'number') ? r : null;
+    }
+    hudClearText() {
+        const r = this.hudClearRect();
+        return t('Speed patch: {0}', r ? t('{0}x{1} at {2},{3}', r[2], r[3], r[0], r[1]) : '—');
+    }
+    /* Its place and size change while it is on. */
+    canAdjustHudClear() {
+        return this.canHudClear() && this.hudClear() === true && this.hudClearRect() !== null;
+    }
+    /* Moves or sizes it a step (left / right / up / down / wider / narrower / taller / shorter), held inside
+     * the HUD: the render at once, patchd saves it. A press that changes nothing sends nothing. */
+    adjustHudClear(dir) {
+        const d = CLEAR_STEPS[dir];
+        if (!d || !this.canAdjustHudClear()) {
+            return;
+        }
+        const r = this.hudClearRect();
+        const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+        const w = clamp(r[2] + d[2] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, HUD_W - r[0]);
+        const h = clamp(r[3] + d[3] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, HUD_H - r[1]);
+        const x = clamp(r[0] + d[0] * HUD_CLEAR_PX, 0, HUD_W - w);
+        const y = clamp(r[1] + d[1] * HUD_CLEAR_PX, 0, HUD_H - h);
+        if (x === r[0] && y === r[1] && w === r[2] && h === r[3]) {
+            return;
+        }
+        this._askedClear = [x, y, w, h];
+        clearTimeout(this._askedClearTimer);
+        this._askedClearTimer = setTimeout(() => {
+            this._askedClear = null;
+            this.emit('change');
+        }, HUD_ASKED_MS);
+        this.render.send({ cmd: 'hud', hud_clear_x: String(x), hud_clear_y: String(y), hud_clear_w: String(w), hud_clear_h: String(h) });
+        this.patch.send({ cmd: 'hud-clear-rect', x, y, w, h });
         this.emit('change');
     }
 
@@ -1201,6 +1322,11 @@ class WazeClusterControl extends EventEmitter {
             if (this._askedPos && msg.hud_x === this._askedPos[0] && msg.hud_y === this._askedPos[1]) {
                 this._askedPos = null;
             }
+            const ac = this._askedClear;
+            if (ac && msg.hud_clear_x === ac[0] && msg.hud_clear_y === ac[1] && msg.hud_clear_w === ac[2] && msg.hud_clear_h === ac[3]) {
+                clearTimeout(this._askedClearTimer);
+                this._askedClear = null;
+            }
             this.emit('change');
         }
     }
@@ -1219,7 +1345,7 @@ class WazeClusterControl extends EventEmitter {
             this._noteEtaAsked(msg);
             this._wake();
             this.emit('change');
-        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom)-reply$/.test(msg.ev)) {
+        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect)-reply$/.test(msg.ev)) {
             if (!msg.ok) {
                 this._log.info(`patchd did not save the setting: ${msg.reason || 'refused'}`);
             }
@@ -1248,5 +1374,5 @@ class WazeClusterControl extends EventEmitter {
 module.exports = {
     WazeClusterControl, LineSocket,
     RENDER_PATH, PATCH_PATH, PENDING_PATH, AA_PENDING_PATH, BOOT_ID_PATH,
-    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS
+    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS, HUD_FADE_STEPS
 };

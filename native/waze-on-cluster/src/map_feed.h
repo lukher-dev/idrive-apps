@@ -72,9 +72,13 @@
 
 namespace woc {
 
-/* The HUD map's widest size, % of the HUD's width: wider is cut off at its
- * edges. A larger hud_width_pct is held to it. */
-const unsigned kHudMaxPct = 85;
+/* The HUD map's widest size, % of the HUD's width. Above 100 % the map is
+ * wider than the HUD: its box is the scene's width, its height the
+ * picture's shape at that width, and its sides are cut (hud_window); at
+ * 135 % it fills the scene's height, scaled nearly 1:1. A larger
+ * hud_width_pct is held to it. Without the head unit's scaler
+ * (FeedConfig::scale_down), and hosted, it is held to kHudWholePct. */
+const unsigned kHudMaxPct = 135, kHudWholePct = 100;
 
 struct FeedConfig {
     std::string socket = "/dev/shm/cluster-render/render.sock";
@@ -83,11 +87,12 @@ struct FeedConfig {
     MapRect rect;             /* where in the target; unset: the map area */
     bool guide_hold = true;   /* the layer's guide_hold: BMW's turn box hidden while the map shows */
     /* On the HUD: the map's width in percent of the HUD's (its height follows
-     * the picture's shape, at most the HUD's), centred. 0: the kit's fitted
-     * box (about 57 %). */
+     * the picture's shape, at most the HUD's), centred; above 100 % its
+     * sides cut (kHudMaxPct). 0: the kit's fitted box (about 57 %). */
     unsigned hud_width_pct = 0;
     /* On the HUD: the map moved from its centred place, in the HUD scene's
-     * pixels (+x right, +y down), held inside the HUD's scene. */
+     * pixels (+x right, +y down), held inside the HUD's scene. Above 100 %
+     * x pans the map inside its box instead, held inside the picture. */
     int hud_offset_x = 0, hud_offset_y = 0;
     /* On the HUD: kept shown over the stock HMI's pop-ups (the layer's
      * yield 0); else it gives way to them (cluster-render's hud_yield_slots). */
@@ -112,6 +117,14 @@ struct FeedConfig {
     bool hud_round_corners = true;
     /* the HUD map's dark background made black (see-through on a HUD) */
     bool hud_black_background = true;
+    /* the HUD map's edges faded to black over this many pixels (0: none) */
+    unsigned hud_edge_fade_px = 30;
+    /* The speed patch: on the HUD the map black inside this rectangle of the
+     * HUD's scene (x, y from its top left, w x h), feathered at its edges,
+     * so BMW's speed readout there stays clear; fixed to the scene, not to
+     * the map. */
+    bool hud_clear = true;
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 220, hud_clear_h = 90;
     /* hosted_vpp_scale: hosted, the host's part is made by the decoder's VPP
      * (MapFeed::part) rather than scaled by the worker */
     bool vpp_scale = false;
@@ -147,6 +160,9 @@ struct FeedStatus {
     bool hud_gate = true;          /* and whether a turn is near (always, with hud_near_turn off) */
     unsigned hud_zoom_pct = 250;   /* the HUD map's zoom setting */
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
+    unsigned hud_edge_fade_px = 30;   /* the HUD map's edges' fade */
+    bool hud_clear = true;            /* and its speed patch, in the HUD scene's pixels */
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 220, hud_clear_h = 90;
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs
@@ -189,9 +205,11 @@ public:
      * map on the HUD. */
     void set_hud_width(unsigned pct);
     /* The HUD map moved (FeedConfig::hud_offset_x/y), at once: the layer
-     * only changes place, no new texture. Held inside the HUD: the offset
-     * the map is at (hud_offset_x/y, the status's) then is as far as it
-     * goes, and the one asked for is kept for the next size. */
+     * only changes place, no new texture (above 100 % the part of the
+     * picture it shows moves instead, and the speed patch with the map's
+     * place, both scaled again from the newest picture). Held inside the
+     * HUD: the offset the map is at (hud_offset_x/y, the status's) then is
+     * as far as it goes, and the one asked for is kept for the next size. */
     void set_hud_offset(int dx, int dy);
     int hud_offset_x() const { return placed_x_; }
     int hud_offset_y() const { return placed_y_; }
@@ -202,6 +220,11 @@ public:
      * for the new part of the picture. */
     void set_hud_zoom(unsigned pct);
     unsigned hud_zoom_used() const { return zoom_used_; }
+    /* The HUD map's edges' fade (FeedConfig::hud_edge_fade_px) and its
+     * speed patch (FeedConfig::hud_clear*), at once: the same layer, the
+     * newest picture scaled again. */
+    void set_hud_edge_fade(unsigned px);
+    void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
     /* A layer to take frames: made, and not reported disabled by
      * cluster-render. */
     bool takes_frames() const { return layer_ && !disabled(); }
@@ -276,8 +299,17 @@ private:
     /* Before the layer goes: the next layer starts from the newest
      * picture. */
     void keep_newest();
-    /* On the HUD also notes the offset it places the map at. */
+    /* On the HUD also notes the offset it places the map at, and the map's
+     * width (virt_w_). */
     crk::QuadRect quad(uint32_t tw, uint32_t th) const;
+    /* On the HUD with the scaler: the frame's shape (shape_, zoom_used_)
+     * for the box q, and q made the place of the scaled picture. Above
+     * 100 % also notes the pan it shows (placed_x_). */
+    void hud_shape(crk::QuadRect *q);
+    /* The HUD's layer's place and shape again after a move, a fade or a
+     * patch: the same layer, the newest picture scaled again when its shape
+     * changed. */
+    void restyle();
     void count_second(int64_t now_ms);
     /* The layer is visible or about to be, on a connection. */
     bool sending() const;
@@ -310,6 +342,8 @@ private:
     std::string target_state_, holder_;
     /* the HUD map's offset as quad() last placed it; as asked until then */
     mutable int placed_x_ = 0, placed_y_ = 0;
+    /* the HUD map's width as quad() last made it: wider than its box above 100 % */
+    mutable uint32_t virt_w_ = 0;
     unsigned cap_kb_ = 0, max_kb_ = 0;
     std::string budget_reason_, refused_, report_;
     bool connected_ = false, status_asked_ = false;

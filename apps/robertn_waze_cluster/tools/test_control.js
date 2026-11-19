@@ -34,7 +34,8 @@
  * cluster renderer holds the box shown. Where the map shows (the cluster,
  * the HUD, both or Off, from the cluster and from both, the HUD's size and
  * place refused while Off) and the HUD's size slider, place, Keep HUD map
- * over BMW's pop-ups and guard; an asked HUD size the render does not show goes after a moment,
+ * over BMW's pop-ups and guard; the HUD map's edge fade slider; Clear
+ * behind speed and the speed patch's place and size, held inside the HUD; an asked HUD size the render does not show goes after a moment,
  * on a failed save and on a render reconnect. CarPlay Wi-Fi: the band patchd reports, 5 GHz or 2.4 GHz, the
  * line under it on 2.4 GHz only, nothing while the band is unknown, from a
  * patchd before it, or with patchd gone.
@@ -426,7 +427,7 @@ test('the HUD disabled by the cluster renderer: Disabled after errors, the size 
     c.close();
 });
 
-test('the HUD map size as a slider: 5 % steps from 30 to 85 %, Standard at the step below its ~57 %', async (render, patch) => {
+test('the HUD map size as a slider: 5 % steps from 30 to 135 %, Standard at the step below its ~57 %', async (render, patch) => {
     render.hud = 1;
     const c = control();
     c.open();
@@ -437,14 +438,15 @@ test('the HUD map size as a slider: 5 % steps from 30 to 85 %, Standard at the s
     c.setHudSizeStep(6);
     assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: 60 %', 6], 'shown at once');
     await until('60 %', () => render.hudWidth === 60 && c.renderStatus.hud_width_pct === 60);
+    assert.strictEqual(HUD_SIZE_STEPS, 21, 'past 100 %: the HUD\'s edges cut the map\'s sides');
     c.setHudSizeStep(HUD_SIZE_STEPS);
-    await until('85 %', () => c.renderStatus.hud_width_pct === 85 && c.hudSizeStep() === HUD_SIZE_STEPS);
+    await until('135 %', () => c.renderStatus.hud_width_pct === 135 && c.hudSizeStep() === HUD_SIZE_STEPS && c.hudSizeText() === 'Size: 135 %');
     c.setHudSizeStep(0);
     await until('30 %', () => c.renderStatus.hud_width_pct === 30 && c.hudSizeText() === 'Size: 30 %');
     const sent = render.received.length;
     [-1, HUD_SIZE_STEPS + 1, 2.5, '3', 0].forEach((step) => c.setHudSizeStep(step));
     assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
-    await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-size').map((m) => m.hud_width_pct).join() === '60,85,30');
+    await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-size').map((m) => m.hud_width_pct).join() === '60,135,30');
     c.close();
     assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: —', null], 'nothing known while closed');
 });
@@ -522,6 +524,138 @@ test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom 
     assert.deepStrictEqual(render.received.filter((m) => m.hud_zoom_pct !== undefined).map((m) => m.hud_zoom_pct), ['150', '250']);
     c.close();
     assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['HUD zoom: —', null], 'nothing known while closed');
+});
+
+test('the HUD map\'s edge fade as a slider: 10 px steps from Off to 60 px; greyed while the HUD is off and for a render without it',
+    async (render, patch) => {
+        const c = control();
+        c.open();
+        await until('connected', () => c.connectedRender() && c.connectedPatch());
+        render.stream(true);
+        await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep(), c.canChangeHudEdgeFade()], ['Edge fade: 30 px', 3, false],
+            '30 px by default, greyed while the HUD is off');
+        c.setHudEdgeFadeStep(4);
+        assert.strictEqual(render.received.filter((m) => m.hud_edge_fade_px !== undefined).length, 0, 'nothing sent while greyed');
+        render.hud = 1;
+        render.announce(render.state, render.reason);
+        await until('on', () => c.canChangeHudEdgeFade());
+        c.setHudEdgeFadeStep(5);
+        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep()], ['Edge fade: 50 px', 5], 'shown at once');
+        await until('50 px', () => render.hudFade === 50 && c.renderStatus.hud_edge_fade_px === 50 && patch.map.hud_edge_fade_px === 50);
+        c.setHudEdgeFadeStep(0);
+        await until('off', () => c.renderStatus.hud_edge_fade_px === 0 && c.hudEdgeFadeText() === 'Edge fade: 0 px' && c.hudEdgeFadeStep() === 0);
+        c.setHudEdgeFadeStep(6);
+        await until('60 px', () => c.renderStatus.hud_edge_fade_px === 60 && c.hudEdgeFadeStep() === 6);
+        const sent = render.received.length;
+        [-1, 7, 2.5, '3', 6].forEach((step) => c.setHudEdgeFadeStep(step));
+        assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
+        assert.deepStrictEqual(render.received.filter((m) => m.hud_edge_fade_px !== undefined),
+            [{ cmd: 'hud', hud_edge_fade_px: '50' }, { cmd: 'hud', hud_edge_fade_px: '0' }, { cmd: 'hud', hud_edge_fade_px: '60' }]);
+        await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-fade').map((m) => m.px).join() === '50,0,60');
+        render.hudFade = null;
+        render.announce(render.state, render.reason);
+        await until('a render without it', () => c.hudEdgeFadeStep() === null && !c.canChangeHudEdgeFade() && c.hudEdgeFadeText() === 'Edge fade: —');
+        c.close();
+        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep()], ['Edge fade: —', null], 'nothing known while closed');
+    });
+
+test('an asked edge fade the render does not show: the render\'s own after a moment', async (render) => {
+    render.hud = 1;
+    const c = control();
+    c.open();
+    await until('on', () => c.renderStatus && c.canChangeHudEdgeFade());
+    const take = render._onCommand.bind(render);
+    render._onCommand = (msg) => (msg.cmd === 'hud' && msg.hud_edge_fade_px !== undefined ? render.received.push(msg) : take(msg));
+    c.setHudEdgeFadeStep(1);
+    assert.strictEqual(c.hudEdgeFadeText(), 'Edge fade: 10 px', 'shown at once');
+    await until('the render\'s own again', () => c.hudEdgeFadeText() === 'Edge fade: 30 px');
+    c.close();
+});
+
+test('Clear behind speed: on by default; a flip goes to the render and patchd, the render\'s status shows it; ' +
+    'greyed while the HUD is off and for a render without it', async (render, patch) => {
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+    assert.deepStrictEqual([c.hudClear(), c.canHudClear(), c.canAdjustHudClear(), c.hudClearText()],
+        [true, false, false, 'Speed patch: 220x90 at 110,320'], 'on, greyed while the HUD is off');
+    c.toggleHudClear();
+    c.adjustHudClear('left');
+    assert.strictEqual(render.received.filter((m) => m.hud_clear !== undefined || m.hud_clear_x !== undefined).length, 0, 'nothing sent while greyed');
+    render.hud = 1;
+    render.announce(render.state, render.reason);
+    await until('on', () => c.canHudClear() && c.canAdjustHudClear());
+    c.toggleHudClear();
+    await until('off', () => c.hudClear() === false && render.hudClear === 0 && patch.map.hud_clear === 0);
+    assert(c.canHudClear() && !c.canAdjustHudClear(), 'the place and size greyed while off');
+    c.adjustHudClear('left');
+    c.toggleHudClear();
+    await until('on again', () => c.hudClear() === true && patch.map.hud_clear === 1);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_clear !== undefined), [{ cmd: 'hud', hud_clear: '0' }, { cmd: 'hud', hud_clear: '1' }]);
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-clear'), [{ cmd: 'hud-clear', on: 0 }, { cmd: 'hud-clear', on: 1 }]);
+    assert.strictEqual(render.received.filter((m) => m.hud_clear_x !== undefined).length, 0, 'no move while off');
+    render.hudClear = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudClear() === null && !c.canHudClear() && !c.canAdjustHudClear() &&
+        c.hudClearText() === 'Speed patch: —');
+    c.close();
+});
+
+test('the speed patch\'s place and size: 10 px a press, held inside the HUD; the render takes it and patchd saves it', async (render, patch) => {
+    render.hud = 1;
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('on', () => c.renderStatus && c.canAdjustHudClear());
+    c.adjustHudClear('right');
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 220x90 at 120,320', 'shown at once');
+    c.adjustHudClear('up');
+    c.adjustHudClear('wider');
+    c.adjustHudClear('shorter');
+    await until('moved and sized', () => c.renderStatus.hud_clear_x === 120 && c.renderStatus.hud_clear_y === 310 &&
+        c.renderStatus.hud_clear_w === 230 && c.renderStatus.hud_clear_h === 80);
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 230x80 at 120,310');
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_clear_x !== undefined).slice(-1),
+        [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '310', hud_clear_w: '230', hud_clear_h: '80' }], 'the whole rectangle each time');
+    await until('saved', () => { const p = patch.received.filter((m) => m.cmd === 'hud-clear-rect').slice(-1)[0];
+        return p && p.x === 120 && p.y === 310 && p.w === 230 && p.h === 80; });
+    assert.deepStrictEqual([patch.map.hud_clear_x, patch.map.hud_clear_y, patch.map.hud_clear_w, patch.map.hud_clear_h], [120, 310, 230, 80]);
+    c.adjustHudClear('left');
+    c.adjustHudClear('down');
+    c.adjustHudClear('narrower');
+    c.adjustHudClear('taller');
+    await until('back', () => c.hudClearText() === 'Speed patch: 220x90 at 110,320' && c.renderStatus.hud_clear_x === 110 &&
+        c.renderStatus.hud_clear_w === 220);
+    /* held inside the HUD's 800x480: the corner and the far edges */
+    for (let i = 0; i < 20; i++) c.adjustHudClear('left');
+    for (let i = 0; i < 40; i++) c.adjustHudClear('up');
+    await until('the top left corner', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_y === 0);
+    for (let i = 0; i < 70; i++) c.adjustHudClear('right');
+    for (let i = 0; i < 50; i++) c.adjustHudClear('down');
+    await until('the bottom right corner', () => c.renderStatus.hud_clear_x === 580 && c.renderStatus.hud_clear_y === 390);
+    c.adjustHudClear('wider');
+    c.adjustHudClear('taller');
+    await sleep(50);
+    assert.strictEqual(c.hudClearText(), 'Speed patch: 220x90 at 580,390', 'no wider or taller past the edges');
+    for (let i = 0; i < 30; i++) c.adjustHudClear('narrower');
+    for (let i = 0; i < 12; i++) c.adjustHudClear('shorter');
+    await until('the smallest', () => c.renderStatus.hud_clear_w === 10 && c.renderStatus.hud_clear_h === 10);
+    const sent = render.received.length;
+    c.adjustHudClear('narrower');
+    c.adjustHudClear('shorter');
+    c.adjustHudClear('sideways');
+    assert.strictEqual(render.received.length, sent, 'nothing sent past the smallest or for no direction');
+    for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
+    await until('as wide as the HUD from where it is', () => c.renderStatus.hud_clear_w === 220);
+    for (let i = 0; i < 100; i++) c.adjustHudClear('left');
+    for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
+    await until('the HUD\'s whole width', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_w === 800);
+    c.close();
+    assert.strictEqual(c.hudClearText(), 'Speed patch: —', 'nothing known while closed');
 });
 
 test('an asked HUD size the render does not show: the render\'s own after a moment, at once on a render reconnect; ' +
@@ -923,13 +1057,13 @@ test('no restart button when carplay restarts at once (never deferred)', async (
     c.close();
 });
 
-test('a refused save of near turns or the zoom is logged, as the other HUD settings', async () => {
+test('a refused save of near turns, the zoom, the edge fade or the speed patch is logged, as the other HUD settings', async () => {
     const lines = [];
     const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, pendingPath: PENDING, retryMs: 100,
         log: { info: (m) => lines.push(m), warn: (m) => lines.push(m) } });
-    ['hud-keep-shown', 'hud-near-turn', 'hud-zoom'].forEach((cmd) => c._onPatch({ ev: `${cmd}-reply`, ok: false, reason: `no ${cmd}` }));
-    assert.deepStrictEqual(lines.filter((m) => /did not save/.test(m)), ['patchd did not save the setting: no hud-keep-shown',
-        'patchd did not save the setting: no hud-near-turn', 'patchd did not save the setting: no hud-zoom']);
+    const cmds = ['hud-keep-shown', 'hud-near-turn', 'hud-zoom', 'hud-fade', 'hud-clear', 'hud-clear-rect'];
+    cmds.forEach((cmd) => c._onPatch({ ev: `${cmd}-reply`, ok: false, reason: `no ${cmd}` }));
+    assert.deepStrictEqual(lines.filter((m) => /did not save/.test(m)), cmds.map((cmd) => `patchd did not save the setting: no ${cmd}`));
 });
 
 test('a refused restart reply clears the asked flag so the button returns', async (render, patch) => {

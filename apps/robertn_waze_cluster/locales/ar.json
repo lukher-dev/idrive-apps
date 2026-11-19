@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "تكبير HUD: {0}",
     "Waiting for a turn": "بانتظار منعطف",
     "No turn data": "لا توجد بيانات منعطفات",
-    "Arrival time on the cluster": "وقت الوصول على لوحة العدادات"
+    "Arrival time on the cluster": "وقت الوصول على لوحة العدادات",
+    "Edge fade: {0}": "تلاشي الحواف: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "مسح خلف السرعة",
+    "Speed patch: {0}": "منطقة السرعة: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} عند {2},{3}",
+    "Wider": "أعرض",
+    "Narrower": "أضيق",
+    "Taller": "أطول",
+    "Shorter": "أقصر"
   }
 }

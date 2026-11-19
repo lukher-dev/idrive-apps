@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Zoom dell'HUD: {0}",
     "Waiting for a turn": "In attesa di una svolta",
     "No turn data": "Nessun dato sulle svolte",
-    "Arrival time on the cluster": "Orario di arrivo sul quadro"
+    "Arrival time on the cluster": "Orario di arrivo sul quadro",
+    "Edge fade: {0}": "Sfumatura bordi: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Libera dietro la velocità",
+    "Speed patch: {0}": "Area velocità: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} in {2},{3}",
+    "Wider": "Più largo",
+    "Narrower": "Più stretto",
+    "Taller": "Più alto",
+    "Shorter": "Più basso"
   }
 }

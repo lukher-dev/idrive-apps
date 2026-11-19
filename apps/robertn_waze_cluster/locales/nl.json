@@ -101,6 +101,15 @@
     "HUD zoom: {0}": "HUD-zoom: {0}",
     "Waiting for a turn": "Wachten op afslag",
     "No turn data": "Geen afslaggegevens",
-    "Arrival time on the cluster": "Aankomsttijd in paneel"
+    "Arrival time on the cluster": "Aankomsttijd in paneel",
+    "Edge fade: {0}": "Randvervaging: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Vrijmaken achter snelheid",
+    "Speed patch: {0}": "Snelheidsvlak: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} op {2},{3}",
+    "Wider": "Breder",
+    "Narrower": "Smaller",
+    "Taller": "Hoger",
+    "Shorter": "Lager"
   }
 }

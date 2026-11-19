@@ -80,6 +80,17 @@ std::vector<std::string> g_local_conf_warnings;
 volatile sig_atomic_t g_stop;
 void on_signal(int) { g_stop = 1; }
 
+/* A control value that is a whole number from lo to hi, into *v. */
+bool whole(const std::string &s, long lo, long hi, long *v)
+{
+    char *end = nullptr;
+    const long n = std::strtol(s.c_str(), &end, 10);
+    if (s.empty() || *end || n < lo || n > hi)
+        return false;
+    *v = n;
+    return true;
+}
+
 std::string status_line(const FeedStatus &s)
 {
     return "{\"ev\":\"status\",\"state\":" + json_escape(s.state) + ",\"target\":" + json_escape(s.target) +
@@ -95,6 +106,9 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_keep_shown\":" + (s.hud_keep_shown ? "1" : "0") +
            ",\"hud_near_turn\":" + (s.hud_near_turn ? "1" : "0") + ",\"hud_gate\":" + (s.hud_gate ? "1" : "0") +
            ",\"hud_zoom_pct\":" + std::to_string(s.hud_zoom_pct) + ",\"hud_zoom_used\":" + std::to_string(s.hud_zoom_used) +
+           ",\"hud_edge_fade_px\":" + std::to_string(s.hud_edge_fade_px) + ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
+           ",\"hud_clear_x\":" + std::to_string(s.hud_clear_x) + ",\"hud_clear_y\":" + std::to_string(s.hud_clear_y) +
+           ",\"hud_clear_w\":" + std::to_string(s.hud_clear_w) + ",\"hud_clear_h\":" + std::to_string(s.hud_clear_h) +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -118,6 +132,8 @@ public:
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
         auto near_turn = msg.find("hud_near_turn"), near = msg.find("near"), zoom = msg.find("hud_zoom_pct");
+        auto fade = msg.find("hud_edge_fade_px"), clear = msg.find("hud_clear");
+        auto cx = msg.find("hud_clear_x"), cy = msg.find("hud_clear_y"), cw = msg.find("hud_clear_w"), ch = msg.find("hud_clear_h");
         if (cmd == "start" && it != msg.end()) {
             log_info("start %s", it->second.c_str());
             if (!feeds_->set_target(it->second))
@@ -131,7 +147,9 @@ public:
             /* the app's turn watch: whether a turn is near, for the HUD map only near turns */
             feeds_->set_turn_near(near->second == "1", now_ms());
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
-                                    keep != msg.end() || near_turn != msg.end() || zoom != msg.end())) {
+                                    keep != msg.end() || near_turn != msg.end() || zoom != msg.end() ||
+                                    fade != msg.end() || clear != msg.end() || cx != msg.end() || cy != msg.end() ||
+                                    cw != msg.end() || ch != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -140,11 +158,11 @@ public:
             }
             if (pct != msg.end()) {
                 const long v = std::strtol(pct->second.c_str(), nullptr, 10);
-                if (v == 0 || (v >= 20 && v <= 100)) {
+                if (v == 0 || (v >= 20 && v <= 135)) {
                     log_info("hud: map %ld%% wide", v);
                     feeds_->set_hud_width((unsigned)v);
                 } else {
-                    log_warn("hud: width %s out of range (0, or 20-100)", pct->second.c_str());
+                    log_warn("hud: width %s out of range (0, or 20-135)", pct->second.c_str());
                 }
             }
             /* and where it is: moved from the centre, in HUD pixels (-800..800 each; held inside the HUD) */
@@ -180,6 +198,29 @@ public:
                     feeds_->set_hud_zoom((unsigned)v);
                 else
                     log_warn("hud: hud_zoom_pct must be 100-250, not %s", zoom->second.c_str());
+            }
+            /* and its edges' fade */
+            if (fade != msg.end()) {
+                long v = 0;
+                if (whole(fade->second, 0, 60, &v))
+                    feeds_->set_hud_edge_fade((unsigned)v);
+                else
+                    log_warn("hud: hud_edge_fade_px must be 0-60, not %s", fade->second.c_str());
+            }
+            /* and its speed patch: on or off and where, in the HUD scene's pixels; those not sent stay */
+            if (clear != msg.end() || cx != msg.end() || cy != msg.end() || cw != msg.end() || ch != msg.end()) {
+                const FeedConfig &now = feeds_->hud_settings();
+                long on = now.hud_clear, x = now.hud_clear_x, y = now.hud_clear_y, w = now.hud_clear_w, h = now.hud_clear_h;
+                const struct { decltype(clear) it; long lo, hi; long *v; } parts[] = {
+                    {clear, 0, 1, &on}, {cx, 0, 799, &x}, {cy, 0, 479, &y}, {cw, 10, 800, &w}, {ch, 10, 480, &h}};
+                bool good = true;
+                for (const auto &p : parts)
+                    if (p.it != msg.end() && !whole(p.it->second, p.lo, p.hi, p.v)) {
+                        log_warn("hud: %s must be %ld-%ld, not %s", p.it->first.c_str(), p.lo, p.hi, p.it->second.c_str());
+                        good = false;
+                    }
+                if (good)
+                    feeds_->set_hud_clear(on != 0, (unsigned)x, (unsigned)y, (unsigned)w, (unsigned)h);
             }
         } else {
             log_warn("control: unknown or malformed command %s", cmd.c_str());
@@ -249,10 +290,12 @@ int serve(Config cfg)
         {"target_fps", 0, 60},      {"picture_fps", 0, 60},          {"pan_blocks", 0, 1},
         {"stall_ms", 1000, 600000},
         {"cluster", 0, 1},          {"hud", 0, 1},                   {"hud_fps", 1, 30},
-        {"hud_width_pct", 0, 100},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
+        {"hud_width_pct", 0, 135},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_near_turn", 0, 1},       {"hud_near_expire_ms", 10000, 600000},
         {"hud_zoom_pct", 100, 250}, {"hud_crop_cx_pm", 0, 1000},     {"hud_crop_cy_pm", 0, 1000},
+        {"hud_edge_fade_px", 0, 60}, {"hud_clear", 0, 1},            {"hud_clear_x", 0, 799},
+        {"hud_clear_y", 0, 479},    {"hud_clear_w", 10, 800},        {"hud_clear_h", 10, 480},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -291,7 +334,7 @@ int serve(Config cfg)
         log_warn("map_rect = %s is ignored: %s; the map area instead", cfg.str("map_rect").c_str(), why);
     fc.hud_width_pct = (unsigned)cfg.num("hud_width_pct");
     if (fc.hud_width_pct && fc.hud_width_pct < 20) {
-        log_warn("hud_width_pct %u: 0 or 20-100; the default box instead", fc.hud_width_pct);
+        log_warn("hud_width_pct %u: 0 or 20-135; the default box instead", fc.hud_width_pct);
         fc.hud_width_pct = 0;
     }
     fc.hud_offset_x = (int)cfg.num("hud_offset_x");
@@ -305,6 +348,12 @@ int serve(Config cfg)
     fc.scale_down = cfg.num("hud_scale_down") != 0;
     fc.hud_round_corners = cfg.num("hud_round_corners") != 0;
     fc.hud_black_background = cfg.num("hud_black_background") != 0;
+    fc.hud_edge_fade_px = (unsigned)cfg.num("hud_edge_fade_px");
+    fc.hud_clear = cfg.num("hud_clear") != 0;
+    fc.hud_clear_x = (unsigned)cfg.num("hud_clear_x");
+    fc.hud_clear_y = (unsigned)cfg.num("hud_clear_y");
+    fc.hud_clear_w = (unsigned)cfg.num("hud_clear_w");
+    fc.hud_clear_h = (unsigned)cfg.num("hud_clear_h");
     fc.vpp_scale = cfg.num("hosted_vpp_scale") == 1;
     if (fc.vpp_scale)
         log_info("hosted_vpp_scale: a host's part of the map is cropped and scaled by VPP, on the GPU");
@@ -592,6 +641,12 @@ void define_keys(Config *cfg)
     cfg->define("hud_scale_down", "1");
     cfg->define("hud_round_corners", "1");
     cfg->define("hud_black_background", "1");
+    cfg->define("hud_edge_fade_px", "30");
+    cfg->define("hud_clear", "1");
+    cfg->define("hud_clear_x", "110");
+    cfg->define("hud_clear_y", "320");
+    cfg->define("hud_clear_w", "220");
+    cfg->define("hud_clear_h", "90");
     cfg->define("render_socket", "/dev/shm/cluster-render/render.sock");
     cfg->define("log_file", "/var/opt/waze-on-cluster/log/waze-on-cluster.log");
     cfg->define("log_file_kb", "512");

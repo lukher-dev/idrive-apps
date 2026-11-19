@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Масштаб HUD: {0}",
     "Waiting for a turn": "Ожидание поворота",
     "No turn data": "Нет данных о поворотах",
-    "Arrival time on the cluster": "Время прибытия на приборах"
+    "Arrival time on the cluster": "Время прибытия на приборах",
+    "Edge fade: {0}": "Затухание краёв: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Очистить под скоростью",
+    "Speed patch: {0}": "Поле скорости: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} в {2},{3}",
+    "Wider": "Шире",
+    "Narrower": "Уже",
+    "Taller": "Выше",
+    "Shorter": "Ниже"
   }
 }

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings ({"cmd":"cluster"}, "hud", "hud-size", "hud-pos",
- * "hud-keep-shown"):
+ * "hud-keep-shown", "hud-near-turn", "hud-zoom", "hud-fade", "hud-clear",
+ * "hud-clear-rect"):
  * each saved in map.state.conf for the render's next start, replacing an
  * earlier value and keeping the other lines, waze-on-cluster.local.conf
  * untouched; a bad value is refused and nothing written. A burst of changes
@@ -88,7 +89,7 @@ function ask(obj) {
             buf.split('\n').forEach(function (l) {
                 var m = null;
                 try { m = JSON.parse(l); } catch (e) {}
-                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
+                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
             });
         });
         s.on('error', reject);
@@ -130,12 +131,16 @@ function ok(name, cond) {
     r = await ask({ cmd: 'hud-size', hud_width_pct: 85 });
     ok('a new size replaces it', r.ok && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\n');
     r = await ask({ cmd: 'hud-size', hud_width_pct: 100 });
-    ok('100 % is saved as the widest, 85 %', r.ok && r.hud_width_pct === 85 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\n');
+    ok('100 % is saved as it is', r.ok && r.hud_width_pct === 100 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 100\n');
+    r = await ask({ cmd: 'hud-size', hud_width_pct: 135 });
+    ok('the widest, 135 %, is saved as it is', r.ok && r.hud_width_pct === 135 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\n');
     r = await ask({ cmd: 'hud-size', hud_width_pct: 10 });
-    ok('an out-of-range size is refused, nothing written', !r.ok && /hud_width_pct = 85\n$/.test(fs.readFileSync(STATE, 'utf8')));
+    var r2 = await ask({ cmd: 'hud-size', hud_width_pct: 136 }), r3 = await ask({ cmd: 'hud-size', hud_width_pct: 70.5 });
+    ok('a size outside 0 or 20-135, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok &&
+        /20-135/.test(r.reason) && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\n', JSON.stringify(r));
     r = await ask({ cmd: 'hud-pos', hud_x: 40, hud_y: -20 });
     ok('the HUD position is saved next to the size, in one write', r.ok && r.hud_offset_x === 40 && r.hud_offset_y === -20 &&
-        fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\nhud_offset_x = 40\nhud_offset_y = -20\n');
+        fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\nhud_offset_x = 40\nhud_offset_y = -20\n');
     r = await ask({ cmd: 'hud-pos', hud_x: 0, hud_y: 0 });
     ok('centred again: both replaced', r.ok && /hud_offset_x = 0\nhud_offset_y = 0\n$/.test(fs.readFileSync(STATE, 'utf8')));
     r = await ask({ cmd: 'hud-pos', hud_x: 900, hud_y: 0 });
@@ -160,11 +165,47 @@ function ok(name, cond) {
     ok('the widest zoom, 250, is saved', r.ok && /hud_zoom_pct = 250\n$/.test(fs.readFileSync(STATE, 'utf8')));
     state = fs.readFileSync(STATE, 'utf8');
     r = await ask({ cmd: 'hud-zoom', pct: 260 });
-    var r2 = await ask({ cmd: 'hud-zoom', pct: 99 }), r3 = await ask({ cmd: 'hud-zoom', pct: '150' }), r4 = await ask({ cmd: 'hud-zoom', pct: 150.5 });
+    r2 = await ask({ cmd: 'hud-zoom', pct: 99 }), r3 = await ask({ cmd: 'hud-zoom', pct: '150' });
+    var r4 = await ask({ cmd: 'hud-zoom', pct: 150.5 });
     ok('a zoom outside 100-250, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok && !r4.ok &&
         fs.readFileSync(STATE, 'utf8') === state);
     r = await ask({ cmd: 'hud-near-turn', on: 2 });
     ok('a near-turn that is not 0 or 1 is refused, nothing written', !r.ok && fs.readFileSync(STATE, 'utf8') === state);
+    r = await ask({ cmd: 'hud-fade', px: 0 });
+    ok('the HUD map\'s edge fade, off, is saved next to them', r.ok && r.hud_edge_fade_px === 0 &&
+        /hud_zoom_pct = 250\nhud_edge_fade_px = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-fade', px: 60 });
+    ok('the widest fade, 60 px, is saved', r.ok && r.hud_edge_fade_px === 60 && /hud_edge_fade_px = 60\n$/.test(fs.readFileSync(STATE, 'utf8')));
+    state = fs.readFileSync(STATE, 'utf8');
+    r = await ask({ cmd: 'hud-fade', px: 61 });
+    r2 = await ask({ cmd: 'hud-fade', px: -1 }), r3 = await ask({ cmd: 'hud-fade', px: '30' }), r4 = await ask({ cmd: 'hud-fade', px: 2.5 });
+    ok('a fade outside 0-60, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok && !r4.ok && !!r.reason &&
+        fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(r));
+    r = await ask({ cmd: 'hud-clear', on: 0 });
+    ok('the map shown behind the speed is saved next to them', r.ok && r.hud_clear === 0 &&
+        /hud_edge_fade_px = 60\nhud_clear = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-clear', on: 1 });
+    ok('cleared behind the speed again replaces it', r.ok && r.hud_clear === 1 && /hud_clear = 1\n$/.test(fs.readFileSync(STATE, 'utf8')));
+    state = fs.readFileSync(STATE, 'utf8');
+    r = await ask({ cmd: 'hud-clear', on: 2 });
+    r2 = await ask({ cmd: 'hud-clear', on: '1' });
+    ok('a clear that is not 0 or 1 is refused, nothing written', !r.ok && !r2.ok && fs.readFileSync(STATE, 'utf8') === state);
+    r = await ask({ cmd: 'hud-clear-rect', x: 110, y: 320, w: 220, h: 90 });
+    ok('the cleared rectangle is saved next to them, in one write', r.ok && r.hud_clear_x === 110 && r.hud_clear_y === 320 &&
+        r.hud_clear_w === 220 && r.hud_clear_h === 90 &&
+        /hud_clear = 1\nhud_clear_x = 110\nhud_clear_y = 320\nhud_clear_w = 220\nhud_clear_h = 90\n$/.test(fs.readFileSync(STATE, 'utf8')),
+        JSON.stringify(r));
+    r = await ask({ cmd: 'hud-clear-rect', x: 799, y: 479, w: 800, h: 480 });
+    r2 = await ask({ cmd: 'hud-clear-rect', x: 0, y: 0, w: 10, h: 10 });
+    ok('the rectangle\'s ends of range are saved', r.ok && r2.ok && r.hud_clear_x === 799 && r.hud_clear_h === 480 &&
+        /hud_clear_x = 0\nhud_clear_y = 0\nhud_clear_w = 10\nhud_clear_h = 10\n$/.test(fs.readFileSync(STATE, 'utf8')));
+    state = fs.readFileSync(STATE, 'utf8');
+    var bad = [{ x: 800, y: 0, w: 10, h: 10 }, { x: 0, y: 480, w: 10, h: 10 }, { x: 0, y: 0, w: 9, h: 10 }, { x: 0, y: 0, w: 801, h: 10 },
+        { x: 0, y: 0, w: 10, h: 481 }, { x: -1, y: 0, w: 10, h: 10 }, { x: 0, y: 0, w: 10 }, { x: 0.5, y: 0, w: 10, h: 10 }, { x: '0', y: 0, w: 10, h: 10 }];
+    var refused = [];
+    for (var i = 0; i < bad.length; i++) refused.push(await ask(Object.assign({ cmd: 'hud-clear-rect' }, bad[i])));
+    ok('a rectangle with a side out of range, missing or not a whole number is refused, nothing written',
+        refused.every(function (x) { return !x.ok && !!x.reason; }) && fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
     ok('the local conf untouched by every setting', fs.readFileSync(CONF, 'utf8') === conf);
     /* A burst: one write SAVE_MS after the last change, every reply after it. */
     var saves = function () { return out.split('(saved for the next start)').length - 1; };

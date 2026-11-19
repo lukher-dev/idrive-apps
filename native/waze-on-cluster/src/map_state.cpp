@@ -13,8 +13,10 @@
 
 namespace woc {
 
-const char *const kMapStateKeys[8] = {"cluster",        "hud",           "hud_width_pct", "hud_offset_x",
-                                      "hud_offset_y",   "hud_keep_shown", "hud_near_turn", "hud_zoom_pct"};
+const char *const kMapStateKeys[14] = {"cluster",          "hud",           "hud_width_pct", "hud_offset_x",
+                                       "hud_offset_y",     "hud_keep_shown", "hud_near_turn", "hud_zoom_pct",
+                                       "hud_edge_fade_px", "hud_clear",     "hud_clear_x",   "hud_clear_y",
+                                       "hud_clear_w",      "hud_clear_h"};
 
 namespace {
 
@@ -24,9 +26,11 @@ std::string trim(const std::string &s)
     return a == std::string::npos ? "" : s.substr(a, b - a + 1);
 }
 
-/* A whole number in the key's range: the map on (1) or off (0), 0 or 20-100 %
+/* A whole number in the key's range: the map on (1) or off (0), 0 or 20-135 %
  * wide, -800..800 px from the centre, kept shown (1) or not (0), only near
- * turns (1) or always (0), zoomed 100-250 %. */
+ * turns (1) or always (0), zoomed 100-250 %, its edges faded over 0-60 px,
+ * cleared behind the speed readout (1) or not (0) in a rectangle of the HUD's
+ * 800x480 scene: x 0-799, y 0-479, 10-800 wide, 10-480 high. */
 bool valid(const std::string &key, const std::string &value)
 {
     char *end = nullptr;
@@ -34,11 +38,21 @@ bool valid(const std::string &key, const std::string &value)
     if (value.empty() || *end)
         return false;
     if (key == "hud_width_pct")
-        return v == 0 || (v >= 20 && v <= 100);
+        return v == 0 || (v >= 20 && v <= 135);
     if (key == "hud_offset_x" || key == "hud_offset_y")
         return v >= -800 && v <= 800;
     if (key == "hud_zoom_pct")
         return v >= 100 && v <= 250;
+    if (key == "hud_edge_fade_px")
+        return v >= 0 && v <= 60;
+    if (key == "hud_clear_x")
+        return v >= 0 && v <= 799;
+    if (key == "hud_clear_y")
+        return v >= 0 && v <= 479;
+    if (key == "hud_clear_w")
+        return v >= 10 && v <= 800;
+    if (key == "hud_clear_h")
+        return v >= 10 && v <= 480;
     return v == 0 || v == 1;
 }
 

@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Povečava HUD: {0}",
     "Waiting for a turn": "Čakanje na zavoj",
     "No turn data": "Ni podatkov o zavojih",
-    "Arrival time on the cluster": "Čas prihoda na armaturi"
+    "Arrival time on the cluster": "Čas prihoda na armaturi",
+    "Edge fade: {0}": "Zatemnitev robov: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Počisti za hitrostjo",
+    "Speed patch: {0}": "Polje hitrosti: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+    "Wider": "Širše",
+    "Narrower": "Ožje",
+    "Taller": "Višje",
+    "Shorter": "Nižje"
   }
 }

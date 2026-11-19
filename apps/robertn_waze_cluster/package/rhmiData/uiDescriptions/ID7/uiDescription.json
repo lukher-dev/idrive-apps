@@ -319,11 +319,11 @@
                 "type": "SInt"
               },
               "MaxValue": {
-                "value": 11,
+                "value": 21,
                 "type": "SInt"
               },
               "NumberOfSteps": {
-                "value": 11,
+                "value": 21,
                 "type": "SInt"
               }
             }
@@ -366,6 +366,48 @@
               },
               "NumberOfSteps": {
                 "value": 15,
+                "type": "SInt"
+              }
+            }
+          ]
+        },
+        "97": {
+          "type": "slider",
+          "name": "wocHudFade",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "TextDescription": {
+                "value": "Edge fade: —",
+                "type": "Text"
+              },
+              "TextDescriptionVisible": {
+                "value": true,
+                "type": "Bool"
+              },
+              "MiddleIndicatorVisible": {
+                "value": false,
+                "type": "Bool"
+              },
+              "MinValue": {
+                "value": 0,
+                "type": "SInt"
+              },
+              "MaxValue": {
+                "value": 6,
+                "type": "SInt"
+              },
+              "NumberOfSteps": {
+                "value": 6,
                 "type": "SInt"
               }
             }
@@ -498,6 +540,230 @@
             {
               "Text": {
                 "value": "Centre",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "98": {
+          "type": "checkBox",
+          "name": "wocHudClear",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Clear behind speed",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "99": {
+          "type": "label",
+          "name": "wocHudClearRect",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed patch: —",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "101": {
+          "type": "button",
+          "name": "wocHudClearLeft",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move left",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "102": {
+          "type": "button",
+          "name": "wocHudClearRight",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move right",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "103": {
+          "type": "button",
+          "name": "wocHudClearUp",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move up",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "104": {
+          "type": "button",
+          "name": "wocHudClearDown",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move down",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "105": {
+          "type": "button",
+          "name": "wocHudClearWider",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Wider",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "106": {
+          "type": "button",
+          "name": "wocHudClearNarrower",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Narrower",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "107": {
+          "type": "button",
+          "name": "wocHudClearTaller",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Taller",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "108": {
+          "type": "button",
+          "name": "wocHudClearShorter",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Shorter",
                 "type": "Text"
               }
             }

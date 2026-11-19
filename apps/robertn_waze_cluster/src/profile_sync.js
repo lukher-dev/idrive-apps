@@ -337,6 +337,12 @@ class ProfileSync extends EventEmitter {
         if (typeof s.hud_zoom_pct === 'number') {
             hud.hud_zoom_pct = String(s.hud_zoom_pct);
         }
+        /* the edge fade and the map cleared behind the speed, from a patchd that has them */
+        ['hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].forEach((k) => {
+            if (typeof s[k] === 'number') {
+                hud[k] = String(s[k]);
+            }
+        });
         this._sender.send(shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]));
     }
 }

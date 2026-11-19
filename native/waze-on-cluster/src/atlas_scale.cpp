@@ -8,6 +8,8 @@
 #include <unistd.h>
 #endif
 
+#include <cmath>
+
 #include "yuv_atlas.h"
 
 namespace woc {
@@ -73,6 +75,7 @@ bool AtlasScaler::configure(uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, un
     crop_w_ = crop_w;
     crop_h_ = crop_h;
     bits_ = level_bits;
+    mask_due_ = true;
     yx_.build(crop_w, dw);
     yy_.build(crop_h, dh);
     cx_.build(crop_w / 2, dw / 2);
@@ -140,6 +143,13 @@ void AtlasScaler::scale(const uint8_t *src, std::vector<uint8_t> *dst)
             corners(du, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
             corners(dv, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
         }
+    }
+    if (mask_due_)
+        make_mask();
+    if (!ymask_.empty()) {
+        apply_mask(d, dw_, dw_, dh_, ymask_, 16);
+        apply_mask(du, dw_, dw_ / 2, dh_ / 2, cmask_, 128);
+        apply_mask(dv, dw_, dw_ / 2, dh_ / 2, cmask_, 128);
     }
     if (bits_)
         crk::round_levels(d, d, dst->size(), bits_);
@@ -261,6 +271,112 @@ void AtlasScaler::corners(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, uin
         }
 }
 
+void AtlasScaler::set_edge_fade(uint32_t px)
+{
+    if (px == fade_)
+        return;
+    fade_ = px;
+    mask_due_ = true;
+}
+
+void AtlasScaler::set_clear(int32_t x, int32_t y, uint32_t w, uint32_t h)
+{
+    if (!w || !h)
+        x = y = 0, w = h = 0;
+    if (x == clear_x_ && y == clear_y_ && w == clear_w_ && h == clear_h_)
+        return;
+    clear_x_ = x;
+    clear_y_ = y;
+    clear_w_ = w;
+    clear_h_ = h;
+    mask_due_ = true;
+}
+
+namespace {
+
+/* Smoothstep of t, 0-1. */
+double smooth(double t)
+{
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    return t * t * (3 - 2 * t);
+}
+
+/* How much of pixel i of n the fade keeps: none at an edge, rising over
+ * band pixels from it. */
+double faded(uint32_t i, uint32_t n, uint32_t band)
+{
+    const uint32_t d = i < n - 1 - i ? i : n - 1 - i;
+    return !band || d >= band ? 1.0 : smooth((double)d / band);
+}
+
+/* How much of pixel i the patch [a, a + len) covers: all of it from feather
+ * pixels in from its edges, rising to that from them, none outside. */
+double covered(int64_t i, int64_t a, uint32_t len, uint32_t feather)
+{
+    if (i < a || i >= a + (int64_t)len)
+        return 0;
+    const int64_t d = i - a < a + (int64_t)len - 1 - i ? i - a : a + (int64_t)len - 1 - i;
+    return !feather || d >= (int64_t)feather ? 1.0 : smooth((d + 0.5) / feather);
+}
+
+}  // namespace
+
+/* Separable: the fade's keep is its column's times its row's, the patch's
+ * cover is its column's times its row's, and a pixel keeps fade x (1 -
+ * cover). U and V take the mean of their four Y's, so their band is half
+ * as wide. */
+void AtlasScaler::make_mask()
+{
+    mask_due_ = false;
+    ymask_.clear();
+    cmask_.clear();
+    if (!dw_ || (!fade_ && !clear_w_))
+        return;
+    const uint32_t band = fade_ * 2 > dw_ || fade_ * 2 > dh_ ? (dw_ < dh_ ? dw_ : dh_) / 2 : fade_;
+    uint32_t feather = clear_w_ < clear_h_ ? clear_w_ / 4 : clear_h_ / 4;
+    feather = feather > kClearFeather ? kClearFeather : feather;
+    std::vector<double> fx(dw_), fy(dh_), cx(dw_), cy(dh_);
+    for (uint32_t x = 0; x < dw_; x++) {
+        fx[x] = faded(x, dw_, band);
+        cx[x] = clear_w_ ? covered(x, clear_x_, clear_w_, feather) : 0;
+    }
+    for (uint32_t y = 0; y < dh_; y++) {
+        fy[y] = faded(y, dh_, band);
+        cy[y] = clear_h_ ? covered(y, clear_y_, clear_h_, feather) : 0;
+    }
+    ymask_.resize((size_t)dw_ * dh_);
+    bool any = false;
+    for (uint32_t y = 0; y < dh_; y++)
+        for (uint32_t x = 0; x < dw_; x++) {
+            const uint16_t m = (uint16_t)std::lround(256 * fx[x] * fy[y] * (1 - cx[x] * cy[y]));
+            ymask_[(size_t)y * dw_ + x] = m;
+            any = any || m < 256;
+        }
+    if (!any) {
+        ymask_.clear();
+        return;
+    }
+    const uint32_t cw = dw_ / 2, ch = dh_ / 2;
+    cmask_.resize((size_t)cw * ch);
+    for (uint32_t y = 0; y < ch; y++)
+        for (uint32_t x = 0; x < cw; x++) {
+            const uint16_t *m = &ymask_[(size_t)y * 2 * dw_ + x * 2];
+            cmask_[(size_t)y * cw + x] = (uint16_t)((m[0] + m[1] + m[dw_] + m[dw_ + 1] + 2) / 4);
+        }
+}
+
+void AtlasScaler::apply_mask(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, const std::vector<uint16_t> &m,
+                             uint8_t black)
+{
+    for (uint32_t y = 0; y < ph; y++) {
+        uint8_t *row = p + (size_t)y * dp;
+        const uint16_t *k = &m[(size_t)y * pw];
+        for (uint32_t x = 0; x < pw; x++)
+            if (k[x] < 256)
+                row[x] = (uint8_t)(black + (((int)row[x] - black) * (int)k[x]) / 256);
+    }
+}
+
 ScaleWorker::~ScaleWorker()
 {
     if (!started_)
@@ -322,11 +438,16 @@ void ScaleWorker::run(std::shared_ptr<State> s)
                 return;
         }
         if (s->made != s->shape || !s->scaler.configured()) {
+            const ScaleShape was = s->made;
             s->made = ScaleShape();
             if (s->scaler.configure(s->shape.w, s->shape.h, s->shape.dw, s->shape.dh, s->shape.level_bits,
                                     s->shape.crop_x, s->shape.crop_y, s->shape.crop_w, s->shape.crop_h)) {
                 s->scaler.set_corner_radius(s->shape.radius);
-                s->scaler.set_black_background(s->shape.black);
+                /* the background followed on through a move (the window, the patch), anew for another size */
+                if (!was.dw || was.black != s->shape.black || was.dw != s->shape.dw || was.dh != s->shape.dh)
+                    s->scaler.set_black_background(s->shape.black);
+                s->scaler.set_edge_fade(s->shape.fade);
+                s->scaler.set_clear(s->shape.clear_x, s->shape.clear_y, s->shape.clear_w, s->shape.clear_h);
                 s->made = s->shape;
             }
         }

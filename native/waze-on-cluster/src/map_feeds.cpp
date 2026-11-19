@@ -170,6 +170,24 @@ void MapFeeds::set_hud_zoom(unsigned pct)
         hud_->set_hud_zoom(pct);
 }
 
+void MapFeeds::set_hud_edge_fade(unsigned px)
+{
+    base_.hud_edge_fade_px = px;
+    if (hud_)
+        hud_->set_hud_edge_fade(px);
+}
+
+void MapFeeds::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+    base_.hud_clear = on;
+    base_.hud_clear_x = x;
+    base_.hud_clear_y = y;
+    base_.hud_clear_w = w;
+    base_.hud_clear_h = h;
+    if (hud_)
+        hud_->set_hud_clear(on, x, y, w, h);
+}
+
 void MapFeeds::poll(int64_t now_ms)
 {
     if (near_ && now_ms - near_at_ms_ >= base_.hud_near_expire_ms) {
@@ -273,6 +291,12 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     s.hud_gate = gate_open();
     s.hud_zoom_pct = base_.hud_zoom_pct;
     s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
+    s.hud_edge_fade_px = base_.hud_edge_fade_px;
+    s.hud_clear = base_.hud_clear;
+    s.hud_clear_x = base_.hud_clear_x;
+    s.hud_clear_y = base_.hud_clear_y;
+    s.hud_clear_w = base_.hud_clear_w;
+    s.hud_clear_h = base_.hud_clear_h;
     s.hud_offset_x = hud_ ? hud_->hud_offset_x() : base_.hud_offset_x;
     s.hud_offset_y = hud_ ? hud_->hud_offset_y() : base_.hud_offset_y;
     return s;

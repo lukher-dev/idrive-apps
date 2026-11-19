@@ -101,6 +101,15 @@
     "HUD zoom: {0}": "HUD 縮放：{0}",
     "Waiting for a turn": "等待轉彎",
     "No turn data": "無轉彎資料",
-    "Arrival time on the cluster": "儀表板顯示抵達時間"
+    "Arrival time on the cluster": "儀表板顯示抵達時間",
+    "Edge fade: {0}": "邊緣漸隱：{0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "清空車速後方",
+    "Speed patch: {0}": "車速區域：{0}",
+    "{0}x{1} at {2},{3}": "{0}x{1}，位於 {2},{3}",
+    "Wider": "加寬",
+    "Narrower": "變窄",
+    "Taller": "加高",
+    "Shorter": "變矮"
   }
 }

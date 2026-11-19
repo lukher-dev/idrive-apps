@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "HUDズーム：{0}",
     "Waiting for a turn": "曲がり角待ち",
     "No turn data": "曲がり角データなし",
-    "Arrival time on the cluster": "メーターに到着予定時刻"
+    "Arrival time on the cluster": "メーターに到着予定時刻",
+    "Edge fade: {0}": "端のフェード：{0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "速度表示の背後を消去",
+    "Speed patch: {0}": "速度エリア：{0}",
+    "{0}x{1} at {2},{3}": "{2},{3} に {0}x{1}",
+    "Wider": "幅を広げる",
+    "Narrower": "幅を狭める",
+    "Taller": "高くする",
+    "Shorter": "低くする"
   }
 }

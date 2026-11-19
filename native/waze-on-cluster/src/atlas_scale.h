@@ -48,6 +48,17 @@ public:
      * nothing, so the picture's corners look round. Applied by scale(). */
     void set_corner_radius(uint32_t r);
 
+    /* The edges' fade: each edge of the output fades smoothly (smoothstep) to
+     * black over px output pixels, U and V over half as many (0: none).
+     * With the corners, both apply. Applied by scale(). */
+    void set_edge_fade(uint32_t px);
+    /* The speed patch: black inside the w x h rectangle at x, y in output
+     * pixels, fading in over kClearFeather pixels from its edges (at most a
+     * quarter of its smaller side); it may reach past the output, whose
+     * part of it is all that counts. w or h 0: none. Applied by scale(). */
+    static const uint32_t kClearFeather = 12;
+    void set_clear(int32_t x, int32_t y, uint32_t w, uint32_t h);
+
     /* Black background: the map's background (its most common Y, followed
      * smoothly frame to frame) and the shades just above it fade to black,
      * so a HUD, which shows black as nothing, shows the roads, route and
@@ -85,22 +96,38 @@ private:
     int bg_ = -1;   /* the background's Y, x 16 (smoothed) */
     void key_background(uint8_t *d);
     std::vector<uint16_t> ycov_, ccov_;   /* corner coverage: Y at radius_, U and V at radius_ / 2 */
+    uint32_t fade_ = 0;
+    int32_t clear_x_ = 0, clear_y_ = 0;
+    uint32_t clear_w_ = 0, clear_h_ = 0;
+    /* The fade and the patch as one mask (0-256 of each pixel kept), Y's
+     * and U and V's (each the mean of its four Y); empty: none. Made again
+     * by scale() after a change. */
+    std::vector<uint16_t> ymask_, cmask_;
+    bool mask_due_ = false;
+    void make_mask();
+    static void apply_mask(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, const std::vector<uint16_t> &m, uint8_t black);
 };
 
 /* What a ScaleWorker makes of a frame: a w x h atlas (its crop_w x crop_h
  * part at crop_x, crop_y with crop_w) scaled to dw x dh, rounded to
- * level_bits, with AtlasScaler's corners and background. */
+ * level_bits, with AtlasScaler's corners, background, edges' fade and speed
+ * patch (clear_w x clear_h at clear_x, clear_y in output pixels; none with
+ * clear_w 0). */
 struct ScaleShape {
     uint32_t w = 0, h = 0, dw = 0, dh = 0;
     uint32_t crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
     unsigned level_bits = 0;
     uint32_t radius = 0;
     bool black = false;
+    uint32_t fade = 0;
+    int32_t clear_x = 0, clear_y = 0;
+    uint32_t clear_w = 0, clear_h = 0;
     bool operator==(const ScaleShape &o) const
     {
         return w == o.w && h == o.h && dw == o.dw && dh == o.dh && crop_x == o.crop_x && crop_y == o.crop_y &&
                crop_w == o.crop_w && crop_h == o.crop_h && level_bits == o.level_bits && radius == o.radius &&
-               black == o.black;
+               black == o.black && fade == o.fade && clear_x == o.clear_x && clear_y == o.clear_y &&
+               clear_w == o.clear_w && clear_h == o.clear_h;
     }
     bool operator!=(const ScaleShape &o) const { return !(*this == o); }
 };

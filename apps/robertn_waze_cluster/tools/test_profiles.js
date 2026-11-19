@@ -446,6 +446,28 @@ async function main() {
         const old = got.filter((m) => m.cmd === 'hud').pop();
         assert(!('hud_near_turn' in old) && !('hud_zoom_pct' in old), 'a patchd before them: not told');
     });
+    await check('ProfileSync: the edge fade and the clear behind the speed go to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 135, 0, 0, 0), { hud_edge_fade_px: 0, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
+            hud_clear_w: 220, hud_clear_h: 90 }));
+        const hud = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(hud.hud_width_pct, '135');
+        assert.strictEqual(hud.hud_edge_fade_px, '0');
+        assert.strictEqual(hud.hud_clear, '1');
+        assert.deepStrictEqual([hud.hud_clear_x, hud.hud_clear_y, hud.hud_clear_w, hud.hud_clear_h], ['110', '320', '220', '90']);
+        got.length = 0;
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_clear: 0, hud_clear_x: 0, hud_clear_y: 0, hud_clear_w: 10, hud_clear_h: 10 }));
+        const off = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(off.hud_clear, '0');
+        assert.deepStrictEqual([off.hud_clear_x, off.hud_clear_y, off.hud_clear_w, off.hud_clear_h], ['0', '0', '10', '10']);
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0));
+        const old = got.filter((m) => m.cmd === 'hud').pop();
+        assert(['hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].every((k) => !(k in old)),
+            'a patchd before them: not told');
+    });
     await check('ProfileSync: settings go to the render through its RenderSender', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,

@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "Zoom HUD: {0}",
     "Waiting for a turn": "Se așteaptă un viraj",
     "No turn data": "Fără date despre viraje",
-    "Arrival time on the cluster": "Ora sosirii pe bord"
+    "Arrival time on the cluster": "Ora sosirii pe bord",
+    "Edge fade: {0}": "Estompare margini: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Curăță în spatele vitezei",
+    "Speed patch: {0}": "Zona vitezei: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} la {2},{3}",
+    "Wider": "Mai lat",
+    "Narrower": "Mai îngust",
+    "Taller": "Mai înalt",
+    "Shorter": "Mai scund"
   }
 }

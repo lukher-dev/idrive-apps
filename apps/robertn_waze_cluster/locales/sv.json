@@ -99,6 +99,15 @@
     "HUD zoom: {0}": "HUD-zoom: {0}",
     "Waiting for a turn": "Väntar på en sväng",
     "No turn data": "Ingen svängdata",
-    "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet"
+    "Arrival time on the cluster": "Ankomsttid i kombiinstrumentet",
+    "Edge fade: {0}": "Uttoning av kanter: {0}",
+    "{0} px": "{0} px",
+    "Clear behind speed": "Rensa bakom hastighet",
+    "Speed patch: {0}": "Hastighetsfält: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} vid {2},{3}",
+    "Wider": "Bredare",
+    "Narrower": "Smalare",
+    "Taller": "Högre",
+    "Shorter": "Lägre"
   }
 }

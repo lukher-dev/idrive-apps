@@ -6,17 +6,23 @@
  *   owner -> tool  {"cmd":"start","target":"sail"|"map"|"panel"}
  *                  {"cmd":"cluster","on":"0"|"1"}  the map on the cluster off or on
  *                  {"cmd":"hud","on":"0"|"1"}  the map on the HUD off or on
- *                  {"cmd":"hud","hud_width_pct":"0"|"20".."100"}  the HUD map's size
+ *                  {"cmd":"hud","hud_width_pct":"0"|"20".."135"}  the HUD map's size (above 100 its sides cut)
  *                  {"cmd":"hud","hud_x":"-800".."800","hud_y":...}  where it is, from the centre
  *                  {"cmd":"hud","hud_keep_shown":"0"|"1"}  kept shown over BMW's pop-ups, or not
  *                  {"cmd":"hud","hud_near_turn":"0"|"1"}  the HUD map only near turns, or always
  *                  {"cmd":"hud","hud_zoom_pct":"100".."250"}  the HUD map's zoom
+ *                  {"cmd":"hud","hud_edge_fade_px":"0".."60"}  its edges faded to black over that many px (0: none)
+ *                  {"cmd":"hud","hud_clear":"0"|"1","hud_clear_x":"0".."799","hud_clear_y":"0".."479",
+ *                   "hud_clear_w":"10".."800","hud_clear_h":"10".."480"}  the speed patch: the map black in
+ *                   that rectangle of the HUD's scene, or not (any of them; those not sent stay)
  *                  {"cmd":"turn","near":"0"|"1"}  a turn near, or not (the app's turn watch)
  *                  {"cmd":"guide","hide":0|1}  BMW's turn box hidden or not (guide_setting.h)
  *   tool -> owner  {"ev":"status",...,"hide_bmw_guidance":0|1,"guide_disabled":0|1,
  *                   "cluster":0|1,"hud":0|1,"hud_state":"off"|"disabled"|"turn_wait"|"idle"|"starting"|"showing"|...,
  *                   "hud_width_pct":...,"hud_x":...,"hud_y":...,"hud_keep_shown":0|1,
- *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...}
+ *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...,
+ *                   "hud_edge_fade_px":...,"hud_clear":0|1,"hud_clear_x":...,"hud_clear_y":...,
+ *                   "hud_clear_w":...,"hud_clear_h":...}
  *                  {"ev":"log","line":...}
  *
  * One connection is the owner; a second one is told "busy" and closed. */

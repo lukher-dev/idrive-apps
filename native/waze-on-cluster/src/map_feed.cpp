@@ -167,33 +167,17 @@ void MapFeed::make_layer()
                  crop.h, crop.x, crop.y, dw, dh, part_.set() ? ", made by VPP (hosted_vpp_scale)" : "");
     } else if (cfg_.target == "hud" && cfg_.scale_down && (sw < cfg_.video.w || sh < cfg_.video.h) && sw >= 64 &&
                sh >= 32 && sw <= cfg_.video.w && sh <= cfg_.video.h) {
-        /* zoomed: the part hud_crop() picks, never narrower than the box (the scaler only scales down) */
-        zoom_used_ = std::min(std::max(cfg_.hud_zoom_pct, kHudZoomMin), hud_zoom_cap(cfg_.video.w, sw));
-        const MapRect crop = hud_crop(cfg_.video.w, cfg_.video.h, zoom_used_, cfg_.hud_crop_cx_pm, cfg_.hud_crop_cy_pm);
-        const uint32_t dw = std::min(sw, crop.w) & ~3u, dh = std::min(sh, crop.h) & ~3u;
-        q.x += (q.w - dw) / 2;
-        q.y += (q.h - dh) / 2;
-        q.w = dw;
-        q.h = dh;
-        vo.w = dw;
-        vo.h = dh;
+        hud_shape(&q);
+        vo.w = q.w;
+        vo.h = q.h;
         scaling_ = true;
-        shape_ = ScaleShape();
-        shape_.w = cfg_.video.w;
-        shape_.h = cfg_.video.h;
-        shape_.dw = dw;
-        shape_.dh = dh;
-        if (zoom_used_ > kHudZoomMin) {
-            shape_.crop_x = crop.x;
-            shape_.crop_y = crop.y;
-            shape_.crop_w = crop.w;
-            shape_.crop_h = crop.h;
-            log_info("render: HUD map zoomed %u%%: the picture's %ux%u at %u,%u", zoom_used_, crop.w, crop.h, crop.x,
-                     crop.y);
-        }
-        shape_.level_bits = cfg_.scaled_level_bits;
-        shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
-        shape_.black = cfg_.hud_black_background;
+        if (shape_.crop_w)
+            log_info("render: HUD map zoomed %u%%%s: the picture's %ux%u at %u,%u", zoom_used_,
+                     virt_w_ > tw ? ", wider than the HUD" : "", shape_.crop_w, shape_.crop_h, shape_.crop_x,
+                     shape_.crop_y);
+        if (shape_.clear_w)
+            log_info("render: HUD map black behind the speed readout: %ux%u at %d,%d of the map", shape_.clear_w,
+                     shape_.clear_h, shape_.clear_x, shape_.clear_y);
     }
     /* a VPP-made picture is of no use to a layer of another part, or none */
     if (held_part_.set() && held_part_ != part_) {
@@ -257,22 +241,27 @@ void MapFeed::set_host(const cr::Host &h)
 /* Where the map goes on a target of tw x th: the kit's fitted rect, or on
  * the HUD with a size set, that width (the picture's shape kept, at most the
  * HUD's height), centred; on the HUD then moved by the offset, held inside
- * the scene. */
+ * the scene. A HUD map wider than the scene (above 100 %, with the scaler,
+ * not hosted) is in a box the scene's width at x 0: its x offset pans the
+ * picture instead (hud_shape). */
 crk::QuadRect MapFeed::quad(uint32_t tw, uint32_t th) const
 {
     if (cfg_.target != "hud" || !cfg_.video.w || !cfg_.video.h)
         return crk::map_quad(tw, th, cfg_.video.w, cfg_.video.h);
     crk::QuadRect q;
-    const unsigned pct = cfg_.hud_width_pct;
+    const unsigned pct = cfg_.hud_width_pct, max = cfg_.scale_down && !hosted() ? kHudMaxPct : kHudWholePct;
     if (!pct) {
         q = crk::map_quad(tw, th, cfg_.video.w, cfg_.video.h);
+        virt_w_ = q.w;
     } else {
-        uint64_t w = (uint64_t)tw * (pct > kHudMaxPct ? kHudMaxPct : pct) / 100;
+        uint64_t w = (uint64_t)tw * (pct > max ? max : pct) / 100;
         uint64_t h = (w * cfg_.video.h + cfg_.video.w / 2) / cfg_.video.w;
         if (h > th) {
             h = th;
             w = (h * cfg_.video.w + cfg_.video.h / 2) / cfg_.video.h;
         }
+        virt_w_ = (uint32_t)w;
+        w = w > tw ? tw : w;
         q = crk::QuadRect{(uint32_t)((tw - w) / 2), (uint32_t)((th - h) / 2), (uint32_t)w, (uint32_t)h};
     }
     const long x = (long)q.x + cfg_.hud_offset_x, y = (long)q.y + cfg_.hud_offset_y;
@@ -280,9 +269,83 @@ crk::QuadRect MapFeed::quad(uint32_t tw, uint32_t th) const
     const uint32_t cx = q.x, cy = q.y;
     q.x = (uint32_t)(x < 0 ? 0 : x > xmax ? xmax : x);
     q.y = (uint32_t)(y < 0 ? 0 : y > ymax ? ymax : y);
-    placed_x_ = (int)q.x - (int)cx;
+    placed_x_ = virt_w_ > q.w ? cfg_.hud_offset_x : (int)q.x - (int)cx;
     placed_y_ = (int)q.y - (int)cy;
     return q;
+}
+
+/* The zoom's part (hud_crop), never narrower than the map (the scaler only
+ * scales down): the map's width, not the box's, sets the cap. A map wider
+ * than its box shows that part's window (hud_window), panned by the x
+ * offset. The scaled picture is a multiple of 4 each way, centred in the
+ * box; the speed patch is the scene's rectangle less the picture's place,
+ * none where it misses the picture. */
+void MapFeed::hud_shape(crk::QuadRect *q)
+{
+    const uint32_t sw = q->w & ~3u, sh = q->h & ~3u;
+    const bool wide = virt_w_ > q->w;
+    zoom_used_ = std::min(std::max(cfg_.hud_zoom_pct, kHudZoomMin), hud_zoom_cap(cfg_.video.w, wide ? virt_w_ : sw));
+    const MapRect part = hud_crop(cfg_.video.w, cfg_.video.h, zoom_used_, cfg_.hud_crop_cx_pm, cfg_.hud_crop_cy_pm);
+    int pan = 0;
+    const MapRect crop = wide ? hud_window(part, cfg_.video.w, sw, virt_w_, cfg_.hud_offset_x, &pan) : part;
+    if (wide)
+        placed_x_ = pan;
+    const uint32_t dw = std::min(sw, crop.w) & ~3u, dh = std::min(sh, crop.h) & ~3u;
+    q->x += (q->w - dw) / 2;
+    q->y += (q->h - dh) / 2;
+    q->w = dw;
+    q->h = dh;
+    shape_ = ScaleShape();
+    shape_.w = cfg_.video.w;
+    shape_.h = cfg_.video.h;
+    shape_.dw = dw;
+    shape_.dh = dh;
+    if (zoom_used_ > kHudZoomMin || wide) {
+        shape_.crop_x = crop.x;
+        shape_.crop_y = crop.y;
+        shape_.crop_w = crop.w;
+        shape_.crop_h = crop.h;
+    }
+    shape_.level_bits = cfg_.scaled_level_bits;
+    shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
+    shape_.black = cfg_.hud_black_background;
+    shape_.fade = cfg_.hud_edge_fade_px;
+    const int64_t cx = (int64_t)cfg_.hud_clear_x - q->x, cy = (int64_t)cfg_.hud_clear_y - q->y;
+    if (cfg_.hud_clear && cfg_.hud_clear_w && cfg_.hud_clear_h && cx < (int64_t)dw && cy < (int64_t)dh &&
+        cx + cfg_.hud_clear_w > 0 && cy + cfg_.hud_clear_h > 0) {
+        shape_.clear_x = (int32_t)cx;
+        shape_.clear_y = (int32_t)cy;
+        shape_.clear_w = cfg_.hud_clear_w;
+        shape_.clear_h = cfg_.hud_clear_h;
+    }
+}
+
+void MapFeed::restyle()
+{
+    uint32_t tw, th;
+    /* hosted, the host places it: the offset waits for the HUD's own */
+    if (cfg_.target != "hud" || !layer_ || hosted() || !target_size(client_.targets, "hud", &tw, &th))
+        return;
+    crk::QuadRect q = quad(tw, th);
+    bool reshaped = false;
+    if (scaling_) {
+        const ScaleShape was = shape_;
+        hud_shape(&q);
+        reshaped = shape_ != was;
+        /* the newest picture scaled again for the new shape (one the worker has
+         * comes back, its scaled frame dropped) */
+        if (reshaped && (!held_.empty() || in_worker_))
+            held_new_ = true;
+    }
+    const bool moved = lo_.x != (int)q.x || lo_.y != (int)q.y;
+    if (moved) {
+        lo_.x = (int)q.x;
+        lo_.y = (int)q.y;
+        client_.set(layer_, lo_);
+    }
+    if (moved || reshaped)
+        log_info("render: HUD map at %u,%u (offset %+d,%+d)%s", q.x, q.y, placed_x_, placed_y_,
+                 shape_.crop_w && virt_w_ > tw ? ", the picture panned in its box" : "");
 }
 
 void MapFeed::set_hud_offset(int dx, int dy)
@@ -291,15 +354,33 @@ void MapFeed::set_hud_offset(int dx, int dy)
         return;
     cfg_.hud_offset_x = placed_x_ = dx;
     cfg_.hud_offset_y = placed_y_ = dy;
-    uint32_t tw, th;
-    /* hosted, the host places it: the offset waits for the HUD's own */
-    if (cfg_.target != "hud" || !layer_ || hosted() || !target_size(client_.targets, "hud", &tw, &th))
+    restyle();
+}
+
+void MapFeed::set_hud_edge_fade(unsigned px)
+{
+    if (px == cfg_.hud_edge_fade_px)
         return;
-    const crk::QuadRect q = quad(tw, th);
-    lo_.x = (int)q.x;
-    lo_.y = (int)q.y;
-    client_.set(layer_, lo_);
-    log_info("render: HUD map moved to %u,%u (offset %+d,%+d)", q.x, q.y, placed_x_, placed_y_);
+    cfg_.hud_edge_fade_px = px;
+    log_info("render: HUD map's edges faded over %u px", px);
+    restyle();
+}
+
+void MapFeed::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+    if (on == cfg_.hud_clear && x == cfg_.hud_clear_x && y == cfg_.hud_clear_y && w == cfg_.hud_clear_w &&
+        h == cfg_.hud_clear_h)
+        return;
+    cfg_.hud_clear = on;
+    cfg_.hud_clear_x = x;
+    cfg_.hud_clear_y = y;
+    cfg_.hud_clear_w = w;
+    cfg_.hud_clear_h = h;
+    if (on)
+        log_info("render: HUD map black behind the speed readout, %ux%u at %u,%u of the HUD", w, h, x, y);
+    else
+        log_info("render: HUD map not cleared behind the speed readout");
+    restyle();
 }
 
 void MapFeed::set_hud_keep_shown(bool keep)
@@ -633,6 +714,12 @@ FeedStatus MapFeed::status(const std::string &decode, const std::string &stream)
     s.hud_keep_shown = cfg_.hud_keep_shown;
     s.hud_zoom_pct = cfg_.hud_zoom_pct;
     s.hud_zoom_used = zoom_used_;
+    s.hud_edge_fade_px = cfg_.hud_edge_fade_px;
+    s.hud_clear = cfg_.hud_clear;
+    s.hud_clear_x = cfg_.hud_clear_x;
+    s.hud_clear_y = cfg_.hud_clear_y;
+    s.hud_clear_w = cfg_.hud_clear_w;
+    s.hud_clear_h = cfg_.hud_clear_h;
     s.hud_offset_y = placed_y_;
     s.upload_cap_kb = cap_kb_;
     s.upload_reason = budget_reason_;
