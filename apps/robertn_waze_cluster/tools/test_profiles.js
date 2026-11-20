@@ -307,6 +307,16 @@ async function main() {
         await until('render moved', () => render.received.length === 3);
         assert.deepStrictEqual(render.received[2], { cmd: 'hud', hud_width_pct: '0', hud_x: '0', hud_y: '0' });
     });
+    await check('the HUD map\'s zoom goes to the render with the other HUD settings; a patchd before it: not told', async () => {
+        render.received.length = 0;
+        sync2._toRender(Object.assign(settings(1, 0, 0, 0, 0, 0), { hud_zoom_pct: 180 }));
+        await until('render moved', () => render.received.length === 3);
+        assert.deepStrictEqual(render.received[2], { cmd: 'hud', hud_width_pct: '0', hud_x: '0', hud_y: '0', hud_keep_shown: '0', hud_zoom_pct: '180' });
+        render.received.length = 0;
+        sync2._toRender(settings(1, 0, 0, 0, 0, 0));
+        await until('render moved again', () => render.received.length === 3);
+        assert(!('hud_zoom_pct' in render.received[2]), 'a patchd before it: not told');
+    });
     sync2.stop();
     c.close();
 

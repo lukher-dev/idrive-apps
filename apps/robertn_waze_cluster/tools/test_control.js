@@ -452,6 +452,33 @@ test('the HUD map over BMW\'s pop-ups: gives way by default; a flip goes to the 
     c.close();
 });
 
+test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom the render uses; ' +
+    'greyed for a render without it', async (render, patch) => {
+    render.hud = 1;
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('on', () => c.renderStatus && c.canChangeHudSize());
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep(), c.canChangeHudZoom()], ['Map zoom: 100 %', 0, true], '100 % by default');
+    c.setHudZoomStep(5);
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['Map zoom: 150 %', 5], 'shown at once');
+    await until('150 %', () => render.hudZoom === 150 && c.renderStatus.hud_zoom_pct === 150 && patch.map.hud_zoom_pct === 150);
+    c.setHudZoomStep(15);
+    await until('250 % asked, 240 % used', () => c.renderStatus.hud_zoom_pct === 250 && c.hudZoomText() === 'Map zoom: 240 %' &&
+        c.hudZoomStep() === 15);
+    const sent = render.received.length;
+    [-1, 16, 2.5, '3', 15].forEach((step) => c.setHudZoomStep(step));
+    assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-zoom').map((m) => m.pct), [150, 250]);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_zoom_pct !== undefined).map((m) => m.hud_zoom_pct), ['150', '250']);
+    render.hudZoom = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudZoomStep() === null && !c.canChangeHudZoom() && c.hudZoomText() === 'Map zoom: \u2014');
+    c.close();
+    assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['Map zoom: \u2014', null], 'nothing known while closed');
+});
+
 test('an asked HUD size the render does not show: the render\'s own after a moment, at once on a render reconnect; ' +
     'the same step taken again', async (render, patch) => {
     render.hud = 1;
