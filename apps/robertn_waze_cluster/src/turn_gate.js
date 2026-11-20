@@ -29,10 +29,13 @@ const KINDS = ['intersection', 'roundabout', 'branch', 'destinationManeuver', 'l
 /* The ones that are a turn worth the map. */
 const TRIGGER_KINDS = ['intersection', 'roundabout', 'branch', 'destinationManeuver'];
 
+/* A unit's length in metres, by its name in lower case: BMW's own names
+ * (METER, KM, MILE_UK, MILE_US, YARD, FEET, as PR #94 reads them on the car)
+ * and the usual short and long ones. */
 const UNITS = {
     m: 1, meter: 1, meters: 1, metre: 1, metres: 1,
     km: 1000, kilometer: 1000, kilometers: 1000, kilometre: 1000, kilometres: 1000,
-    mi: 1609.344, mile: 1609.344, miles: 1609.344,
+    mi: 1609.344, mile: 1609.344, miles: 1609.344, mile_uk: 1609.344, mile_us: 1609.344,
     ft: 0.3048, foot: 0.3048, feet: 0.3048,
     yd: 0.9144, yard: 0.9144, yards: 0.9144
 };

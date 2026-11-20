@@ -61,6 +61,30 @@ async function main() {
         assert(near(toMetres('1000', 'ft'), 304.8));
         assert(near(toMetres('500', 'YARDS'), 457.2));
     });
+    await check('toMetres: BMW\'s unit names (METER, KM, MILE_UK, MILE_US, YARD, FEET)', () => {
+        assert.strictEqual(toMetres('350', 'METER'), 350);
+        assert.strictEqual(toMetres('1.200', 'METER'), 1200);
+        assert.strictEqual(toMetres('1,5', 'KM'), 1500);
+        assert(near(toMetres('0.5', 'MILE_UK'), 804.672));
+        assert(near(toMetres('0.2', 'MILE_US'), 321.869));
+        assert(near(toMetres('¼', 'MILE_US'), 402.336));
+        assert(near(toMetres('1 1/2', 'MILE_UK'), 2414.016));
+        assert(near(toMetres('300', 'YARD'), 274.32));
+        assert(near(toMetres('1,000', 'YARD'), 914.4));
+        assert(near(toMetres('500', 'FEET'), 152.4));
+        assert(near(toMetres('1,500', 'FEET'), 457.2));
+    });
+    await check('parseManeuver: a distance in BMW\'s miles, yards and feet', () => {
+        assert(near(parseManeuver(reply('intersection', '0.3', 'MILE_US', 'Elm St')).metres, 482.803));
+        assert(near(parseManeuver(reply('branch', '1', 'MILE_UK')).metres, 1609.344));
+        assert(near(parseManeuver(reply('roundabout', '200', 'YARD')).metres, 182.88));
+        assert(near(parseManeuver(reply('intersection', '800', 'FEET')).metres, 243.84));
+    });
+    await check('the gate opens on a turn in miles: a quarter mile within 1000 m, a mile not', () => {
+        const g = new TurnGate();
+        assert.strictEqual(g.update(parseManeuver(reply('intersection', '1', 'MILE_US')), 0), false);
+        assert.strictEqual(g.update(parseManeuver(reply('intersection', '¼', 'MILE_US')), 500), true);
+    });
     await check('toMetres: fractions of a mile', () => {
         assert(near(toMetres('¼', 'mi'), 402.336));
         assert(near(toMetres('1/4', 'MILES'), 402.336));
