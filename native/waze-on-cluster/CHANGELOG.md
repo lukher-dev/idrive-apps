@@ -117,6 +117,13 @@ slider: it shows the middle of the map, never scaled up, and each driver
 profile keeps its own zoom. 100 % (the default) shows the whole map as
 before.
 
+The HUD map can be up to 135 % of the HUD's width (85 % before). Above
+100 % it keeps its shape and the HUD's edges cut its sides; at 135 % it
+fills the HUD's height. There the horizontal position slides which part of
+the map shows, and the zoom is held to what the map's width allows. Up to
+100 % nothing changes. Needs the head unit's scaler (hud_scale_down);
+without it the map is at most 100 % wide.
+
 ## 0.10.12
 
 The diagnostic journal is kept in memory and written to storage only around

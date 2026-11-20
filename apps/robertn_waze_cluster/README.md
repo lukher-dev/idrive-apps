@@ -71,12 +71,14 @@ The app is in the head unit's display language.
 - **Keep HUD map over BMW's pop-ups:** unticked (the default), the map steps
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
-- **Size:** how wide the map is on the HUD.
+- **Size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
+  HUD's edges cut the map's sides.
 - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
   the default) to 250 %. The map is never scaled up, so a wide HUD map
   takes less zoom: the row shows the zoom in use.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
-  map sits on the HUD.
+  map sits on the HUD. Above 100 %, left and right slide the map inside the
+  HUD.
 
 **CarPlay** and **Android Auto**
 

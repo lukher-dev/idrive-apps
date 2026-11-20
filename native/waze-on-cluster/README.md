@@ -121,9 +121,14 @@ the cluster is hidden (cluster-render README, "Guide hold"). The app's
 
 **Where the map shows.** The app's **Show on** sets the cluster, the HUD,
 both or neither (**Off**), at once. On the HUD the frames are scaled on the
-head unit to the size shown (**Size**, 30 % to 85 % of the HUD's width, or
+head unit to the size shown (**Size**, 30 % to 135 % of the HUD's width, or
 Standard, about 57 %), moved by **Position**, the corners rounded and a
-night map's background made black, which the HUD shows as nothing. With
+night map's background made black, which the HUD shows as nothing. Above
+100 % the map keeps its shape and its sides are cut by the HUD's edges; at
+135 % it fills the HUD's height, scaled nearly 1:1. There left and right
+**Position** slides which part of the map shows instead of moving it, held
+inside the picture. Above 100 % needs `hud_scale_down`; without it, or
+inside another app's scene, the map is at most 100 % wide. With
 both, the HUD gets up to half the upload budget, only what it uses. The
 HUD map steps aside while BMW's HUD lists show (never for route guidance),
 unless **Keep HUD map over BMW's pop-ups** is ticked. **Own settings for
@@ -134,8 +139,9 @@ settings.
 100/zoom of each side, centred on `hud_crop_cx_pm`, `hud_crop_cy_pm`
 (per mille of the picture, 500 and 500 by default; opt-in keys in
 `features.conf`) and held inside it, scaled to the HUD map's size. A size
-takes at most the zoom whose part is as wide as the map is shown (240 % at
-Standard, 160 % at 85 %), so the picture is never scaled up; the status's
+takes at most the zoom whose part is as wide as the map is (240 % at
+Standard, 160 % at 85 %, 113 % at 120 %, 100 % at 135 %), so the picture is
+never scaled up; the status's
 `hud_zoom_used` is the zoom in use. The default, 100 %, shows the whole
 picture, the phone's turn card and arrival-time card with it.
 

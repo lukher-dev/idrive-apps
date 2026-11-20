@@ -22,6 +22,10 @@ HUD. 100 % (the default) shows the whole map as before. The map is never
 scaled up, so a wide HUD map takes less zoom; the row shows the zoom in use.
 Own settings for this driver keeps the zoom too.
 
+Size in HUD goes up to 135 % (85 % before). Above 100 % the map keeps its
+shape and the HUD's edges cut its sides; Move left and Move right then slide
+the map inside the HUD.
+
 ## 0.6.12
 
 The cluster's safe area is back to 504x368 at (286, 72); a smaller area made
