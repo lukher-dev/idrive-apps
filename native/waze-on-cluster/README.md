@@ -121,12 +121,12 @@ the cluster is hidden (cluster-render README, "Guide hold"). The app's
 
 **Where the map shows.** The app's **Show on** sets the cluster, the HUD,
 both or neither (**Off**), at once. On the HUD the frames are scaled on the
-head unit to the size shown (**Size**, 30 % to 135 % of the HUD's width, or
-Standard, about 57 %), moved by **Position**, the corners rounded and a
+head unit to the size shown (**Map size**, 30 % to 135 % of the HUD's width,
+or Standard, about 57 %), moved by **Map position**, the corners rounded and a
 night map's background made black, which the HUD shows as nothing. Above
 100 % the map keeps its shape and its sides are cut by the HUD's edges; at
 135 % it fills the HUD's height, scaled nearly 1:1. There left and right
-**Position** slides which part of the map shows instead of moving it, held
+**Map position** slides which part of the map shows instead of moving it, held
 inside the picture. Above 100 % needs `hud_scale_down`; without it, or
 inside another app's scene, the map is at most 100 % wide. With
 both, the HUD gets up to half the upload budget, only what it uses. The
