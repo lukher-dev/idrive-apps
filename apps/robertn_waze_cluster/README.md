@@ -60,7 +60,8 @@ The app is in the head unit's display language.
   (experimental)**, **Cluster and HUD (experimental)** or **Off**. The
   change is immediate. **Off** shows BMW's own content on both.
 - **Own settings for this driver:** ticked, the current driver profile
-  keeps its own Show on, HUD size, HUD zoom and HUD position.
+  keeps its own Show on, HUD size, HUD zoom, HUD position and the speed
+  area.
 - **Hide BMW's turn box:** ticked (the default), BMW's turn-by-turn box on
   the cluster is hidden while the map shows.
 - **Logs:** opens the Logs page (see below).
@@ -79,6 +80,14 @@ The app is in the head unit's display language.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
   map sits on the HUD. Above 100 %, left and right slide the map inside the
   HUD.
+- **Hide map behind BMW's speed:** ticked, the map is hidden in an area of
+  the HUD, so BMW's speed readout stays readable. Off by default: BMW's
+  speed sits in a different place on different cars' HUDs. **Speed area**
+  shows that area's size and place in HUD pixels (250x90 at 110,320 by
+  default, where a 5 Series G30 LCI shows the speed and the speed-limit
+  sign); **Move speed area left / right / up / down** and **Speed area
+  wider / narrower / taller / shorter** move and size it 10 px a press.
+  The area stays where it is on the HUD when the map moves or changes size.
 
 **CarPlay** and **Android Auto**
 

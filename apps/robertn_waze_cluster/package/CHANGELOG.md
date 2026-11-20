@@ -26,6 +26,13 @@ Size in HUD goes up to 135 % (85 % before). Above 100 % the map keeps its
 shape and the HUD's edges cut its sides; Move left and Move right then slide
 the map inside the HUD.
 
+Hide map behind BMW's speed, a checkbox in HUD after the position buttons:
+the HUD map is hidden in an area of the HUD so BMW's speed stays readable.
+Off by default. The Speed area row shows the area, 250x90 at 110,320 by
+default (where a G30 LCI shows its speed and speed-limit sign), and its
+buttons move and size it 10 px a press. Own settings for this driver keeps
+it too.
+
 ## 0.6.12
 
 The cluster's safe area is back to 504x368 at (286, 72); a smaller area made

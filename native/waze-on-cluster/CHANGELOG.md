@@ -124,6 +124,14 @@ the map shows, and the zoom is held to what the map's width allows. Up to
 100 % nothing changes. Needs the head unit's scaler (hud_scale_down);
 without it the map is at most 100 % wide.
 
+The HUD map can be hidden behind BMW's speed: hud_clear makes it black in a
+rectangle of the HUD's 800x480 scene (hud_clear_x, hud_clear_y, hud_clear_w,
+hud_clear_h; 250x90 at 110,320 by default, a G30 LCI's speed and
+speed-limit sign), feathered at its edges. The rectangle stays put when the
+map moves or changes size. Off by default; the app's Hide map behind BMW's
+speed checkbox and Speed area buttons set it, saved per driver profile.
+Needs the head unit's scaler (hud_scale_down).
+
 ## 0.10.12
 
 The diagnostic journal is kept in memory and written to storage only around

@@ -145,6 +145,20 @@ never scaled up; the status's
 `hud_zoom_used` is the zoom in use. The default, 100 %, shows the whole
 picture, the phone's turn card and arrival-time card with it.
 
+**Hide map behind BMW's speed** (`hud_clear`, off by default) makes the HUD
+map black, which the HUD shows as nothing, in a rectangle of the HUD's
+800x480 scene (`hud_clear_x` 0 to 799, `hud_clear_y` 0 to 479 from its top
+left, `hud_clear_w` 10 to 800, `hud_clear_h` 10 to 480), fading in over
+12 px from its edges, so BMW's speed readout there stays readable over the
+map. The rectangle belongs to the HUD, not the map: moving or resizing the
+map leaves it in place, and only the part of it over the map shows. BMW
+places the speed differently on different cars' HUDs, so it is off by
+default; the default rectangle, 250x90 at 110,320, covers the current
+speed and the speed-limit sign on a 5 Series G30 LCI, the one car it was
+measured on. The app's **Speed area** buttons move and size it 10 px a
+press; the control `{"cmd":"hud","hud_clear":"0"|"1","hud_clear_x":...}`
+takes any of the five and the status reports them. Needs `hud_scale_down`.
+
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md
 "Hosting another target"), and so can an app that draws a target with
