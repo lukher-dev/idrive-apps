@@ -14,9 +14,13 @@
  * flip it), Logs. HUD: HUD map (the map
  * on the HUD), the Keep HUD map over BMW's pop-ups checkbox, the Size
  * slider, the Map zoom slider, Position with Move left, Move right, Move
- * up, Move down and Centre; the checkbox, the sliders and the position
- * buttons are greyed
- * while the HUD is off or disabled after errors. CarPlay and Android Auto
+ * up, Move down and Centre, then the Hide map behind BMW's speed checkbox
+ * (the map hidden in a rectangle of the HUD, where BMW's speed is) and the
+ * Speed area row with Move speed area left, right, up and down and Speed
+ * area wider, narrower, taller and shorter for its rectangle; the
+ * checkboxes, the sliders and the buttons are greyed while the HUD is off
+ * or disabled after errors, the speed area's buttons also while it is
+ * unticked. CarPlay and Android Auto
  * have the same rows: Status, Patch, Remove patch; CarPlay adds CarPlay
  * Wi-Fi (the band, 5 GHz or 2.4 GHz) and, on 2.4 GHz, the line under it;
  * Android Auto adds Zoom with Zoom out and Zoom in, and the Hide phone's
@@ -95,6 +99,10 @@ const HUD_ZOOM_NAME = 'wocHudZoom';
 const HUD_POS_NAME = 'wocHudPos';
 const HUD_MOVE_NAMES = { left: 'wocHudLeft', right: 'wocHudRight', up: 'wocHudUp', down: 'wocHudDown' };
 const HUD_CENTRE_NAME = 'wocHudCentre';
+const HUD_CLEAR_NAME = 'wocHudClear';
+const HUD_CLEAR_RECT_NAME = 'wocHudClearRect';
+const HUD_CLEAR_NAMES = { left: 'wocHudClearLeft', right: 'wocHudClearRight', up: 'wocHudClearUp', down: 'wocHudClearDown',
+    wider: 'wocHudClearWider', narrower: 'wocHudClearNarrower', taller: 'wocHudClearTaller', shorter: 'wocHudClearShorter' };
 const CAPTURE_NAME = 'wocCapture';
 const CAPTURE_STATUS = 'wocCaptureStatus';
 const LOGS_NAME = 'wocLogs';
@@ -209,8 +217,8 @@ class WazeClusterApp extends OnlineApp {
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
             AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, RESTART_NAME, GUIDE_NAME,
             HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_SIZE_NAME, HUD_ZOOM_NAME,
-            HUD_POS_NAME]
-            .concat(Object.values(HUD_MOVE_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
+            HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
+            .concat(Object.values(HUD_MOVE_NAMES), Object.values(HUD_CLEAR_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
                 LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES);
         names.forEach((name) => { this._components[name] = rhmi.getByName(name); });
         const missing = names.filter((name) => !this._components[name]);
@@ -239,6 +247,12 @@ class WazeClusterApp extends OnlineApp {
             /* as for the turn box: the render's answer decides the tick */
             delete this._written[`selected:${HUD_KEEP_NAME}`];
             this._control.toggleHudKeep();
+            this._render();
+        });
+        this._bind(HUD_CLEAR_NAME, () => {
+            /* as for the turn box: the render's answer decides the tick */
+            delete this._written[`selected:${HUD_CLEAR_NAME}`];
+            this._control.toggleHudClear();
             this._render();
         });
         this._bind(PROFILE_NAME, () => {
@@ -274,6 +288,7 @@ class WazeClusterApp extends OnlineApp {
             }
         });
         Object.keys(HUD_MOVE_NAMES).forEach((dir) => this._bind(HUD_MOVE_NAMES[dir], () => this._control.moveHud(dir)));
+        Object.keys(HUD_CLEAR_NAMES).forEach((dir) => this._bind(HUD_CLEAR_NAMES[dir], () => this._control.adjustHudClear(dir)));
         this._bind(HUD_CENTRE_NAME, () => this._control.centreHud());
         this._bind(CAPTURE_NAME, () => this._control.capture());
         this._bind(LOGS_NAME, () => Promise.resolve(rhmi.openState(LOGS_STATE))
@@ -540,6 +555,10 @@ class WazeClusterApp extends OnlineApp {
             [HEAD_HUD_NAME, t('HUD')],
             [HUD_MOVE_NAMES.left, t('Move left')], [HUD_MOVE_NAMES.right, t('Move right')], [HUD_MOVE_NAMES.up, t('Move up')],
             [HUD_MOVE_NAMES.down, t('Move down')], [HUD_CENTRE_NAME, t('Centre')],
+            [HUD_CLEAR_NAMES.left, t('Move speed area left')], [HUD_CLEAR_NAMES.right, t('Move speed area right')],
+            [HUD_CLEAR_NAMES.up, t('Move speed area up')], [HUD_CLEAR_NAMES.down, t('Move speed area down')],
+            [HUD_CLEAR_NAMES.wider, t('Speed area wider')], [HUD_CLEAR_NAMES.narrower, t('Speed area narrower')],
+            [HUD_CLEAR_NAMES.taller, t('Speed area taller')], [HUD_CLEAR_NAMES.shorter, t('Speed area shorter')],
             [RESTART_NAME, t('Restart head unit')]].forEach(([name, text]) => this._write(name, text));
         this._write(STATUS_NAME, c.statusText());
         this._write(MAP_NAME, c.mapText());
@@ -601,6 +620,13 @@ class WazeClusterApp extends OnlineApp {
         this._write(HUD_POS_NAME, c.hudPositionText());
         Object.values(HUD_MOVE_NAMES).forEach((n) => this._setEnabled(n, adjust));
         this._setEnabled(HUD_CENTRE_NAME, c.canCentreHud());
+        /* the speed area: its place and size greyed also while it is off */
+        this._write(HUD_CLEAR_NAME, t("Hide map behind BMW's speed"));
+        this._setSelected(HUD_CLEAR_NAME, c.hudClear() === true);
+        this._setEnabled(HUD_CLEAR_NAME, c.canHudClear());
+        this._write(HUD_CLEAR_RECT_NAME, c.hudClearText());
+        const adjustClear = c.canAdjustHudClear();
+        Object.values(HUD_CLEAR_NAMES).forEach((n) => this._setEnabled(n, adjustClear));
     }
 
     _renderLogs() {

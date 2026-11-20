@@ -317,6 +317,18 @@ async function main() {
         await until('render moved again', () => render.received.length === 3);
         assert(!('hud_zoom_pct' in render.received[2]), 'a patchd before it: not told');
     });
+    await check('hidden behind BMW\'s speed and the speed area go to the render with the other HUD settings; a patchd before it: not told', async () => {
+        render.received.length = 0;
+        sync2._toRender(Object.assign(settings(1, 0, 0, 0, 0, 0), { hud_clear: 1, hud_clear_x: 130, hud_clear_y: 300, hud_clear_w: 200,
+            hud_clear_h: 80 }));
+        await until('render moved', () => render.received.length === 3);
+        const hud = render.received[2];
+        assert.deepStrictEqual([hud.hud_clear, hud.hud_clear_x, hud.hud_clear_y, hud.hud_clear_w, hud.hud_clear_h], ['1', '130', '300', '200', '80']);
+        render.received.length = 0;
+        sync2._toRender(settings(1, 0, 0, 0, 0, 0));
+        await until('render moved again', () => render.received.length === 3);
+        assert(!('hud_clear' in render.received[2]) && !('hud_clear_x' in render.received[2]), 'a patchd before it: not told');
+    });
     sync2.stop();
     c.close();
 

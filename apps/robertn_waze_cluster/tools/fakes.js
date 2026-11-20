@@ -134,6 +134,9 @@ class FakeRender extends LineServer {
         /* the HUD map's zoom and the cap of its box (hudZoom null: a tool without them) */
         this.hudZoom = 100;
         this.hudZoomCap = 240;
+        /* the speed area: hidden (0/1) and its rectangle [x, y, w, h] (hudClear null: a tool without it) */
+        this.hudClear = 0;
+        this.hudClearRect = [110, 320, 250, 90];
         this._showTimer = null;
     }
 
@@ -160,6 +163,10 @@ class FakeRender extends LineServer {
                 hud_width_pct: this.hudWidth || 0, hud_x: this.hudX || 0, hud_y: this.hudY || 0 });
             if (this.hudKeep !== null) s.hud_keep_shown = this.hudKeep;
             if (this.hudZoom !== null) Object.assign(s, { hud_zoom_pct: this.hudZoom, hud_zoom_used: Math.min(this.hudZoom, this.hudZoomCap) });
+            if (this.hudClear !== null) {
+                const [x, y, w, h] = this.hudClearRect;
+                Object.assign(s, { hud_clear: this.hudClear, hud_clear_x: x, hud_clear_y: y, hud_clear_w: w, hud_clear_h: h });
+            }
         }
         if (this.hide !== null) {
             s.hide_bmw_guidance = this.hide;
@@ -206,6 +213,12 @@ class FakeRender extends LineServer {
             if (msg.hud_y !== undefined) this.hudY = Number(msg.hud_y);
             if (msg.hud_keep_shown !== undefined && this.hudKeep !== null) this.hudKeep = Number(msg.hud_keep_shown);
             if (msg.hud_zoom_pct !== undefined && this.hudZoom !== null) this.hudZoom = Number(msg.hud_zoom_pct);
+            if (msg.hud_clear !== undefined && this.hudClear !== null) this.hudClear = Number(msg.hud_clear);
+            if (this.hudClear !== null) {
+                ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].forEach((k, i) => {
+                    if (msg[k] !== undefined) this.hudClearRect[i] = Number(msg[k]);
+                });
+            }
             this._broadcast(this._status());
         }
     }
@@ -234,7 +247,8 @@ class FakePatch extends LineServer {
         this.mute = false;         /* commands received and not answered */
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
-        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_zoom_pct: 100 };
+        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_zoom_pct: 100,
+            hud_clear: 0, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
         this.shared = null;
         this.own = {};
         this.active = null;
@@ -313,9 +327,10 @@ class FakePatch extends LineServer {
             return;
         }
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
-            'hud-keep-shown': ['hud_keep_shown'], 'hud-zoom': ['hud_zoom_pct'] };
+            'hud-keep-shown': ['hud_keep_shown'], 'hud-zoom': ['hud_zoom_pct'], 'hud-clear': ['hud_clear'],
+            'hud-clear-rect': ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'] };
         if (MAP[msg.cmd]) {
-            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y]
+            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y] : msg.cmd === 'hud-clear-rect' ? [msg.x, msg.y, msg.w, msg.h]
                 : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-zoom' ? msg.pct : msg.on];
             this.map = Object.assign({}, this.map);
             MAP[msg.cmd].forEach((k, i) => { this.map[k] = v[i]; });

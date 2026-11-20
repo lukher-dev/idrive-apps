@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Der Ton kann aussetzen. Am iPhone WLAN aus- und wieder einschalten.",
     "Own settings for this driver": "Eigene Einstellungen für diesen Fahrer",
     "Keep HUD map over BMW's pop-ups": "Karte im HUD vor BMW-Pop-ups behalten",
-    "Map zoom: {0}": "Kartenzoom: {0}"
+    "Map zoom: {0}": "Kartenzoom: {0}",
+    "Hide map behind BMW's speed": "Karte hinter BMW-Tempo ausblenden",
+    "Speed area: {0}": "Tempobereich: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} bei {2},{3}",
+    "Move speed area left": "Tempobereich nach links",
+    "Move speed area right": "Tempobereich nach rechts",
+    "Move speed area up": "Tempobereich nach oben",
+    "Move speed area down": "Tempobereich nach unten",
+    "Speed area wider": "Tempobereich breiter",
+    "Speed area narrower": "Tempobereich schmaler",
+    "Speed area taller": "Tempobereich höher",
+    "Speed area shorter": "Tempobereich niedriger"
   }
 }

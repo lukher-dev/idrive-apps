@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ses kesilebilir. iPhone'unuzda Wi-Fi'yi kapatıp açın.",
     "Own settings for this driver": "Bu sürücüye özel ayarlar",
     "Keep HUD map over BMW's pop-ups": "HUD haritasını BMW açılır pencerelerinin üstünde tut",
-    "Map zoom: {0}": "Harita yakınlaştırma: {0}"
+    "Map zoom: {0}": "Harita yakınlaştırma: {0}",
+    "Hide map behind BMW's speed": "Haritayı BMW hızının altında gizle",
+    "Speed area: {0}": "Hız alanı: {0}",
+    "{0}x{1} at {2},{3}": "{2},{3} konumunda {0}x{1}",
+    "Move speed area left": "Hız alanını sola taşı",
+    "Move speed area right": "Hız alanını sağa taşı",
+    "Move speed area up": "Hız alanını yukarı taşı",
+    "Move speed area down": "Hız alanını aşağı taşı",
+    "Speed area wider": "Hız alanı daha geniş",
+    "Speed area narrower": "Hız alanı daha dar",
+    "Speed area taller": "Hız alanı daha yüksek",
+    "Speed area shorter": "Hız alanı daha alçak"
   }
 }

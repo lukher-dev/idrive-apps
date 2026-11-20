@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ääni voi katkeilla. Laita iPhonen Wi-Fi pois ja takaisin päälle.",
     "Own settings for this driver": "Omat asetukset tälle kuljettajalle",
     "Keep HUD map over BMW's pop-ups": "Pidä HUD-kartta BMW:n ponnahdusikkunoiden päällä",
-    "Map zoom: {0}": "Kartan zoomaus: {0}"
+    "Map zoom: {0}": "Kartan zoomaus: {0}",
+    "Hide map behind BMW's speed": "Piilota kartta BMW:n nopeuden alta",
+    "Speed area: {0}": "Nopeusalue: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} kohdassa {2},{3}",
+    "Move speed area left": "Siirrä nopeusaluetta vasemmalle",
+    "Move speed area right": "Siirrä nopeusaluetta oikealle",
+    "Move speed area up": "Siirrä nopeusaluetta ylös",
+    "Move speed area down": "Siirrä nopeusaluetta alas",
+    "Speed area wider": "Nopeusalue leveämmäksi",
+    "Speed area narrower": "Nopeusalue kapeammaksi",
+    "Speed area taller": "Nopeusalue korkeammaksi",
+    "Speed area shorter": "Nopeusalue matalammaksi"
   }
 }

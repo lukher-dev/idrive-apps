@@ -99,7 +99,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "قد ينقطع الصوت. على iPhone، أوقف Wi-Fi ثم شغّله.",
    "Own settings for this driver": "إعدادات خاصة لهذا السائق",
    "Keep HUD map over BMW's pop-ups": "إبقاء خريطة HUD فوق النوافذ المنبثقة من BMW",
-   "Map zoom: {0}": "تكبير الخريطة: {0}"
+   "Map zoom: {0}": "تكبير الخريطة: {0}",
+   "Hide map behind BMW's speed": "إخفاء الخريطة خلف سرعة BMW",
+   "Speed area: {0}": "منطقة السرعة: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} عند {2},{3}",
+   "Move speed area left": "تحريك منطقة السرعة لليسار",
+   "Move speed area right": "تحريك منطقة السرعة لليمين",
+   "Move speed area up": "تحريك منطقة السرعة للأعلى",
+   "Move speed area down": "تحريك منطقة السرعة للأسفل",
+   "Speed area wider": "منطقة السرعة أعرض",
+   "Speed area narrower": "منطقة السرعة أضيق",
+   "Speed area taller": "منطقة السرعة أطول",
+   "Speed area shorter": "منطقة السرعة أقصر"
   }
  },
  {
@@ -200,7 +211,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk se může přerušovat. Na iPhonu vypněte a zapněte Wi-Fi.",
    "Own settings for this driver": "Vlastní nastavení pro tohoto řidiče",
    "Keep HUD map over BMW's pop-ups": "Ponechat mapu na HUD přes vyskakovací okna BMW",
-   "Map zoom: {0}": "Přiblížení mapy: {0}"
+   "Map zoom: {0}": "Přiblížení mapy: {0}",
+   "Hide map behind BMW's speed": "Skrýt mapu pod rychlostí BMW",
+   "Speed area: {0}": "Plocha rychlosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Move speed area left": "Posunout plochu rychlosti vlevo",
+   "Move speed area right": "Posunout plochu rychlosti vpravo",
+   "Move speed area up": "Posunout plochu rychlosti nahoru",
+   "Move speed area down": "Posunout plochu rychlosti dolů",
+   "Speed area wider": "Plocha rychlosti širší",
+   "Speed area narrower": "Plocha rychlosti užší",
+   "Speed area taller": "Plocha rychlosti vyšší",
+   "Speed area shorter": "Plocha rychlosti nižší"
   }
  },
  {
@@ -301,7 +323,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Lyden kan falde ud. Slå Wi-Fi fra og til på din iPhone.",
    "Own settings for this driver": "Egne indstillinger for denne fører",
    "Keep HUD map over BMW's pop-ups": "Behold kort i HUD over BMW's pop-ups",
-   "Map zoom: {0}": "Kortzoom: {0}"
+   "Map zoom: {0}": "Kortzoom: {0}",
+   "Hide map behind BMW's speed": "Skjul kort bag BMW-hastighed",
+   "Speed area: {0}": "Hastighedsfelt: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
+   "Move speed area left": "Flyt hastighedsfelt til venstre",
+   "Move speed area right": "Flyt hastighedsfelt til højre",
+   "Move speed area up": "Flyt hastighedsfelt op",
+   "Move speed area down": "Flyt hastighedsfelt ned",
+   "Speed area wider": "Hastighedsfelt bredere",
+   "Speed area narrower": "Hastighedsfelt smallere",
+   "Speed area taller": "Hastighedsfelt højere",
+   "Speed area shorter": "Hastighedsfelt lavere"
   }
  },
  {
@@ -402,7 +435,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Der Ton kann aussetzen. Am iPhone WLAN aus- und wieder einschalten.",
    "Own settings for this driver": "Eigene Einstellungen für diesen Fahrer",
    "Keep HUD map over BMW's pop-ups": "Karte im HUD vor BMW-Pop-ups behalten",
-   "Map zoom: {0}": "Kartenzoom: {0}"
+   "Map zoom: {0}": "Kartenzoom: {0}",
+   "Hide map behind BMW's speed": "Karte hinter BMW-Tempo ausblenden",
+   "Speed area: {0}": "Tempobereich: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} bei {2},{3}",
+   "Move speed area left": "Tempobereich nach links",
+   "Move speed area right": "Tempobereich nach rechts",
+   "Move speed area up": "Tempobereich nach oben",
+   "Move speed area down": "Tempobereich nach unten",
+   "Speed area wider": "Tempobereich breiter",
+   "Speed area narrower": "Tempobereich schmaler",
+   "Speed area taller": "Tempobereich höher",
+   "Speed area shorter": "Tempobereich niedriger"
   }
  },
  {
@@ -503,7 +547,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ο ήχος μπορεί να διακόπτεται. Στο iPhone, απενεργοποιήστε και ενεργοποιήστε ξανά το Wi-Fi.",
    "Own settings for this driver": "Δικές ρυθμίσεις για αυτόν τον οδηγό",
    "Keep HUD map over BMW's pop-ups": "Διατήρηση χάρτη στο HUD πάνω από τα αναδυόμενα της BMW",
-   "Map zoom: {0}": "Ζουμ χάρτη: {0}"
+   "Map zoom: {0}": "Ζουμ χάρτη: {0}",
+   "Hide map behind BMW's speed": "Χωρίς χάρτη πίσω από ταχύτητα BMW",
+   "Speed area: {0}": "Πεδίο ταχύτητας: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} στο {2},{3}",
+   "Move speed area left": "Πεδίο ταχύτητας αριστερά",
+   "Move speed area right": "Πεδίο ταχύτητας δεξιά",
+   "Move speed area up": "Πεδίο ταχύτητας πάνω",
+   "Move speed area down": "Πεδίο ταχύτητας κάτω",
+   "Speed area wider": "Πεδίο ταχύτητας φαρδύτερο",
+   "Speed area narrower": "Πεδίο ταχύτητας στενότερο",
+   "Speed area taller": "Πεδίο ταχύτητας ψηλότερο",
+   "Speed area shorter": "Πεδίο ταχύτητας χαμηλότερο"
   }
  },
  {
@@ -604,7 +659,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "El audio puede cortarse. En tu iPhone, desactiva y vuelve a activar el Wi-Fi.",
    "Own settings for this driver": "Configuración propia para este conductor",
    "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW",
-   "Map zoom: {0}": "Zoom del mapa: {0}"
+   "Map zoom: {0}": "Zoom del mapa: {0}",
+   "Hide map behind BMW's speed": "Ocultar mapa tras la velocidad BMW",
+   "Speed area: {0}": "Zona de velocidad: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} en {2},{3}",
+   "Move speed area left": "Zona de velocidad a la izquierda",
+   "Move speed area right": "Zona de velocidad a la derecha",
+   "Move speed area up": "Zona de velocidad arriba",
+   "Move speed area down": "Zona de velocidad abajo",
+   "Speed area wider": "Zona de velocidad más ancha",
+   "Speed area narrower": "Zona de velocidad más angosta",
+   "Speed area taller": "Zona de velocidad más alta",
+   "Speed area shorter": "Zona de velocidad más baja"
   }
  },
  {
@@ -705,7 +771,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "El audio puede cortarse. En tu iPhone, desactiva y vuelve a activar la Wi-Fi.",
    "Own settings for this driver": "Ajustes propios para este conductor",
    "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW",
-   "Map zoom: {0}": "Zoom del mapa: {0}"
+   "Map zoom: {0}": "Zoom del mapa: {0}",
+   "Hide map behind BMW's speed": "Ocultar mapa tras la velocidad BMW",
+   "Speed area: {0}": "Zona de velocidad: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} en {2},{3}",
+   "Move speed area left": "Zona de velocidad a la izquierda",
+   "Move speed area right": "Zona de velocidad a la derecha",
+   "Move speed area up": "Zona de velocidad arriba",
+   "Move speed area down": "Zona de velocidad abajo",
+   "Speed area wider": "Zona de velocidad más ancha",
+   "Speed area narrower": "Zona de velocidad más estrecha",
+   "Speed area taller": "Zona de velocidad más alta",
+   "Speed area shorter": "Zona de velocidad más baja"
   }
  },
  {
@@ -806,7 +883,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ääni voi katkeilla. Laita iPhonen Wi-Fi pois ja takaisin päälle.",
    "Own settings for this driver": "Omat asetukset tälle kuljettajalle",
    "Keep HUD map over BMW's pop-ups": "Pidä HUD-kartta BMW:n ponnahdusikkunoiden päällä",
-   "Map zoom: {0}": "Kartan zoomaus: {0}"
+   "Map zoom: {0}": "Kartan zoomaus: {0}",
+   "Hide map behind BMW's speed": "Piilota kartta BMW:n nopeuden alta",
+   "Speed area: {0}": "Nopeusalue: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} kohdassa {2},{3}",
+   "Move speed area left": "Siirrä nopeusaluetta vasemmalle",
+   "Move speed area right": "Siirrä nopeusaluetta oikealle",
+   "Move speed area up": "Siirrä nopeusaluetta ylös",
+   "Move speed area down": "Siirrä nopeusaluetta alas",
+   "Speed area wider": "Nopeusalue leveämmäksi",
+   "Speed area narrower": "Nopeusalue kapeammaksi",
+   "Speed area taller": "Nopeusalue korkeammaksi",
+   "Speed area shorter": "Nopeusalue matalammaksi"
   }
  },
  {
@@ -907,7 +995,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Le son peut se couper. Sur votre iPhone, désactivez puis réactivez le Wi-Fi.",
    "Own settings for this driver": "Réglages propres à ce conducteur",
    "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les fenêtres contextuelles BMW",
-   "Map zoom: {0}": "Zoom de la carte : {0}"
+   "Map zoom: {0}": "Zoom de la carte : {0}",
+   "Hide map behind BMW's speed": "Masquer carte sous la vitesse BMW",
+   "Speed area: {0}": "Zone de vitesse : {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} à {2},{3}",
+   "Move speed area left": "Zone de vitesse à gauche",
+   "Move speed area right": "Zone de vitesse à droite",
+   "Move speed area up": "Zone de vitesse vers le haut",
+   "Move speed area down": "Zone de vitesse vers le bas",
+   "Speed area wider": "Zone de vitesse plus large",
+   "Speed area narrower": "Zone de vitesse plus étroite",
+   "Speed area taller": "Zone de vitesse plus haute",
+   "Speed area shorter": "Zone de vitesse plus basse"
   }
  },
  {
@@ -1008,7 +1107,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Le son peut se couper. Sur votre iPhone, désactivez puis réactivez le Wi-Fi.",
    "Own settings for this driver": "Réglages propres à ce conducteur",
    "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les pop-up BMW",
-   "Map zoom: {0}": "Zoom de la carte : {0}"
+   "Map zoom: {0}": "Zoom de la carte : {0}",
+   "Hide map behind BMW's speed": "Masquer carte sous la vitesse BMW",
+   "Speed area: {0}": "Zone de vitesse : {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} à {2},{3}",
+   "Move speed area left": "Zone de vitesse à gauche",
+   "Move speed area right": "Zone de vitesse à droite",
+   "Move speed area up": "Zone de vitesse vers le haut",
+   "Move speed area down": "Zone de vitesse vers le bas",
+   "Speed area wider": "Zone de vitesse plus large",
+   "Speed area narrower": "Zone de vitesse plus étroite",
+   "Speed area taller": "Zone de vitesse plus haute",
+   "Speed area shorter": "Zone de vitesse plus basse"
   }
  },
  {
@@ -1109,7 +1219,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "השמע עלול להיקטע. ב-iPhone, כבו את ה-Wi-Fi והפעילו אותו מחדש.",
    "Own settings for this driver": "הגדרות נפרדות לנהג זה",
    "Keep HUD map over BMW's pop-ups": "השארת המפה ב-HUD מעל החלונות הקופצים של BMW",
-   "Map zoom: {0}": "זום המפה: {0}"
+   "Map zoom: {0}": "זום המפה: {0}",
+   "Hide map behind BMW's speed": "הסתרת המפה מאחורי המהירות של BMW",
+   "Speed area: {0}": "אזור המהירות: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ב-{2},{3}",
+   "Move speed area left": "הזזת אזור המהירות שמאלה",
+   "Move speed area right": "הזזת אזור המהירות ימינה",
+   "Move speed area up": "הזזת אזור המהירות למעלה",
+   "Move speed area down": "הזזת אזור המהירות למטה",
+   "Speed area wider": "אזור המהירות רחב יותר",
+   "Speed area narrower": "אזור המהירות צר יותר",
+   "Speed area taller": "אזור המהירות גבוה יותר",
+   "Speed area shorter": "אזור המהירות נמוך יותר"
   }
  },
  {
@@ -1210,7 +1331,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "A hang akadozhat. Az iPhone-on kapcsolja ki, majd be a Wi-Fi-t.",
    "Own settings for this driver": "Saját beállítások ennek a vezetőnek",
    "Keep HUD map over BMW's pop-ups": "Térkép megtartása a HUD-on a BMW felugró ablakai felett",
-   "Map zoom: {0}": "Térkép nagyítása: {0}"
+   "Map zoom: {0}": "Térkép nagyítása: {0}",
+   "Hide map behind BMW's speed": "Térkép rejtése BMW-sebesség alatt",
+   "Speed area: {0}": "Sebességmező: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} itt: {2},{3}",
+   "Move speed area left": "Sebességmező mozgatása balra",
+   "Move speed area right": "Sebességmező mozgatása jobbra",
+   "Move speed area up": "Sebességmező mozgatása fel",
+   "Move speed area down": "Sebességmező mozgatása le",
+   "Speed area wider": "Sebességmező szélesebb",
+   "Speed area narrower": "Sebességmező keskenyebb",
+   "Speed area taller": "Sebességmező magasabb",
+   "Speed area shorter": "Sebességmező alacsonyabb"
   }
  },
  {
@@ -1311,7 +1443,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Audio mungkin terputus. Di iPhone Anda, matikan lalu nyalakan Wi-Fi.",
    "Own settings for this driver": "Pengaturan sendiri untuk pengemudi ini",
    "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW",
-   "Map zoom: {0}": "Zoom peta: {0}"
+   "Map zoom: {0}": "Zoom peta: {0}",
+   "Hide map behind BMW's speed": "Sembunyikan peta di kecepatan BMW",
+   "Speed area: {0}": "Area kecepatan: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} di {2},{3}",
+   "Move speed area left": "Geser area kecepatan ke kiri",
+   "Move speed area right": "Geser area kecepatan ke kanan",
+   "Move speed area up": "Geser area kecepatan ke atas",
+   "Move speed area down": "Geser area kecepatan ke bawah",
+   "Speed area wider": "Area kecepatan lebih lebar",
+   "Speed area narrower": "Area kecepatan lebih sempit",
+   "Speed area taller": "Area kecepatan lebih tinggi",
+   "Speed area shorter": "Area kecepatan lebih pendek"
   }
  },
  {
@@ -1412,7 +1555,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "L'audio potrebbe interrompersi. Sull'iPhone, disattiva e riattiva il Wi-Fi.",
    "Own settings for this driver": "Impostazioni proprie per questo conducente",
    "Keep HUD map over BMW's pop-ups": "Mantieni la mappa sull'HUD sopra i pop-up BMW",
-   "Map zoom: {0}": "Zoom mappa: {0}"
+   "Map zoom: {0}": "Zoom mappa: {0}",
+   "Hide map behind BMW's speed": "Nascondi mappa sotto velocità BMW",
+   "Speed area: {0}": "Area velocità: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} in {2},{3}",
+   "Move speed area left": "Sposta area velocità a sinistra",
+   "Move speed area right": "Sposta area velocità a destra",
+   "Move speed area up": "Sposta area velocità in alto",
+   "Move speed area down": "Sposta area velocità in basso",
+   "Speed area wider": "Area velocità più larga",
+   "Speed area narrower": "Area velocità più stretta",
+   "Speed area taller": "Area velocità più alta",
+   "Speed area shorter": "Area velocità più bassa"
   }
  },
  {
@@ -1513,7 +1667,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音声が途切れることがあります。iPhoneでWi-Fiをオフにしてからオンにしてください。",
    "Own settings for this driver": "このドライバー専用の設定",
    "Keep HUD map over BMW's pop-ups": "HUDの地図をBMWのポップアップより優先",
-   "Map zoom: {0}": "地図のズーム：{0}"
+   "Map zoom: {0}": "地図のズーム：{0}",
+   "Hide map behind BMW's speed": "BMWの速度表示の下の地図を非表示",
+   "Speed area: {0}": "速度エリア：{0}",
+   "{0}x{1} at {2},{3}": "{2},{3} に {0}x{1}",
+   "Move speed area left": "速度エリアを左へ移動",
+   "Move speed area right": "速度エリアを右へ移動",
+   "Move speed area up": "速度エリアを上へ移動",
+   "Move speed area down": "速度エリアを下へ移動",
+   "Speed area wider": "速度エリアの幅を広げる",
+   "Speed area narrower": "速度エリアの幅を狭める",
+   "Speed area taller": "速度エリアを高くする",
+   "Speed area shorter": "速度エリアを低くする"
   }
  },
  {
@@ -1614,7 +1779,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "오디오가 끊길 수 있습니다. iPhone에서 Wi-Fi를 껐다가 다시 켜십시오.",
    "Own settings for this driver": "이 운전자 전용 설정",
    "Keep HUD map over BMW's pop-ups": "BMW 팝업 위에 HUD 지도 유지",
-   "Map zoom: {0}": "지도 줌: {0}"
+   "Map zoom: {0}": "지도 줌: {0}",
+   "Hide map behind BMW's speed": "BMW 속도 표시 뒤 지도 숨기기",
+   "Speed area: {0}": "속도 영역: {0}",
+   "{0}x{1} at {2},{3}": "{2},{3} 위치 {0}x{1}",
+   "Move speed area left": "속도 영역을 왼쪽으로 이동",
+   "Move speed area right": "속도 영역을 오른쪽으로 이동",
+   "Move speed area up": "속도 영역을 위로 이동",
+   "Move speed area down": "속도 영역을 아래로 이동",
+   "Speed area wider": "속도 영역 넓게",
+   "Speed area narrower": "속도 영역 좁게",
+   "Speed area taller": "속도 영역 높게",
+   "Speed area shorter": "속도 영역 낮게"
   }
  },
  {
@@ -1715,7 +1891,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Lyden kan falle ut. Slå Wi-Fi av og på igjen på iPhone.",
    "Own settings for this driver": "Egne innstillinger for denne føreren",
    "Keep HUD map over BMW's pop-ups": "Behold kart i HUD over BMWs popup-vinduer",
-   "Map zoom: {0}": "Kartzoom: {0}"
+   "Map zoom: {0}": "Kartzoom: {0}",
+   "Hide map behind BMW's speed": "Skjul kart bak BMW-hastighet",
+   "Speed area: {0}": "Hastighetsfelt: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
+   "Move speed area left": "Flytt hastighetsfelt til venstre",
+   "Move speed area right": "Flytt hastighetsfelt til høyre",
+   "Move speed area up": "Flytt hastighetsfelt opp",
+   "Move speed area down": "Flytt hastighetsfelt ned",
+   "Speed area wider": "Hastighetsfelt bredere",
+   "Speed area narrower": "Hastighetsfelt smalere",
+   "Speed area taller": "Hastighetsfelt høyere",
+   "Speed area shorter": "Hastighetsfelt lavere"
   }
  },
  {
@@ -1818,7 +2005,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Het geluid kan wegvallen. Zet Wi-Fi op je iPhone uit en weer aan.",
    "Own settings for this driver": "Eigen instellingen voor deze bestuurder",
    "Keep HUD map over BMW's pop-ups": "Kaart in HUD boven BMW-pop-ups houden",
-   "Map zoom: {0}": "Kaartzoom: {0}"
+   "Map zoom: {0}": "Kaartzoom: {0}",
+   "Hide map behind BMW's speed": "Kaart verbergen achter BMW-snelheid",
+   "Speed area: {0}": "Snelheidsvlak: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} op {2},{3}",
+   "Move speed area left": "Snelheidsvlak naar links",
+   "Move speed area right": "Snelheidsvlak naar rechts",
+   "Move speed area up": "Snelheidsvlak omhoog",
+   "Move speed area down": "Snelheidsvlak omlaag",
+   "Speed area wider": "Snelheidsvlak breder",
+   "Speed area narrower": "Snelheidsvlak smaller",
+   "Speed area taller": "Snelheidsvlak hoger",
+   "Speed area shorter": "Snelheidsvlak lager"
   }
  },
  {
@@ -1919,7 +2117,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Dźwięk może się przerywać. Na iPhonie wyłącz i włącz Wi-Fi.",
    "Own settings for this driver": "Własne ustawienia dla tego kierowcy",
    "Keep HUD map over BMW's pop-ups": "Zachowaj mapę na HUD nad wyskakującymi oknami BMW",
-   "Map zoom: {0}": "Powiększenie mapy: {0}"
+   "Map zoom: {0}": "Powiększenie mapy: {0}",
+   "Hide map behind BMW's speed": "Ukryj mapę pod prędkością BMW",
+   "Speed area: {0}": "Obszar prędkości: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} w {2},{3}",
+   "Move speed area left": "Przesuń obszar prędkości w lewo",
+   "Move speed area right": "Przesuń obszar prędkości w prawo",
+   "Move speed area up": "Przesuń obszar prędkości w górę",
+   "Move speed area down": "Przesuń obszar prędkości w dół",
+   "Speed area wider": "Obszar prędkości szerszy",
+   "Speed area narrower": "Obszar prędkości węższy",
+   "Speed area taller": "Obszar prędkości wyższy",
+   "Speed area shorter": "Obszar prędkości niższy"
   }
  },
  {
@@ -2020,7 +2229,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "O áudio pode falhar. No iPhone, desative e ative o Wi-Fi.",
    "Own settings for this driver": "Configurações próprias para este motorista",
    "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups da BMW",
-   "Map zoom: {0}": "Zoom do mapa: {0}"
+   "Map zoom: {0}": "Zoom do mapa: {0}",
+   "Hide map behind BMW's speed": "Ocultar mapa sob a velocidade BMW",
+   "Speed area: {0}": "Área da velocidade: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} em {2},{3}",
+   "Move speed area left": "Área da velocidade à esquerda",
+   "Move speed area right": "Área da velocidade à direita",
+   "Move speed area up": "Área da velocidade para cima",
+   "Move speed area down": "Área da velocidade para baixo",
+   "Speed area wider": "Área da velocidade mais larga",
+   "Speed area narrower": "Área da velocidade mais estreita",
+   "Speed area taller": "Área da velocidade mais alta",
+   "Speed area shorter": "Área da velocidade mais baixa"
   }
  },
  {
@@ -2121,7 +2341,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "O áudio pode falhar. No iPhone, desative e volte a ativar o Wi-Fi.",
    "Own settings for this driver": "Definições próprias para este condutor",
    "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups BMW",
-   "Map zoom: {0}": "Zoom do mapa: {0}"
+   "Map zoom: {0}": "Zoom do mapa: {0}",
+   "Hide map behind BMW's speed": "Ocultar mapa sob a velocidade BMW",
+   "Speed area: {0}": "Área da velocidade: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} em {2},{3}",
+   "Move speed area left": "Área da velocidade à esquerda",
+   "Move speed area right": "Área da velocidade à direita",
+   "Move speed area up": "Área da velocidade para cima",
+   "Move speed area down": "Área da velocidade para baixo",
+   "Speed area wider": "Área da velocidade mais larga",
+   "Speed area narrower": "Área da velocidade mais estreita",
+   "Speed area taller": "Área da velocidade mais alta",
+   "Speed area shorter": "Área da velocidade mais baixa"
   }
  },
  {
@@ -2222,7 +2453,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Sunetul se poate întrerupe. Pe iPhone, dezactivați și reactivați Wi-Fi.",
    "Own settings for this driver": "Setări proprii pentru acest șofer",
    "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW",
-   "Map zoom: {0}": "Zoom hartă: {0}"
+   "Map zoom: {0}": "Zoom hartă: {0}",
+   "Hide map behind BMW's speed": "Ascunde harta sub viteza BMW",
+   "Speed area: {0}": "Zona vitezei: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} la {2},{3}",
+   "Move speed area left": "Mută zona vitezei la stânga",
+   "Move speed area right": "Mută zona vitezei la dreapta",
+   "Move speed area up": "Mută zona vitezei în sus",
+   "Move speed area down": "Mută zona vitezei în jos",
+   "Speed area wider": "Zona vitezei mai lată",
+   "Speed area narrower": "Zona vitezei mai îngustă",
+   "Speed area taller": "Zona vitezei mai înaltă",
+   "Speed area shorter": "Zona vitezei mai joasă"
   }
  },
  {
@@ -2323,7 +2565,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Звук может прерываться. На iPhone выключите и снова включите Wi-Fi.",
    "Own settings for this driver": "Свои настройки для этого водителя",
    "Keep HUD map over BMW's pop-ups": "Оставлять карту на HUD поверх всплывающих окон BMW",
-   "Map zoom: {0}": "Масштаб карты: {0}"
+   "Map zoom: {0}": "Масштаб карты: {0}",
+   "Hide map behind BMW's speed": "Скрыть карту под скоростью BMW",
+   "Speed area: {0}": "Поле скорости: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} в {2},{3}",
+   "Move speed area left": "Сдвинуть поле скорости влево",
+   "Move speed area right": "Сдвинуть поле скорости вправо",
+   "Move speed area up": "Сдвинуть поле скорости вверх",
+   "Move speed area down": "Сдвинуть поле скорости вниз",
+   "Speed area wider": "Поле скорости шире",
+   "Speed area narrower": "Поле скорости уже",
+   "Speed area taller": "Поле скорости выше",
+   "Speed area shorter": "Поле скорости ниже"
   }
  },
  {
@@ -2424,7 +2677,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk sa môže prerušovať. Na iPhone vypnite a zapnite Wi-Fi.",
    "Own settings for this driver": "Vlastné nastavenia pre tohto vodiča",
    "Keep HUD map over BMW's pop-ups": "Ponechať mapu na HUD nad kontextovými oknami BMW",
-   "Map zoom: {0}": "Priblíženie mapy: {0}"
+   "Map zoom: {0}": "Priblíženie mapy: {0}",
+   "Hide map behind BMW's speed": "Skryť mapu pod rýchlosťou BMW",
+   "Speed area: {0}": "Plocha rýchlosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Move speed area left": "Posunúť plochu rýchlosti vľavo",
+   "Move speed area right": "Posunúť plochu rýchlosti vpravo",
+   "Move speed area up": "Posunúť plochu rýchlosti hore",
+   "Move speed area down": "Posunúť plochu rýchlosti dole",
+   "Speed area wider": "Plocha rýchlosti širšia",
+   "Speed area narrower": "Plocha rýchlosti užšia",
+   "Speed area taller": "Plocha rýchlosti vyššia",
+   "Speed area shorter": "Plocha rýchlosti nižšia"
   }
  },
  {
@@ -2525,7 +2789,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvok se lahko prekinja. Na iPhonu izklopite in vklopite Wi-Fi.",
    "Own settings for this driver": "Lastne nastavitve za tega voznika",
    "Keep HUD map over BMW's pop-ups": "Ohrani zemljevid na HUD nad pojavnimi okni BMW",
-   "Map zoom: {0}": "Povečava zemljevida: {0}"
+   "Map zoom: {0}": "Povečava zemljevida: {0}",
+   "Hide map behind BMW's speed": "Skrij zemljevid pod hitrostjo BMW",
+   "Speed area: {0}": "Polje hitrosti: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+   "Move speed area left": "Premakni polje hitrosti levo",
+   "Move speed area right": "Premakni polje hitrosti desno",
+   "Move speed area up": "Premakni polje hitrosti gor",
+   "Move speed area down": "Premakni polje hitrosti dol",
+   "Speed area wider": "Polje hitrosti širše",
+   "Speed area narrower": "Polje hitrosti ožje",
+   "Speed area taller": "Polje hitrosti višje",
+   "Speed area shorter": "Polje hitrosti nižje"
   }
  },
  {
@@ -2626,7 +2901,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ljudet kan försvinna. Stäng av och slå på Wi-Fi på din iPhone.",
    "Own settings for this driver": "Egna inställningar för den här föraren",
    "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster",
-   "Map zoom: {0}": "Kartzoom: {0}"
+   "Map zoom: {0}": "Kartzoom: {0}",
+   "Hide map behind BMW's speed": "Dölj kartan bakom BMW:s hastighet",
+   "Speed area: {0}": "Hastighetsfält: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} vid {2},{3}",
+   "Move speed area left": "Flytta hastighetsfält åt vänster",
+   "Move speed area right": "Flytta hastighetsfält åt höger",
+   "Move speed area up": "Flytta hastighetsfält upp",
+   "Move speed area down": "Flytta hastighetsfält ned",
+   "Speed area wider": "Hastighetsfält bredare",
+   "Speed area narrower": "Hastighetsfält smalare",
+   "Speed area taller": "Hastighetsfält högre",
+   "Speed area shorter": "Hastighetsfält lägre"
   }
  },
  {
@@ -2727,7 +3013,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "เสียงอาจขาดหาย ให้ปิดแล้วเปิด Wi-Fi บน iPhone",
    "Own settings for this driver": "การตั้งค่าเฉพาะสำหรับผู้ขับขี่คนนี้",
    "Keep HUD map over BMW's pop-ups": "คงแผนที่บน HUD ไว้เหนือป๊อปอัปของ BMW",
-   "Map zoom: {0}": "ซูมแผนที่: {0}"
+   "Map zoom: {0}": "ซูมแผนที่: {0}",
+   "Hide map behind BMW's speed": "ซ่อนแผนที่หลังความเร็วของ BMW",
+   "Speed area: {0}": "พื้นที่ความเร็ว: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} ที่ {2},{3}",
+   "Move speed area left": "เลื่อนพื้นที่ความเร็วไปซ้าย",
+   "Move speed area right": "เลื่อนพื้นที่ความเร็วไปขวา",
+   "Move speed area up": "เลื่อนพื้นที่ความเร็วขึ้น",
+   "Move speed area down": "เลื่อนพื้นที่ความเร็วลง",
+   "Speed area wider": "พื้นที่ความเร็วกว้างขึ้น",
+   "Speed area narrower": "พื้นที่ความเร็วแคบลง",
+   "Speed area taller": "พื้นที่ความเร็วสูงขึ้น",
+   "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง"
   }
  },
  {
@@ -2828,7 +3125,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ses kesilebilir. iPhone'unuzda Wi-Fi'yi kapatıp açın.",
    "Own settings for this driver": "Bu sürücüye özel ayarlar",
    "Keep HUD map over BMW's pop-ups": "HUD haritasını BMW açılır pencerelerinin üstünde tut",
-   "Map zoom: {0}": "Harita yakınlaştırma: {0}"
+   "Map zoom: {0}": "Harita yakınlaştırma: {0}",
+   "Hide map behind BMW's speed": "Haritayı BMW hızının altında gizle",
+   "Speed area: {0}": "Hız alanı: {0}",
+   "{0}x{1} at {2},{3}": "{2},{3} konumunda {0}x{1}",
+   "Move speed area left": "Hız alanını sola taşı",
+   "Move speed area right": "Hız alanını sağa taşı",
+   "Move speed area up": "Hız alanını yukarı taşı",
+   "Move speed area down": "Hız alanını aşağı taşı",
+   "Speed area wider": "Hız alanı daha geniş",
+   "Speed area narrower": "Hız alanı daha dar",
+   "Speed area taller": "Hız alanı daha yüksek",
+   "Speed area shorter": "Hız alanı daha alçak"
   }
  },
  {
@@ -2929,7 +3237,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Звук може перериватися. На iPhone вимкніть і знову ввімкніть Wi-Fi.",
    "Own settings for this driver": "Власні налаштування для цього водія",
    "Keep HUD map over BMW's pop-ups": "Залишати карту на HUD поверх спливних вікон BMW",
-   "Map zoom: {0}": "Масштаб карти: {0}"
+   "Map zoom: {0}": "Масштаб карти: {0}",
+   "Hide map behind BMW's speed": "Приховати карту під швидкістю BMW",
+   "Speed area: {0}": "Поле швидкості: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} у {2},{3}",
+   "Move speed area left": "Посунути поле швидкості ліворуч",
+   "Move speed area right": "Посунути поле швидкості праворуч",
+   "Move speed area up": "Посунути поле швидкості вгору",
+   "Move speed area down": "Посунути поле швидкості вниз",
+   "Speed area wider": "Поле швидкості ширше",
+   "Speed area narrower": "Поле швидкості вужче",
+   "Speed area taller": "Поле швидкості вище",
+   "Speed area shorter": "Поле швидкості нижче"
   }
  },
  {
@@ -3030,7 +3349,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Âm thanh có thể bị ngắt. Trên iPhone, hãy tắt rồi bật lại Wi-Fi.",
    "Own settings for this driver": "Cài đặt riêng cho người lái này",
    "Keep HUD map over BMW's pop-ups": "Giữ bản đồ trên HUD phía trên cửa sổ bật lên của BMW",
-   "Map zoom: {0}": "Thu phóng bản đồ: {0}"
+   "Map zoom: {0}": "Thu phóng bản đồ: {0}",
+   "Hide map behind BMW's speed": "Ẩn bản đồ sau tốc độ BMW",
+   "Speed area: {0}": "Vùng tốc độ: {0}",
+   "{0}x{1} at {2},{3}": "{0}x{1} tại {2},{3}",
+   "Move speed area left": "Dời vùng tốc độ sang trái",
+   "Move speed area right": "Dời vùng tốc độ sang phải",
+   "Move speed area up": "Dời vùng tốc độ lên",
+   "Move speed area down": "Dời vùng tốc độ xuống",
+   "Speed area wider": "Vùng tốc độ rộng hơn",
+   "Speed area narrower": "Vùng tốc độ hẹp hơn",
+   "Speed area taller": "Vùng tốc độ cao hơn",
+   "Speed area shorter": "Vùng tốc độ thấp hơn"
   }
  },
  {
@@ -3133,7 +3463,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音频可能中断。请在 iPhone 上关闭再打开无线局域网。",
    "Own settings for this driver": "此驾驶员的专属设置",
    "Keep HUD map over BMW's pop-ups": "HUD 地图保持在 BMW 弹窗之上",
-   "Map zoom: {0}": "地图缩放：{0}"
+   "Map zoom: {0}": "地图缩放：{0}",
+   "Hide map behind BMW's speed": "隐藏 BMW 车速后方的地图",
+   "Speed area: {0}": "车速区域：{0}",
+   "{0}x{1} at {2},{3}": "{0}x{1}，位于 {2},{3}",
+   "Move speed area left": "车速区域左移",
+   "Move speed area right": "车速区域右移",
+   "Move speed area up": "车速区域上移",
+   "Move speed area down": "车速区域下移",
+   "Speed area wider": "车速区域加宽",
+   "Speed area narrower": "车速区域变窄",
+   "Speed area taller": "车速区域加高",
+   "Speed area shorter": "车速区域变矮"
   }
  },
  {
@@ -3236,7 +3577,18 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音訊可能中斷。請在 iPhone 上關閉再開啟 Wi-Fi。",
    "Own settings for this driver": "此駕駛的專屬設定",
    "Keep HUD map over BMW's pop-ups": "HUD 地圖保持在 BMW 彈出視窗之上",
-   "Map zoom: {0}": "地圖縮放：{0}"
+   "Map zoom: {0}": "地圖縮放：{0}",
+   "Hide map behind BMW's speed": "隱藏 BMW 車速後方的地圖",
+   "Speed area: {0}": "車速區域：{0}",
+   "{0}x{1} at {2},{3}": "{0}x{1}，位於 {2},{3}",
+   "Move speed area left": "車速區域左移",
+   "Move speed area right": "車速區域右移",
+   "Move speed area up": "車速區域上移",
+   "Move speed area down": "車速區域下移",
+   "Speed area wider": "車速區域加寬",
+   "Speed area narrower": "車速區域變窄",
+   "Speed area taller": "車速區域加高",
+   "Speed area shorter": "車速區域變矮"
   }
  }
 ];

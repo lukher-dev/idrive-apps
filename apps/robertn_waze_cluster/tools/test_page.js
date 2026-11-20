@@ -34,7 +34,10 @@
  * greyed; Keep HUD map over BMW's pop-ups, a checkbox under HUD map,
  * unticked by default, each press one command to the render and one save,
  * ticked as the render reports, greyed with the size slider and for a render
- * without the setting; Own settings for this driver, a checkbox under Show on, greyed
+ * without the setting; Hide map behind BMW's speed, a checkbox under the
+ * position buttons, unticked by default, with the Speed area row and its
+ * move and size buttons, each press one command to the render and one save,
+ * the buttons greyed while it is unticked; Own settings for this driver, a checkbox under Show on, greyed
  * while no driver profile is detected, ticked for a profile with its own
  * map settings, a switch of profile moving the render to that profile's
  * (or the shared) settings, unticked the shared ones back; no label greyed (the HMI's labels have no setEnabled, its
@@ -288,6 +291,10 @@ async function main() {
         'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudSize Size: \u2014',
         'wocHudZoom Map zoom: \u2014', 'wocHudPos Position: \u2014', 'wocHudLeft Move left',
         'wocHudRight Move right', 'wocHudUp Move up', 'wocHudDown Move down', 'wocHudCentre Centre',
+        "wocHudClear Hide map behind BMW's speed", 'wocHudClearRect Speed area: \u2014', 'wocHudClearLeft Move speed area left',
+        'wocHudClearRight Move speed area right', 'wocHudClearUp Move speed area up', 'wocHudClearDown Move speed area down',
+        'wocHudClearWider Speed area wider', 'wocHudClearNarrower Speed area narrower', 'wocHudClearTaller Speed area taller',
+        'wocHudClearShorter Speed area shorter',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch', 'wocWifi ', 'wocWifiHint ',
         'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch',
         'wocAaZoom Zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
@@ -307,8 +314,8 @@ async function main() {
         .find((id) => components[id].name === n)].properties.Focusable.value]), Array(4).fill(['0', 0]), 'the section headers take no focus');
     assert.strictEqual(main.find(([, , name]) => focus[name] === '3')[2], 'wocShowOn', 'the first row the controller stops on: Show on');
     assert(!main.some(([, , name]) => /^wocRow|^wocSetup|^wocCapture/.test(name)), 'no log rows, setup line or capture on the main page');
-    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep'].map((n) => widgets[n]), Array(4).fill('LT_CheckBox_1Row'),
-        'the on/off settings are checkboxes');
+    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep', 'wocHudClear'].map((n) => widgets[n]),
+        Array(5).fill('LT_CheckBox_1Row'), 'the on/off settings are checkboxes');
     assert.strictEqual(widgets.wocHudZoom, 'LT_Slider_LeftJustified_Fill_Steps', 'the HUD map\'s zoom a slider like the size');
     assert.deepStrictEqual([widgets.wocShowOn, widgets.wocHudSize], ['LT_DropDownMenu_1Row_2Col3070', 'LT_Slider_LeftJustified_Fill_Steps'],
         'where the map shows: a drop-down of four; the HUD\'s size: a slider');
@@ -360,7 +367,8 @@ async function main() {
         assert(!logs.some((l) => /^error/.test(l)), logs.filter((l) => /^error/.test(l)).join('\n'));
         const bound = logs.filter((l) => l.startsWith('info: BIND OK: ')).map((l) => l.split(' ')[3]).sort();
         assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture', 'wocDisable', 'wocEnable',
-            'wocGuide', 'wocHudCentre', 'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
+            'wocGuide', 'wocHudCentre', 'wocHudClear', 'wocHudClearDown', 'wocHudClearLeft', 'wocHudClearNarrower', 'wocHudClearRight',
+            'wocHudClearShorter', 'wocHudClearTaller', 'wocHudClearUp', 'wocHudClearWider', 'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
             'wocRestart'],
             'bound buttons and checkbox');
         assert.strictEqual(byName.wocRestart.visible, false, 'restart button hidden while the map shows');
@@ -444,8 +452,10 @@ async function main() {
         /* ---- where the map shows, and the HUD ---- */
         const showOn = byName.wocShowOn;
         const size = byName.wocHudSize;
-        const hudRows = () => ['wocHudKeep', 'wocHudSize', 'wocHudZoom', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocHudDown']
+        const hudRows = () => ['wocHudKeep', 'wocHudSize', 'wocHudZoom', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocHudDown', 'wocHudClear']
             .map((n) => byName[n].enabled);
+        const clearMoves = ['wocHudClearLeft', 'wocHudClearRight', 'wocHudClearUp', 'wocHudClearDown', 'wocHudClearWider', 'wocHudClearNarrower',
+            'wocHudClearTaller', 'wocHudClearShorter'];
         await until('the cluster, the HUD off', () => showOn.shown() === 'Show on: Cluster' && showOn.enabled === true &&
             byName.wocHud.text === 'HUD map: Off' && size.text === 'Size: Standard' && size.cells['0:Value'] === 5 &&
             byName.wocHudPos.text === 'Position: Centre');
@@ -519,6 +529,38 @@ async function main() {
             zoom.cells['0:Value'] === 1);
         render.hudZoomCap = 240;
         console.log('ok   the HUD map\'s zoom: a slider sent to the render and saved like the size, its text the zoom in use');
+        /* Hide map behind BMW's speed: a checkbox, the speed area's buttons greyed while it is unticked */
+        const clear = byName.wocHudClear, clearRect = byName.wocHudClearRect;
+        assert(clear.enabled === true && clear.selected === false && clear.text === "Hide map behind BMW's speed", 'off by default');
+        assert.strictEqual(clearRect.text, 'Speed area: 250x90 at 110,320');
+        assert(clearMoves.every((n) => byName[n].enabled === false), 'its place and size greyed while off');
+        render.received.length = 0;
+        byName.wocHudClearLeft.emit('action');
+        await sleep(100);
+        assert.deepStrictEqual(render.received, [], 'greyed while off: nothing sent');
+        clear.press();
+        await until('on: its place and size enabled', () => render.hudClear === 1 && clear.selected === true && patch.map.hud_clear === 1 &&
+            clearMoves.every((n) => byName[n].enabled === true));
+        assert.deepStrictEqual(clearMoves.map((n) => byName[n].text), ['Move speed area left', 'Move speed area right', 'Move speed area up',
+            'Move speed area down', 'Speed area wider', 'Speed area narrower', 'Speed area taller', 'Speed area shorter']);
+        render.received.length = 0;
+        byName.wocHudClearRight.emit('action');
+        await until('moved', () => clearRect.text === 'Speed area: 250x90 at 120,320' && render.hudClearRect[0] === 120);
+        byName.wocHudClearWider.emit('action');
+        await until('wider', () => clearRect.text === 'Speed area: 260x90 at 120,320' && patch.map.hud_clear_w === 260);
+        assert.deepStrictEqual(render.received, [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '250', hud_clear_h: '90' },
+            { cmd: 'hud', hud_clear_x: '120', hud_clear_y: '320', hud_clear_w: '260', hud_clear_h: '90' }], 'one command to the render a press');
+        await sleep(450);   /* Move speed area left was pressed above: past PRESS_DEDUPE_MS */
+        byName.wocHudClearLeft.emit('action');
+        await until('moved back', () => clearRect.text === 'Speed area: 260x90 at 110,320' && render.hudClearRect[0] === 110);
+        byName.wocHudClearNarrower.emit('action');
+        await until('back to 250x90 at 110,320, saved', () => clearRect.text === 'Speed area: 250x90 at 110,320' &&
+            render.hudClearRect.join() === '110,320,250,90' && patch.map.hud_clear_x === 110 && patch.map.hud_clear_w === 250);
+        await sleep(450);
+        clear.press();
+        await until('off again: its place and size greyed', () => render.hudClear === 0 && clear.selected === false && patch.map.hud_clear === 0 &&
+            clear.enabled === true && clearMoves.every((n) => byName[n].enabled === false));
+        console.log('ok   Hide map behind BMW\'s speed: a checkbox, the speed area moved and sized 10 px a press, greyed while unticked');
         await sleep(450);
         showOn.pick(2);
         await until('both', () => render.cluster === 1 && showOn.shown() === 'Show on: Cluster and HUD (experimental)' &&
@@ -708,10 +750,10 @@ async function main() {
         Object.values(components).filter((d) => !/^(wocRestart|wocWifi)/.test(d.name) && d.type !== 'title')
             .forEach((d) => assert.strictEqual(byName[d.name].visible, true, `${d.name} stays on the page`));
         ['wocEnable', 'wocDisable', 'wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard', 'wocGuide', 'wocShowOn', 'wocProfile', 'wocHudSize',
-            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudZoom']
+            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudZoom', 'wocHudClear', 'wocHudClearLeft', 'wocHudClearShorter']
             .forEach((n) => assert.deepStrictEqual([...byName[n].enabledSeen].sort(), [false, true], `${n} greyed and enabled in place`));
         const valueRow = /^[A-Z][A-Za-z ]+: [A-Z0-9\u2014]/;
-        ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudZoom', 'wocHudPos', 'wocRestartStatus']
+        ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudZoom', 'wocHudPos', 'wocHudClearRect', 'wocRestartStatus']
             .forEach((n) => assert(valueRow.test(byName[n].text), `${n}: "${byName[n].text}" as Name: Value`));
         console.log('ok   no row came or went but CarPlay Wi-Fi, its line and the restart\'s; the buttons were greyed and enabled in place; ' +
             'info rows as Name: Value');

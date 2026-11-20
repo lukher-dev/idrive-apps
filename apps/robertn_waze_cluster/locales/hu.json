@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "A hang akadozhat. Az iPhone-on kapcsolja ki, majd be a Wi-Fi-t.",
     "Own settings for this driver": "Saját beállítások ennek a vezetőnek",
     "Keep HUD map over BMW's pop-ups": "Térkép megtartása a HUD-on a BMW felugró ablakai felett",
-    "Map zoom: {0}": "Térkép nagyítása: {0}"
+    "Map zoom: {0}": "Térkép nagyítása: {0}",
+    "Hide map behind BMW's speed": "Térkép rejtése BMW-sebesség alatt",
+    "Speed area: {0}": "Sebességmező: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} itt: {2},{3}",
+    "Move speed area left": "Sebességmező mozgatása balra",
+    "Move speed area right": "Sebességmező mozgatása jobbra",
+    "Move speed area up": "Sebességmező mozgatása fel",
+    "Move speed area down": "Sebességmező mozgatása le",
+    "Speed area wider": "Sebességmező szélesebb",
+    "Speed area narrower": "Sebességmező keskenyebb",
+    "Speed area taller": "Sebességmező magasabb",
+    "Speed area shorter": "Sebességmező alacsonyabb"
   }
 }

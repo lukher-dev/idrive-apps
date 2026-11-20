@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ο ήχος μπορεί να διακόπτεται. Στο iPhone, απενεργοποιήστε και ενεργοποιήστε ξανά το Wi-Fi.",
     "Own settings for this driver": "Δικές ρυθμίσεις για αυτόν τον οδηγό",
     "Keep HUD map over BMW's pop-ups": "Διατήρηση χάρτη στο HUD πάνω από τα αναδυόμενα της BMW",
-    "Map zoom: {0}": "Ζουμ χάρτη: {0}"
+    "Map zoom: {0}": "Ζουμ χάρτη: {0}",
+    "Hide map behind BMW's speed": "Χωρίς χάρτη πίσω από ταχύτητα BMW",
+    "Speed area: {0}": "Πεδίο ταχύτητας: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} στο {2},{3}",
+    "Move speed area left": "Πεδίο ταχύτητας αριστερά",
+    "Move speed area right": "Πεδίο ταχύτητας δεξιά",
+    "Move speed area up": "Πεδίο ταχύτητας πάνω",
+    "Move speed area down": "Πεδίο ταχύτητας κάτω",
+    "Speed area wider": "Πεδίο ταχύτητας φαρδύτερο",
+    "Speed area narrower": "Πεδίο ταχύτητας στενότερο",
+    "Speed area taller": "Πεδίο ταχύτητας ψηλότερο",
+    "Speed area shorter": "Πεδίο ταχύτητας χαμηλότερο"
   }
 }

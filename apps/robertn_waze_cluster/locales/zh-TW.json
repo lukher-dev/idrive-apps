@@ -97,6 +97,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音訊可能中斷。請在 iPhone 上關閉再開啟 Wi-Fi。",
     "Own settings for this driver": "此駕駛的專屬設定",
     "Keep HUD map over BMW's pop-ups": "HUD 地圖保持在 BMW 彈出視窗之上",
-    "Map zoom: {0}": "地圖縮放：{0}"
+    "Map zoom: {0}": "地圖縮放：{0}",
+    "Hide map behind BMW's speed": "隱藏 BMW 車速後方的地圖",
+    "Speed area: {0}": "車速區域：{0}",
+    "{0}x{1} at {2},{3}": "{0}x{1}，位於 {2},{3}",
+    "Move speed area left": "車速區域左移",
+    "Move speed area right": "車速區域右移",
+    "Move speed area up": "車速區域上移",
+    "Move speed area down": "車速區域下移",
+    "Speed area wider": "車速區域加寬",
+    "Speed area narrower": "車速區域變窄",
+    "Speed area taller": "車速區域加高",
+    "Speed area shorter": "車速區域變矮"
   }
 }

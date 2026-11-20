@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Lyden kan falle ut. Slå Wi-Fi av og på igjen på iPhone.",
     "Own settings for this driver": "Egne innstillinger for denne føreren",
     "Keep HUD map over BMW's pop-ups": "Behold kart i HUD over BMWs popup-vinduer",
-    "Map zoom: {0}": "Kartzoom: {0}"
+    "Map zoom: {0}": "Kartzoom: {0}",
+    "Hide map behind BMW's speed": "Skjul kart bak BMW-hastighet",
+    "Speed area: {0}": "Hastighetsfelt: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
+    "Move speed area left": "Flytt hastighetsfelt til venstre",
+    "Move speed area right": "Flytt hastighetsfelt til høyre",
+    "Move speed area up": "Flytt hastighetsfelt opp",
+    "Move speed area down": "Flytt hastighetsfelt ned",
+    "Speed area wider": "Hastighetsfelt bredere",
+    "Speed area narrower": "Hastighetsfelt smalere",
+    "Speed area taller": "Hastighetsfelt høyere",
+    "Speed area shorter": "Hastighetsfelt lavere"
   }
 }

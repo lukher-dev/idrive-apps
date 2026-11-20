@@ -477,6 +477,230 @@
             }
           ]
         },
+        "98": {
+          "type": "checkBox",
+          "name": "wocHudClear",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Hide map behind BMW's speed",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "99": {
+          "type": "label",
+          "name": "wocHudClearRect",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 0,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed area: —",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "101": {
+          "type": "button",
+          "name": "wocHudClearLeft",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move speed area left",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "102": {
+          "type": "button",
+          "name": "wocHudClearRight",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move speed area right",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "103": {
+          "type": "button",
+          "name": "wocHudClearUp",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move speed area up",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "104": {
+          "type": "button",
+          "name": "wocHudClearDown",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Move speed area down",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "105": {
+          "type": "button",
+          "name": "wocHudClearWider",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed area wider",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "106": {
+          "type": "button",
+          "name": "wocHudClearNarrower",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed area narrower",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "107": {
+          "type": "button",
+          "name": "wocHudClearTaller",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed area taller",
+                "type": "Text"
+              }
+            }
+          ]
+        },
+        "108": {
+          "type": "button",
+          "name": "wocHudClearShorter",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Speed area shorter",
+                "type": "Text"
+              }
+            }
+          ]
+        },
         "90": {
           "type": "label",
           "name": "wocHeadCarPlay",

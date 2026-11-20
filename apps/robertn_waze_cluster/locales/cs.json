@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk se může přerušovat. Na iPhonu vypněte a zapněte Wi-Fi.",
     "Own settings for this driver": "Vlastní nastavení pro tohoto řidiče",
     "Keep HUD map over BMW's pop-ups": "Ponechat mapu na HUD přes vyskakovací okna BMW",
-    "Map zoom: {0}": "Přiblížení mapy: {0}"
+    "Map zoom: {0}": "Přiblížení mapy: {0}",
+    "Hide map behind BMW's speed": "Skrýt mapu pod rychlostí BMW",
+    "Speed area: {0}": "Plocha rychlosti: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
+    "Move speed area left": "Posunout plochu rychlosti vlevo",
+    "Move speed area right": "Posunout plochu rychlosti vpravo",
+    "Move speed area up": "Posunout plochu rychlosti nahoru",
+    "Move speed area down": "Posunout plochu rychlosti dolů",
+    "Speed area wider": "Plocha rychlosti širší",
+    "Speed area narrower": "Plocha rychlosti užší",
+    "Speed area taller": "Plocha rychlosti vyšší",
+    "Speed area shorter": "Plocha rychlosti nižší"
   }
 }

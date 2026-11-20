@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "เสียงอาจขาดหาย ให้ปิดแล้วเปิด Wi-Fi บน iPhone",
     "Own settings for this driver": "การตั้งค่าเฉพาะสำหรับผู้ขับขี่คนนี้",
     "Keep HUD map over BMW's pop-ups": "คงแผนที่บน HUD ไว้เหนือป๊อปอัปของ BMW",
-    "Map zoom: {0}": "ซูมแผนที่: {0}"
+    "Map zoom: {0}": "ซูมแผนที่: {0}",
+    "Hide map behind BMW's speed": "ซ่อนแผนที่หลังความเร็วของ BMW",
+    "Speed area: {0}": "พื้นที่ความเร็ว: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} ที่ {2},{3}",
+    "Move speed area left": "เลื่อนพื้นที่ความเร็วไปซ้าย",
+    "Move speed area right": "เลื่อนพื้นที่ความเร็วไปขวา",
+    "Move speed area up": "เลื่อนพื้นที่ความเร็วขึ้น",
+    "Move speed area down": "เลื่อนพื้นที่ความเร็วลง",
+    "Speed area wider": "พื้นที่ความเร็วกว้างขึ้น",
+    "Speed area narrower": "พื้นที่ความเร็วแคบลง",
+    "Speed area taller": "พื้นที่ความเร็วสูงขึ้น",
+    "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง"
   }
 }

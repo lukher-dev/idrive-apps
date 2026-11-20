@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Audio mungkin terputus. Di iPhone Anda, matikan lalu nyalakan Wi-Fi.",
     "Own settings for this driver": "Pengaturan sendiri untuk pengemudi ini",
     "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW",
-    "Map zoom: {0}": "Zoom peta: {0}"
+    "Map zoom: {0}": "Zoom peta: {0}",
+    "Hide map behind BMW's speed": "Sembunyikan peta di kecepatan BMW",
+    "Speed area: {0}": "Area kecepatan: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} di {2},{3}",
+    "Move speed area left": "Geser area kecepatan ke kiri",
+    "Move speed area right": "Geser area kecepatan ke kanan",
+    "Move speed area up": "Geser area kecepatan ke atas",
+    "Move speed area down": "Geser area kecepatan ke bawah",
+    "Speed area wider": "Area kecepatan lebih lebar",
+    "Speed area narrower": "Area kecepatan lebih sempit",
+    "Speed area taller": "Area kecepatan lebih tinggi",
+    "Speed area shorter": "Area kecepatan lebih pendek"
   }
 }

@@ -319,7 +319,8 @@ class ProfileSync extends EventEmitter {
     /* The render to the settings in effect: a display turned on first, so a
      * switch from one display to the other never passes through neither,
      * then the HUD's size, place, whether it stays shown over BMW's
-     * pop-ups and its zoom (each from a patchd that has it). */
+     * pop-ups, its zoom and whether and where it is hidden behind BMW's
+     * speed (each from a patchd that has it). */
     _toRender(s) {
         const on = (v) => (v ? '1' : '0');
         const shows = ['cluster', 'hud'].sort((a, b) => s[b] - s[a]);
@@ -331,6 +332,12 @@ class ProfileSync extends EventEmitter {
         if (typeof s.hud_zoom_pct === 'number') {
             hud.hud_zoom_pct = String(s.hud_zoom_pct);
         }
+        /* and the speed area, from a patchd that has it */
+        ['hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].forEach((k) => {
+            if (typeof s[k] === 'number') {
+                hud[k] = String(s[k]);
+            }
+        });
         const cmds = shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]);
         const c = this._control;
         if (c && c.render && c.render.connected()) {

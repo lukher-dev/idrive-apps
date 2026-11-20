@@ -95,6 +95,17 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Sunetul se poate întrerupe. Pe iPhone, dezactivați și reactivați Wi-Fi.",
     "Own settings for this driver": "Setări proprii pentru acest șofer",
     "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW",
-    "Map zoom: {0}": "Zoom hartă: {0}"
+    "Map zoom: {0}": "Zoom hartă: {0}",
+    "Hide map behind BMW's speed": "Ascunde harta sub viteza BMW",
+    "Speed area: {0}": "Zona vitezei: {0}",
+    "{0}x{1} at {2},{3}": "{0}x{1} la {2},{3}",
+    "Move speed area left": "Mută zona vitezei la stânga",
+    "Move speed area right": "Mută zona vitezei la dreapta",
+    "Move speed area up": "Mută zona vitezei în sus",
+    "Move speed area down": "Mută zona vitezei în jos",
+    "Speed area wider": "Zona vitezei mai lată",
+    "Speed area narrower": "Zona vitezei mai îngustă",
+    "Speed area taller": "Zona vitezei mai înaltă",
+    "Speed area shorter": "Zona vitezei mai joasă"
   }
 }

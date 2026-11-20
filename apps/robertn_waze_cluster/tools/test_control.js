@@ -34,7 +34,9 @@
  * cluster renderer holds the box shown. Where the map shows (the cluster,
  * the HUD, both or Off, from the cluster and from both, the HUD's size and
  * place refused while Off) and the HUD's size slider, place, Keep HUD map
- * over BMW's pop-ups and guard; an asked HUD size the render does not show goes after a moment,
+ * over BMW's pop-ups and guard; Hide map behind BMW's speed and the speed
+ * area's buttons (10 px a press, held inside the HUD's 800x480, greyed while
+ * it is off); an asked HUD size the render does not show goes after a moment,
  * on a failed save and on a render reconnect. CarPlay Wi-Fi: the band patchd reports, 5 GHz or 2.4 GHz, the
  * line under it on 2.4 GHz only, nothing while the band is unknown, from a
  * patchd before it, or with patchd gone.
@@ -478,6 +480,94 @@ test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom 
     await until('a render without it', () => c.hudZoomStep() === null && !c.canChangeHudZoom() && c.hudZoomText() === 'Map zoom: \u2014');
     c.close();
     assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['Map zoom: \u2014', null], 'nothing known while closed');
+});
+
+test('Hide map behind BMW\'s speed: off by default; a flip goes to the render and patchd, the render\'s status shows it; ' +
+    'greyed while the HUD is off and for a render without it, the speed area\'s buttons also while it is off', async (render, patch) => {
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+    assert.deepStrictEqual([c.hudClear(), c.canHudClear(), c.canAdjustHudClear(), c.hudClearText()],
+        [false, false, false, 'Speed area: 250x90 at 110,320'], 'off, greyed while the HUD is off');
+    c.toggleHudClear();
+    c.adjustHudClear('left');
+    assert.strictEqual(render.received.filter((m) => m.hud_clear !== undefined || m.hud_clear_x !== undefined).length, 0, 'nothing sent while greyed');
+    render.hud = 1;
+    render.announce(render.state, render.reason);
+    await until('the HUD on', () => c.canHudClear());
+    assert(!c.canAdjustHudClear(), 'the place and size greyed while off');
+    c.adjustHudClear('left');
+    c.toggleHudClear();
+    await until('on', () => c.hudClear() === true && render.hudClear === 1 && patch.map.hud_clear === 1 && c.canAdjustHudClear());
+    c.toggleHudClear();
+    await until('off again', () => c.hudClear() === false && patch.map.hud_clear === 0 && !c.canAdjustHudClear());
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_clear !== undefined), [{ cmd: 'hud', hud_clear: '1' }, { cmd: 'hud', hud_clear: '0' }]);
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-clear'), [{ cmd: 'hud-clear', on: 1 }, { cmd: 'hud-clear', on: 0 }]);
+    assert.strictEqual(render.received.filter((m) => m.hud_clear_x !== undefined).length, 0, 'no move while off');
+    render.hudClear = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudClear() === null && !c.canHudClear() && !c.canAdjustHudClear() &&
+        c.hudClearText() === 'Speed area: —');
+    c.close();
+});
+
+test('the speed area\'s place and size: 10 px a press, held inside the HUD; the render takes it and patchd saves it', async (render, patch) => {
+    render.hud = 1;
+    render.hudClear = 1;
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('on', () => c.renderStatus && c.canAdjustHudClear());
+    c.adjustHudClear('right');
+    assert.strictEqual(c.hudClearText(), 'Speed area: 250x90 at 120,320', 'shown at once');
+    c.adjustHudClear('up');
+    c.adjustHudClear('wider');
+    c.adjustHudClear('shorter');
+    await until('moved and sized', () => c.renderStatus.hud_clear_x === 120 && c.renderStatus.hud_clear_y === 310 &&
+        c.renderStatus.hud_clear_w === 260 && c.renderStatus.hud_clear_h === 80);
+    assert.strictEqual(c.hudClearText(), 'Speed area: 260x80 at 120,310');
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_clear_x !== undefined).slice(-1),
+        [{ cmd: 'hud', hud_clear_x: '120', hud_clear_y: '310', hud_clear_w: '260', hud_clear_h: '80' }], 'the whole rectangle each time');
+    await until('saved', () => {
+        const p = patch.received.filter((m) => m.cmd === 'hud-clear-rect').slice(-1)[0];
+        return p && p.x === 120 && p.y === 310 && p.w === 260 && p.h === 80;
+    });
+    assert.deepStrictEqual([patch.map.hud_clear_x, patch.map.hud_clear_y, patch.map.hud_clear_w, patch.map.hud_clear_h], [120, 310, 260, 80]);
+    c.adjustHudClear('left');
+    c.adjustHudClear('down');
+    c.adjustHudClear('narrower');
+    c.adjustHudClear('taller');
+    await until('back', () => c.hudClearText() === 'Speed area: 250x90 at 110,320' && c.renderStatus.hud_clear_x === 110 &&
+        c.renderStatus.hud_clear_w === 250);
+    /* held inside the HUD's 800x480: the corners and the far edges */
+    for (let i = 0; i < 20; i++) c.adjustHudClear('left');
+    for (let i = 0; i < 40; i++) c.adjustHudClear('up');
+    await until('the top left corner', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_y === 0);
+    for (let i = 0; i < 70; i++) c.adjustHudClear('right');
+    for (let i = 0; i < 50; i++) c.adjustHudClear('down');
+    await until('the bottom right corner', () => c.renderStatus.hud_clear_x === 550 && c.renderStatus.hud_clear_y === 390);
+    c.adjustHudClear('wider');
+    c.adjustHudClear('taller');
+    await sleep(50);
+    assert.strictEqual(c.hudClearText(), 'Speed area: 250x90 at 550,390', 'no wider or taller past the edges');
+    for (let i = 0; i < 30; i++) c.adjustHudClear('narrower');
+    for (let i = 0; i < 12; i++) c.adjustHudClear('shorter');
+    await until('the smallest', () => c.renderStatus.hud_clear_w === 10 && c.renderStatus.hud_clear_h === 10);
+    const sent = render.received.length;
+    c.adjustHudClear('narrower');
+    c.adjustHudClear('shorter');
+    c.adjustHudClear('sideways');
+    assert.strictEqual(render.received.length, sent, 'nothing sent past the smallest or for no direction');
+    for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
+    await until('as wide as the HUD from where it is', () => c.renderStatus.hud_clear_w === 250);
+    for (let i = 0; i < 100; i++) c.adjustHudClear('left');
+    for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
+    await until('the HUD\'s whole width', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_w === 800);
+    c.close();
+    assert.strictEqual(c.hudClearText(), 'Speed area: —', 'nothing known while closed');
 });
 
 test('an asked HUD size the render does not show: the render\'s own after a moment, at once on a render reconnect; ' +
