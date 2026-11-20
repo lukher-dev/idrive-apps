@@ -84,6 +84,14 @@ int main()
     c = conf();
     load_map_state(&c, path);
     ok("a zoom outside 100-250: left out", settings(c) == "1 0 60 0 0 0 100");
+    std::ofstream(path) << "hud_width_pct = 135\n";
+    c = conf();
+    load_map_state(&c, path);
+    ok("the widest HUD map, 135 %, from the state file", settings(c) == "1 0 135 0 0 0 100");
+    std::ofstream(path) << "hud_width_pct = 136\n";
+    c = conf();
+    load_map_state(&c, path);
+    ok("a HUD map wider than 135 %: left out", settings(c) == "1 0 60 0 0 0 100");
     std::ofstream(path) << "hud = 1\n";
     chmod(path.c_str(), 0);
     if (access(path.c_str(), R_OK) != 0) {   /* root reads it anyway */

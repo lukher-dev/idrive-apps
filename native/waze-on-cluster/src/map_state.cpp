@@ -24,7 +24,7 @@ std::string trim(const std::string &s)
     return a == std::string::npos ? "" : s.substr(a, b - a + 1);
 }
 
-/* A whole number in the key's range: the map on (1) or off (0), 0 or 20-100 %
+/* A whole number in the key's range: the map on (1) or off (0), 0 or 20-135 %
  * wide, -800..800 px from the centre, kept shown (1) or not (0), zoomed
  * 100-250 %. */
 bool valid(const std::string &key, const std::string &value)
@@ -34,7 +34,7 @@ bool valid(const std::string &key, const std::string &value)
     if (value.empty() || *end)
         return false;
     if (key == "hud_width_pct")
-        return v == 0 || (v >= 20 && v <= 100);
+        return v == 0 || (v >= 20 && v <= 135);
     if (key == "hud_offset_x" || key == "hud_offset_y")
         return v >= -800 && v <= 800;
     if (key == "hud_zoom_pct")

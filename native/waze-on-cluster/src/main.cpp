@@ -115,11 +115,11 @@ public:
             }
             if (pct != msg.end()) {
                 const long v = std::strtol(pct->second.c_str(), nullptr, 10);
-                if (v == 0 || (v >= 20 && v <= 100)) {
+                if (v == 0 || (v >= 20 && v <= 135)) {
                     log_info("hud: map %ld%% wide", v);
                     feeds_->set_hud_width((unsigned)v);
                 } else {
-                    log_warn("hud: width %s out of range (0, or 20-100)", pct->second.c_str());
+                    log_warn("hud: width %s out of range (0, or 20-135)", pct->second.c_str());
                 }
             }
             /* and where it is: moved from the centre, in HUD pixels (-800..800 each; held inside the HUD) */
@@ -213,7 +213,7 @@ int serve(Config cfg)
         {"target_fps", 0, 60},      {"picture_fps", 0, 60},          {"pan_blocks", 0, 1},
         {"stall_ms", 1000, 600000},
         {"cluster", 0, 1},          {"hud", 0, 1},                   {"hud_fps", 1, 30},
-        {"hud_width_pct", 0, 100},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
+        {"hud_width_pct", 0, 135},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_zoom_pct", 100, 250},     {"hud_crop_cx_pm", 0, 1000},
         {"hud_crop_cy_pm", 0, 1000},
@@ -261,7 +261,7 @@ int serve(Config cfg)
         log_warn("map_rect = %s is ignored: %s; the map area instead", cfg.str("map_rect").c_str(), why);
     fc.hud_width_pct = (unsigned)cfg.num("hud_width_pct");
     if (fc.hud_width_pct && fc.hud_width_pct < 20) {
-        log_warn("hud_width_pct %u: 0 or 20-100; the default box instead", fc.hud_width_pct);
+        log_warn("hud_width_pct %u: 0 or 20-135; the default box instead", fc.hud_width_pct);
         fc.hud_width_pct = 0;
     }
     fc.hud_offset_x = (int)cfg.num("hud_offset_x");

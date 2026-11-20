@@ -5,7 +5,7 @@
  *
  *   owner -> tool  {"cmd":"cluster","on":"0"|"1"}  the map on the cluster off or on
  *                  {"cmd":"hud","on":"0"|"1"}  the map on the HUD off or on
- *                  {"cmd":"hud","hud_width_pct":"0"|"20".."100"}  the HUD map's size
+ *                  {"cmd":"hud","hud_width_pct":"0"|"20".."135"}  the HUD map's size (above 100 its sides cut)
  *                  {"cmd":"hud","hud_x":"-800".."800","hud_y":...}  where it is, from the centre
  *                  {"cmd":"hud","hud_keep_shown":"0"|"1"}  kept shown over BMW's pop-ups, or not
  *                  {"cmd":"hud","hud_zoom_pct":"100".."250"}  the HUD map's zoom

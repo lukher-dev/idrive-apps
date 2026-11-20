@@ -528,6 +528,165 @@ static void hud_zoom()
                                               feeds.status("decode").hud_zoom_used == 100);
 }
 
+/* The HUD map wider than the HUD (hud_width_pct above 100): its box the
+ * scene's width, its height the picture's shape at the map's width, centred;
+ * the zoom capped by the map's width, not the box's; the box shows the
+ * middle of the (zoomed) picture, which hud_offset_x pans, held inside the
+ * picture, while the box stays at x 0, on the same layer, the newest picture
+ * scaled again without a new frame; without the head unit's scaler the map
+ * is held to 100 %. */
+static void hud_wide()
+{
+    const std::vector<uint8_t> f = atlas(37);
+    Rig b(false, 6000, false, true, true);
+    b.feed.reset();
+    b.start();
+    FeedConfig fc;
+    fc.socket = b.path;
+    fc.video.level_bits = 0;
+    fc.hud_round_corners = false;
+    fc.hud_black_background = false;
+    fc.hud_width_pct = 100;
+    MapFeeds feeds(fc, true, true, 10);
+    feeds.set_stream(true, false, Picture::Shown);
+    std::vector<uint8_t> spare;
+    /* frames: offered every 65 ms; else none, the HUD scales only what it holds */
+    const auto pump = [&](int64_t ms, bool frames) {
+        for (int64_t t = 0; t < ms; t += 5) {
+            b.now += 5;
+            if (frames && t % 65 == 0 && feeds.wants_frames()) {
+                spare.assign(f.begin(), f.end());
+                feeds.offer(&spare, (uint64_t)b.now, b.now);
+            }
+            for (int round = 0; round < 400; round++) {
+                std::vector<pollfd> fds;
+                const size_t first = b.svc->poll_fds(&fds);
+                const int n = ::poll(fds.data(), fds.size(), 0);
+                b.port.tick(b.now);
+                b.svc->after_poll(fds, first, b.now);
+                const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
+                const bool scaling = hud_scaling(feeds, b.now);
+                if (scaling)
+                    usleep(1000);
+                feeds.poll(b.now);
+                if (round > 0 && n <= 0 && !pending && !scaling)
+                    break;
+            }
+        }
+    };
+    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh as the HUD's worker does */
+    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh) {
+        AtlasScaler sc;
+        std::vector<uint8_t> out;
+        if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h))
+            sc.scale(f.data(), &out);
+        return out;
+    };
+    const auto hud_shows = [&](const std::vector<uint8_t> &want) {
+        crs::FakeGraph *g = b.gpu.graph("hud");
+        bool on = false;
+        if (g && !want.empty())
+            for (const auto &kv : g->shown.buffers)
+                on = on || (kv.second.f == crs::TexFormat::R8 && kv.second.px == want);
+        return on;
+    };
+    const auto hud_layer = [&]() -> const crs::Layer * {
+        for (const crs::Layer *x : b.svc->compositor().layers())
+            if (x->target() == 2)
+                return x;
+        return nullptr;
+    };
+    const auto at = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+        const crs::Layer *l = hud_layer();
+        return l && l->params.rect.x == (int)x && l->params.rect.y == (int)y && l->params.rect.w == w && l->params.rect.h == h;
+    };
+
+    pump(2000, true);
+    ok("100 %: the HUD's width, 800x352 at 0,63 (the box 353 high), the whole picture scaled",
+       at(0, 63, 800, 352) && hud_shows(scaled(0, 0, 1088, 480, 800, 352)) && feeds.status("decode").hud_width_pct == 100);
+
+    feeds.set_hud_width(120);
+    feeds.set_hud_zoom(250);
+    pump(2000, true);
+    FeedStatus st = feeds.status("decode");
+    ok("120 % (a map 960 wide): its box the HUD's width, 424 high, centred (0,28)", at(0, 28, 800, 424));
+    ok("120 %: the zoom capped by the map's width (113 %), not the box's: the middle 800 of its 960x424 part, 1:1",
+       hud_shows(scaled(144, 28, 800, 424, 800, 424)) && st.hud_zoom_used == 113 && st.hud_width_pct == 120);
+
+    feeds.set_hud_zoom(100);
+    feeds.set_hud_width(135);
+    pump(2000, true);
+    ok("135 % (a map 1080 wide): 800x476 at 0,2, the middle 804x480 of the picture scaled to it",
+       at(0, 2, 800, 476) && hud_shows(scaled(142, 0, 804, 480, 800, 476)) && feeds.status("decode").hud_zoom_used == 100);
+    const crs::Layer *l135 = hud_layer();
+    const uint32_t id135 = l135 ? l135->id() : 0;
+
+    feeds.set_hud_offset(50, 0);
+    pump(1000, false);
+    st = feeds.status("decode");
+    ok("135 %, moved 50 right: the box stays at 0,2, it shows 51 px more of the picture's left (92 instead of 142)",
+       at(0, 2, 800, 476) && hud_shows(scaled(92, 0, 804, 480, 800, 476)) && st.hud_offset_x == 50 && st.hud_offset_y == 0);
+    ok("135 %, moved: the same layer, its newest picture scaled again without a new frame", hud_layer() && hud_layer()->id() == id135);
+
+    feeds.set_hud_offset(800, -800);
+    pump(1000, false);
+    st = feeds.status("decode");
+    ok("135 %, moved too far: the picture's left edge, the box at the top, the offset as far as it goes (140,-2)",
+       at(0, 0, 800, 476) && hud_shows(scaled(0, 0, 804, 480, 800, 476)) && st.hud_offset_x == 140 && st.hud_offset_y == -2);
+
+    feeds.set_hud_offset(-50, 0);
+    pump(1000, false);
+    st = feeds.status("decode");
+    ok("135 %, moved 50 left: more of the picture's right side (192)",
+       at(0, 2, 800, 476) && hud_shows(scaled(192, 0, 804, 480, 800, 476)) && st.hud_offset_x == -50);
+
+    feeds.set_hud_width(100);
+    pump(2000, true);
+    st = feeds.status("decode");
+    ok("back to 100 %: the offset moves the box again, held inside the HUD (0 at its left edge)",
+       at(0, 63, 800, 352) && hud_shows(scaled(0, 0, 1088, 480, 800, 352)) && st.hud_offset_x == 0);
+
+    /* without the head unit's scaler: held to 100 % */
+    Rig c(false, 6000, false, true, true);
+    c.feed.reset();
+    c.start();
+    FeedConfig nc = fc;
+    nc.socket = c.path;
+    nc.scale_down = false;
+    nc.hud_width_pct = 135;
+    MapFeeds plain(nc, true, true, 10);
+    plain.set_stream(true, false, Picture::Shown);
+    for (int64_t t = 0; t < 1500; t += 5) {
+        c.now += 5;
+        if (t % 65 == 0 && plain.wants_frames()) {
+            spare.assign(f.begin(), f.end());
+            plain.offer(&spare, (uint64_t)c.now, c.now);
+        }
+        for (int round = 0; round < 400; round++) {
+            std::vector<pollfd> fds;
+            const size_t first = c.svc->poll_fds(&fds);
+            const int n = ::poll(fds.data(), fds.size(), 0);
+            c.port.tick(c.now);
+            c.svc->after_poll(fds, first, c.now);
+            plain.poll(c.now);
+            if (round > 0 && n <= 0)
+                break;
+        }
+    }
+    const crs::Layer *pl = nullptr;
+    for (const crs::Layer *x : c.svc->compositor().layers())
+        if (x->target() == 2)
+            pl = x;
+    crs::FakeGraph *pg = c.gpu.graph("hud");
+    bool whole = false;
+    if (pg)
+        for (const auto &kv : pg->shown.buffers)
+            whole = whole || (kv.second.f == crs::TexFormat::R8 && kv.second.px == f);
+    ok("no scaler (hud_scale_down 0), 135 %: held to 100 % (800x353 at 0,63), the frame whole",
+       pl && pl->params.rect.x == 0 && pl->params.rect.y == 63 && pl->params.rect.w == 800 && pl->params.rect.h == 353 && whole &&
+           plain.status("decode").hud_width_pct == 135);
+}
+
 /* Only what the renderer needs goes over its socket. */
 static void only_what_is_needed()
 {
@@ -1500,6 +1659,7 @@ int main()
     guide_hold();
     show_off();
     hud_zoom();
+    hud_wide();
     only_what_is_needed();
     {   /* (its own scope: the names of the rest of main) */
     /* ---- MapFeeds: the cluster, and the HUD's copy when it is on ---- */
@@ -1624,12 +1784,15 @@ int main()
     const crs::Layer *hl = layer_on(2);
     const unsigned default_w = hl ? hl->params.rect.w : 0;
     ok("the default HUD map is the kit's fitted box, narrower than the HUD", hl && default_w > 0 && default_w < 800);
-    feeds.set_hud_width(100);
+    feeds.set_hud_width(85);
     bpump(300, &f2);
     hl = layer_on(2);
-    ok("100 %: held to the widest, 85 % (680x300), the picture's shape kept, centred",
+    ok("85 %: 680x300, the picture's shape kept, centred",
        hl && hl->params.rect.w == 680 && hl->params.rect.h == 300 && hl->params.rect.x == 60 && hl->params.rect.y == 90 &&
            feeds.status("decode").hud_width_pct == 85);
+    feeds.set_hud_width(200);
+    bpump(300, &f2);
+    ok("200 %: held to the widest, 135 %", feeds.status("decode").hud_width_pct == 135);
     feeds.set_hud_width(40);
     bpump(300, &f2);
     hl = layer_on(2);
