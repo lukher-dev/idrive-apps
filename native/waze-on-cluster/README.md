@@ -132,6 +132,18 @@ unless **Keep HUD map over BMW's pop-ups** is ticked. **Own settings for
 this driver** gives the driver profile in use its own copy of these
 settings.
 
+**Show HUD map only near turns** (`hud_near_turn`) keeps the HUD map
+hidden, its slot let go, until the app says a turn is near. The app reads
+the maneuvers BMW navigation keeps for its own HUD view
+(`GuidanceEventList`, view `HUD.RB.Main`, which the phone's navigation
+feeds) and sends `{"cmd":"turn","near":"1"|"0"}`: near from **Show from**
+before a turn (`hud_near_m`, 200 to 2000 m, 1000 by default; at least 1 km
+before a motorway exit), past 10 s after the next maneuver is further than
+that plus 400 m, or gone. It says so again every 30 s; a near not said
+again for `hud_near_expire_ms` (90 s) counts as past. The render keeps
+`hud_near_m` and reports it; the app does the gating. The cluster's map
+does not follow any of this.
+
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md
 "Hosting another target"), and so can an app that draws a target with

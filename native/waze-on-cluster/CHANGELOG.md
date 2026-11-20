@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+The HUD map can show only near turns: hidden until the app says a turn is
+near, and hidden again when the turn is past. The app's Show HUD map only
+near turns checkbox and its Show from slider (200 m to 2 km) are saved per
+driver profile. Off by default; the cluster's map is not affected.
+
 ## 0.14.16
 
 A map setting the app saves for one driver profile goes into that

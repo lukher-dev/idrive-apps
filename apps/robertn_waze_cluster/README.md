@@ -60,7 +60,7 @@ The app is in the head unit's display language.
   (experimental)**, **Cluster and HUD (experimental)** or **Off**. The
   change is immediate. **Off** shows BMW's own content on both.
 - **Own settings for this driver:** ticked, the current driver profile
-  keeps its own Show on, HUD size and HUD position.
+  keeps its own Show on, HUD size, HUD position and the near-turn settings.
   Show on and the HUD settings are greyed for a moment while the page loads
   the current driver's settings. Once any driver has own settings, they are
   also greyed for a moment after a driver change and while this checkbox's
@@ -76,6 +76,14 @@ The app is in the head unit's display language.
 - **Keep HUD map over BMW's pop-ups:** unticked (the default), the map steps
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
+- **Show HUD map only near turns:** ticked, the HUD map shows only while a
+  turn is close (from **Show from**, 1 km by default, and at least 1 km
+  before a motorway exit) and goes about 10 s after it. It reads the turns
+  your navigation app sends the car, as BMW's own HUD arrow does. Google
+  Maps sends them; Apple Maps should too, though it is untried. With an app
+  that sends none, such as Waze, the map never shows.
+- **Show from … before a turn:** how far before a turn the map appears with
+  the option above, 200 m to 2 km.
 - **Size:** how wide the map is on the HUD.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
   map sits on the HUD.
@@ -114,6 +122,8 @@ want first, then restart once.
 | The map never shows on the cluster | Set **Instrument cluster > Central display area** to **Map view**. With Route preview or Assisted Driving View the cluster's own content takes the centre. |
 | `Cluster map: Error` or `Unavailable` | [Report it](#logs-and-reporting-a-problem). |
 | `HUD map: Disabled after errors` | Update **Cluster renderer** in the Store. The cluster map keeps working. |
+| `HUD map: Waiting for a turn` | Normal with **Show HUD map only near turns**: the map shows as the next turn gets close. |
+| `HUD map: No turn data` | The car's turn list isn't available to the app. Untick **Show HUD map only near turns** to have the map always, and [report it](#logs-and-reporting-a-problem). |
 | CarPlay audio cuts out and `CarPlay Wi-Fi: 2.4 GHz` | On your iPhone, turn Wi-Fi off and on. |
 
 ## Logs and reporting a problem
