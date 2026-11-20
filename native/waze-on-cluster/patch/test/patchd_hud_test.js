@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings ({"cmd":"cluster"}, "hud", "hud-size", "hud-pos",
- * "hud-keep-shown", "hud-zoom"):
+ * "hud-keep-shown", "hud-zoom", "hud-clear", "hud-clear-rect"):
  * each saved in map.state.conf for the render's next start, replacing an
  * earlier value and keeping the other lines, waze-on-cluster.local.conf
  * untouched; a bad value is refused and nothing written. A burst of changes
@@ -88,7 +88,7 @@ function ask(obj) {
             buf.split('\n').forEach(function (l) {
                 var m = null;
                 try { m = JSON.parse(l); } catch (e) {}
-                if (m && /^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-zoom)-reply$/.test(m.ev)) { s.end(); resolve(m); }
+                if (m && /^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-zoom|hud-clear|hud-clear-rect)-reply$/.test(m.ev)) { s.end(); resolve(m); }
             });
         });
         s.on('error', reject);
@@ -164,6 +164,36 @@ function ok(name, cond) {
     var r2 = await ask({ cmd: 'hud-zoom', pct: 99 }), r3 = await ask({ cmd: 'hud-zoom', pct: '150' }), r4 = await ask({ cmd: 'hud-zoom', pct: 150.5 });
     ok('a zoom outside 100-250, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok && !r4.ok &&
         fs.readFileSync(STATE, 'utf8') === state);
+    r = await ask({ cmd: 'hud-clear', on: 1 });
+    ok('the HUD map hidden behind the speed is saved next to them', r.ok && r.hud_clear === 1 &&
+        /hud_zoom_pct = 250\nhud_clear = 1\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-clear', on: 0 });
+    ok('and off again', r.ok && r.hud_clear === 0 && /hud_clear = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    state = fs.readFileSync(STATE, 'utf8');
+    var refused = [], i;
+    var badOn = [2, -1, '1', true, null];
+    for (i = 0; i < badOn.length; i++) refused.push(await ask({ cmd: 'hud-clear', on: badOn[i] }));
+    refused.push(await ask({ cmd: 'hud-clear' }));
+    ok('hud-clear other than 0 or 1, or missing, is refused, nothing written',
+        refused.every(function (x) { return !x.ok && !!x.reason; }) && fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
+    r = await ask({ cmd: 'hud-clear-rect', x: 120, y: 300, w: 260, h: 100 });
+    ok('the speed area is saved, its four keys together', r.ok && r.hud_clear_x === 120 && r.hud_clear_y === 300 && r.hud_clear_w === 260 &&
+        r.hud_clear_h === 100 && /hud_clear = 0\nhud_clear_x = 120\nhud_clear_y = 300\nhud_clear_w = 260\nhud_clear_h = 100\n$/.test(
+            fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-clear-rect', x: 0, y: 0, w: 10, h: 10 });
+    r2 = await ask({ cmd: 'hud-clear-rect', x: 799, y: 479, w: 800, h: 480 });
+    ok('its ends of range are saved', r.ok && r2.ok && r.hud_clear_w === 10 && r2.hud_clear_x === 799 && r2.hud_clear_h === 480 &&
+        /hud_clear_x = 799\nhud_clear_y = 479\nhud_clear_w = 800\nhud_clear_h = 480\n$/.test(fs.readFileSync(STATE, 'utf8')),
+        JSON.stringify([r, r2]));
+    state = fs.readFileSync(STATE, 'utf8');
+    refused = [];
+    var badRect = [{ x: 800, y: 0, w: 10, h: 10 }, { x: -1, y: 0, w: 10, h: 10 }, { x: 0, y: 480, w: 10, h: 10 },
+        { x: 0, y: 0, w: 9, h: 10 }, { x: 0, y: 0, w: 801, h: 10 }, { x: 0, y: 0, w: 10, h: 481 }, { x: 0, y: 0, w: 10, h: 9 },
+        { x: 10.5, y: 0, w: 10, h: 10 }, { x: '10', y: 0, w: 10, h: 10 }, { x: null, y: 0, w: 10, h: 10 }, { x: 10, y: 10, w: 100 }];
+    for (i = 0; i < badRect.length; i++) refused.push(await ask(Object.assign({ cmd: 'hud-clear-rect' }, badRect[i])));
+    ok('a speed area out of range, not whole numbers or missing one of the four is refused, nothing written',
+        refused.every(function (x) { return !x.ok && /x 0-799, y 0-479, w 10-800, h 10-480/.test(x.reason); }) &&
+            fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
     ok('the local conf untouched by every setting', fs.readFileSync(CONF, 'utf8') === conf);
     /* A burst: one write SAVE_MS after the last change, every reply after it. */
     var saves = function () { return out.split('(saved for the next start)').length - 1; };

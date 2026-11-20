@@ -55,19 +55,26 @@
  *                  {"cmd":"hud-pos","hud_x":-800..800,"hud_y":-800..800}
  *                  {"cmd":"hud-keep-shown","on":0|1}
  *                  {"cmd":"hud-zoom","pct":100..250}
+ *                  {"cmd":"hud-clear","on":0|1}
+ *                  {"cmd":"hud-clear-rect","x":0..799,"y":0..479,"w":10..800,"h":10..480}
  *                                   the map on the cluster on or off, on the HUD on
  *                                   or off, the HUD's size
  *                                   (0: the default box), where it is moved from
  *                                   the centre (HUD pixels), whether it stays
- *                                   shown over BMW's pop-ups and its zoom, saved for
+ *                                   shown over BMW's pop-ups, its zoom, whether it
+ *                                   is black behind BMW's speed and where (a
+ *                                   rectangle in the HUD scene's pixels), saved for
  *                                   the render's next start as "cluster", "hud",
  *                                   "hud_width_pct", "hud_offset_x", "hud_offset_y",
- *                                   "hud_keep_shown" and "hud_zoom_pct" in MAP_STATE
+ *                                   "hud_keep_shown", "hud_zoom_pct", "hud_clear",
+ *                                   "hud_clear_x", "hud_clear_y", "hud_clear_w" and
+ *                                   "hud_clear_h" in MAP_STATE
  *                                   (the app changes the running render itself).
  *                                   Changes are written together MAP_SAVE_MS
  *                                   after the last one; the reply (cluster-reply,
  *                                   hud-reply, hud-size-reply, hud-pos-reply,
- *                                   hud-keep-shown-reply, hud-zoom-reply)
+ *                                   hud-keep-shown-reply, hud-zoom-reply,
+ *                                   hud-clear-reply, hud-clear-rect-reply)
  *                                   follows the write and carries ok, the values
  *                                   saved and reason.
  *                  {"cmd":"profile","id":"<id>"|null}
@@ -255,9 +262,11 @@ var LOCAL_CONF = process.env.WOC_LOCAL_CONF || '/var/opt/waze-on-cluster/waze-on
  * configuration. Not in LOCAL_CONF, which waze-on-cluster 0.8 refuses to
  * start with any of MAP_KEYS in. */
 var MAP_STATE = path.join(STATE_DIR, 'map.state.conf');
-var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_zoom_pct'];
+var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_zoom_pct',
+    'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'];
 /* Keys added after the first sets were saved: one missing from a saved set is its default. */
-var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_zoom_pct'];
+var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_zoom_pct', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w',
+    'hud_clear_h'];
 /* The opt-in settings: the render reads this file (its features_file) over
  * its configuration. Not in LOCAL_CONF, which every release up to 0.10.7
  * refuses to start with any of FEATURE_KEYS in; no release before 0.10.9
@@ -301,7 +310,9 @@ function rewriteConf(file, set, drop) {
 function mapValueOk(k, v) {
     var n = Number(v);
     return /^-?\d+$/.test(v) && (k === 'hud_width_pct' ? n === 0 || (n >= 20 && n <= HUD_MAX_PCT)
-        : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : k === 'hud_zoom_pct' ? n >= 100 && n <= 250 : n === 0 || n === 1);
+        : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : k === 'hud_zoom_pct' ? n >= 100 && n <= 250
+        : k === 'hud_clear_x' ? n >= 0 && n <= 799 : k === 'hud_clear_y' ? n >= 0 && n <= 479
+        : k === 'hud_clear_w' ? n >= 10 && n <= 800 : k === 'hud_clear_h' ? n >= 10 && n <= 480 : n === 0 || n === 1);
 }
 
 /* Moves any of MAP_KEYS found in LOCAL_CONF into MAP_STATE, a value already
@@ -434,7 +445,8 @@ function saveLater(settings, withProfiles) {
 var PROFILES_FILE = path.join(STATE_DIR, 'profiles.json');
 var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
-var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_zoom_pct: 100 };
+var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_zoom_pct: 100,
+    hud_clear: 0, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
 var restored = false;         /* MAP_STATE written from PROFILES_FILE at the start, not yet told to the app */
@@ -2395,6 +2407,24 @@ function handle(line, sock) {
             return;
         }
         saveMapSettings(sock, 'hud-zoom-reply', { hud_zoom_pct: zoom }, 'the HUD map zoom');
+        return;
+    }
+    if (msg.cmd === 'hud-clear') {
+        if (msg.on !== 0 && msg.on !== 1) {
+            reply(sock, { ev: 'hud-clear-reply', ok: false, reason: 'on must be 0 or 1' });
+            return;
+        }
+        saveMapSettings(sock, 'hud-clear-reply', { hud_clear: msg.on }, 'the HUD map hidden behind the speed');
+        return;
+    }
+    if (msg.cmd === 'hud-clear-rect') {
+        var rect = { hud_clear_x: msg.x, hud_clear_y: msg.y, hud_clear_w: msg.w, hud_clear_h: msg.h };
+        if (!Object.keys(rect).every(function (k) { return typeof rect[k] === 'number' && mapValueOk(k, String(rect[k])); })) {
+            reply(sock, { ev: 'hud-clear-rect-reply', ok: false,
+                reason: 'the speed area must be whole numbers: x 0-799, y 0-479, w 10-800, h 10-480 (HUD pixels)' });
+            return;
+        }
+        saveMapSettings(sock, 'hud-clear-rect-reply', rect, 'the HUD speed area');
         return;
     }
     /* The driver profile and its own settings: not operations on carplay either. */
