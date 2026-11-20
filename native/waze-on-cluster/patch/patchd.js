@@ -51,7 +51,7 @@
  *                                   and answers with the lines and health only
  *                  {"cmd":"cluster","on":0|1}
  *                  {"cmd":"hud","on":0|1}
- *                  {"cmd":"hud-size","hud_width_pct":0|20..100}   (over 85 saved as 85)
+ *                  {"cmd":"hud-size","hud_width_pct":0|20..135}
  *                  {"cmd":"hud-pos","hud_x":-800..800,"hud_y":-800..800}
  *                  {"cmd":"hud-keep-shown","on":0|1}
  *                  {"cmd":"hud-zoom","pct":100..250}
@@ -176,7 +176,7 @@ var FIFO = process.env.WOC_FIFO || '/run/waze-on-cluster/alt.h264';
 /* The local UDP sink for udp mode. Must match the render's udp_port
  * (waze-on-cluster.conf); the render listens on 127.0.0.1:UDP_PORT. */
 var UDP_PORT = process.env.WOC_UDP_PORT || '20557';
-var HUD_MAX_PCT = 85;   /* the widest HUD map size: wider is cut off at the HUD's edges */
+var HUD_MAX_PCT = 135;   /* the widest HUD map size, % of the HUD's width: past 100 its sides run off the HUD's */
 var SOCK = process.env.WOC_PATCH_SOCK || '/dev/shm/waze-on-cluster/patch.sock';
 var SOCK_GROUP = process.env.WOC_PATCH_GROUP || 'tm_oap_app';
 var LOGS_SOCK = process.env.WOC_PATCH_LOGS_SOCK || path.join(path.dirname(SOCK), 'patch-logs.sock');
@@ -300,7 +300,7 @@ function rewriteConf(file, set, drop) {
  * range (the commands' below). */
 function mapValueOk(k, v) {
     var n = Number(v);
-    return /^-?\d+$/.test(v) && (k === 'hud_width_pct' ? n === 0 || (n >= 20 && n <= 100)
+    return /^-?\d+$/.test(v) && (k === 'hud_width_pct' ? n === 0 || (n >= 20 && n <= HUD_MAX_PCT)
         : /^hud_offset_/.test(k) ? n >= -800 && n <= 800 : k === 'hud_zoom_pct' ? n >= 100 && n <= 250 : n === 0 || n === 1);
 }
 
@@ -2368,11 +2368,11 @@ function handle(line, sock) {
     }
     if (msg.cmd === 'hud-size') {
         var pct = msg.hud_width_pct;
-        if (!(pct === 0 || (typeof pct === 'number' && pct >= 20 && pct <= 100 && pct === Math.floor(pct)))) {
-            reply(sock, { ev: 'hud-size-reply', ok: false, reason: 'HUD width must be 0 or 20-100 %' });
+        if (!(pct === 0 || (typeof pct === 'number' && pct >= 20 && pct <= HUD_MAX_PCT && pct === Math.floor(pct)))) {
+            reply(sock, { ev: 'hud-size-reply', ok: false, reason: 'HUD width must be 0 or 20-' + HUD_MAX_PCT + ' %' });
             return;
         }
-        saveMapSettings(sock, 'hud-size-reply', { hud_width_pct: Math.min(pct, HUD_MAX_PCT) }, 'the HUD map size');
+        saveMapSettings(sock, 'hud-size-reply', { hud_width_pct: pct }, 'the HUD map size');
         return;
     }
     if (msg.cmd === 'hud-pos') {

@@ -516,6 +516,16 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     r = await ask({ cmd: 'profile', id: A });
     ok('back to A: zoom 180', r.ok && r.own && r.settings.hud_zoom_pct === 180 &&
         await when(function () { return state().hud_zoom_pct === 180; }), JSON.stringify(r));
+
+    /* The widest HUD size, 135 %, per profile, read back after a start. */
+    r = await ask({ cmd: 'hud-size', hud_width_pct: 135 });
+    ok('the widest HUD size, 135 %, as A\'s own', r.ok && r.hud_width_pct === 135 &&
+        await when(function () { return state().hud_width_pct === 135 && profiles().own[A].hud_width_pct === 135; }), JSON.stringify(r));
+    await stop();
+    await start();
+    r = await ask({ cmd: 'profile', id: A });
+    ok('started again: A\'s 135 % kept', r.ok && r.own && r.settings.hud_width_pct === 135 && state().hud_width_pct === 135,
+        JSON.stringify(r));
 })().catch(function (e) {
     ok('no error: ' + e.message, false);
 }).then(function () {

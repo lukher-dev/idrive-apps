@@ -130,12 +130,16 @@ function ok(name, cond) {
     r = await ask({ cmd: 'hud-size', hud_width_pct: 85 });
     ok('a new size replaces it', r.ok && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\n');
     r = await ask({ cmd: 'hud-size', hud_width_pct: 100 });
-    ok('100 % is saved as the widest, 85 %', r.ok && r.hud_width_pct === 85 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\n');
+    ok('100 % is saved as it is', r.ok && r.hud_width_pct === 100 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 100\n');
+    r = await ask({ cmd: 'hud-size', hud_width_pct: 135 });
+    ok('the widest, 135 %, is saved as it is', r.ok && r.hud_width_pct === 135 && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\n');
     r = await ask({ cmd: 'hud-size', hud_width_pct: 10 });
-    ok('an out-of-range size is refused, nothing written', !r.ok && /hud_width_pct = 85\n$/.test(fs.readFileSync(STATE, 'utf8')));
+    var r2 = await ask({ cmd: 'hud-size', hud_width_pct: 136 }), r3 = await ask({ cmd: 'hud-size', hud_width_pct: 70.5 });
+    ok('a size outside 0 or 20-135, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok &&
+        /20-135/.test(r.reason) && fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\n', JSON.stringify(r));
     r = await ask({ cmd: 'hud-pos', hud_x: 40, hud_y: -20 });
     ok('the HUD position is saved next to the size, in one write', r.ok && r.hud_offset_x === 40 && r.hud_offset_y === -20 &&
-        fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 85\nhud_offset_x = 40\nhud_offset_y = -20\n');
+        fs.readFileSync(STATE, 'utf8') === 'hud = 1\nhud_width_pct = 135\nhud_offset_x = 40\nhud_offset_y = -20\n');
     r = await ask({ cmd: 'hud-pos', hud_x: 0, hud_y: 0 });
     ok('centred again: both replaced', r.ok && /hud_offset_x = 0\nhud_offset_y = 0\n$/.test(fs.readFileSync(STATE, 'utf8')));
     r = await ask({ cmd: 'hud-pos', hud_x: 900, hud_y: 0 });
