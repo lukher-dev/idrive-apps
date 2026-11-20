@@ -533,8 +533,8 @@ static void hud_zoom()
     FeedConfig fc;
     fc.socket = b.path;
     fc.video.level_bits = 0;
+    fc.hud_round_corners = false;
     fc.hud_black_background = false;
-    fc.hud_edge_fade_px = 0;
     fc.hud_clear = false;
     MapFeeds feeds(fc, true, true, 10);
     feeds.set_stream(true, false, Picture::Shown);
@@ -614,8 +614,8 @@ static void hud_zoom()
  * scene's width, its height the picture's shape at the map's width, centred;
  * the zoom capped by the map's width, not the box's; the box shows the
  * middle of the (zoomed) picture, which hud_offset_x pans, held inside the
- * picture, while the box stays at x 0; the edges' fade and the speed patch
- * (fixed to the scene: it follows the box's place) on the same layer, the
+ * picture, while the box stays at x 0; the speed patch (fixed to the
+ * scene: it follows the box's place) on the same layer, the
  * newest picture scaled again without a new frame; without the head unit's
  * scaler the map is held to 100 %. */
 static void hud_wide()
@@ -627,8 +627,8 @@ static void hud_wide()
     FeedConfig fc;
     fc.socket = b.path;
     fc.video.level_bits = 0;
+    fc.hud_round_corners = false;
     fc.hud_black_background = false;
-    fc.hud_edge_fade_px = 0;
     fc.hud_clear = false;
     fc.hud_zoom_pct = 100;
     fc.hud_width_pct = 100;
@@ -660,13 +660,12 @@ static void hud_wide()
             }
         }
     };
-    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh, with a fade and a patch */
-    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, uint32_t fade = 0,
-                            int32_t px = 0, int32_t py = 0, uint32_t pw = 0, uint32_t ph = 0) {
+    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh, with a patch */
+    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, int32_t px = 0,
+                            int32_t py = 0, uint32_t pw = 0, uint32_t ph = 0) {
         AtlasScaler sc;
         std::vector<uint8_t> out;
         if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h)) {
-            sc.set_edge_fade(fade);
             sc.set_clear(px, py, pw, ph);
             sc.scale(f.data(), &out);
         }
@@ -729,31 +728,27 @@ static void hud_wide()
     pump(1000, false);
     st = feeds.status("decode");
     ok("the speed patch: black at the scene's 110,320 (the map's 110,318, its box at 0,2), no new frame",
-       hud_shows(scaled(142, 0, 804, 480, 800, 476, 0, 110, 318, 220, 90)) && st.hud_clear && st.hud_clear_x == 110 &&
+       hud_shows(scaled(142, 0, 804, 480, 800, 476, 110, 318, 220, 90)) && st.hud_clear && st.hud_clear_x == 110 &&
            st.hud_clear_y == 320 && st.hud_clear_w == 220 && st.hud_clear_h == 90);
     feeds.set_hud_offset(0, -2);
     pump(1000, false);
     ok("the speed patch fixed to the scene: the box 2 up, the patch 2 down in the map (110,320)",
-       at(0, 0, 800, 476) && hud_shows(scaled(142, 0, 804, 480, 800, 476, 0, 110, 320, 220, 90)));
-    feeds.set_hud_edge_fade(30);
-    pump(1000, false);
-    ok("the edges' fade with the patch: both on the same layer", hud_shows(scaled(142, 0, 804, 480, 800, 476, 30, 110, 320, 220, 90)) &&
-                                                                 feeds.status("decode").hud_edge_fade_px == 30 && hud_layer() &&
-                                                                 hud_layer()->id() == id135);
+       at(0, 0, 800, 476) && hud_shows(scaled(142, 0, 804, 480, 800, 476, 110, 320, 220, 90)) && hud_layer() &&
+           hud_layer()->id() == id135);
     feeds.set_hud_width(40);
     feeds.set_hud_offset(0, 0);
     pump(2000, true);
     ok("40 % (320x140 at 240,169): the patch is the scene's rect less the box's place (at -130,151 of the map), clipped to it",
-       at(240, 169, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, 30, 110 - 240, 320 - 169, 220, 90)));
+       at(240, 169, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, 110 - 240, 320 - 169, 220, 90)));
     feeds.set_hud_offset(0, -100);
     pump(1000, false);
-    ok("40 %, moved up past the patch: none on the map", at(240, 69, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, 30)));
+    ok("40 %, moved up past the patch: none on the map", at(240, 69, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140)));
     feeds.set_hud_offset(0, 0);
     feeds.set_hud_clear(false, 110, 320, 220, 90);
     pump(1000, false);
-    ok("hud_clear 0: no patch", hud_shows(scaled(0, 0, 1088, 480, 320, 140, 30)) && !feeds.status("decode").hud_clear);
+    ok("hud_clear 0: no patch", hud_shows(scaled(0, 0, 1088, 480, 320, 140)) && !feeds.status("decode").hud_clear);
 
-    /* without the head unit's scaler: held to 100 %, no fade, no patch */
+    /* without the head unit's scaler: held to 100 %, no corners, no patch */
     Rig c(false, 6000, false, true, true);
     c.feed.reset();
     c.start();
@@ -761,7 +756,7 @@ static void hud_wide()
     nc.socket = c.path;
     nc.scale_down = false;
     nc.hud_width_pct = 135;
-    nc.hud_edge_fade_px = 30;
+    nc.hud_round_corners = true;
     nc.hud_clear = true;
     MapFeeds plain(nc, true, true, 10);
     plain.set_stream(true, false, Picture::Shown);
@@ -791,7 +786,7 @@ static void hud_wide()
     if (pg)
         for (const auto &kv : pg->shown.buffers)
             whole = whole || (kv.second.f == crs::TexFormat::R8 && kv.second.px == f);
-    ok("no scaler (hud_scale_down 0), 135 %: held to 100 % (800x353 at 0,63), the frame whole, no fade or patch",
+    ok("no scaler (hud_scale_down 0), 135 %: held to 100 % (800x353 at 0,63), the frame whole, no corners or patch",
        pl && pl->params.rect.x == 0 && pl->params.rect.y == 63 && pl->params.rect.w == 800 && pl->params.rect.h == 353 && whole &&
            plain.status("decode").hud_width_pct == 135);
 }
@@ -1618,8 +1613,7 @@ int main()
     bfc.socket = b.path;
     bfc.video.level_bits = 0;
     bfc.hud_zoom_pct = 100;   /* the whole frame on the HUD: this checks the scaling, hud_zoom() the zoom */
-    bfc.hud_edge_fade_px = 0;   /* and hud_wide() the fade and the speed patch */
-    bfc.hud_clear = false;
+    bfc.hud_clear = false;   /* and hud_wide() the speed patch */
     MapFeeds feeds(bfc, true, false, 10);
     feeds.set_stream(true, false, Picture::Shown);
     std::vector<uint8_t> bspare, boffered;
@@ -1684,6 +1678,7 @@ int main()
     AtlasScaler ref;
     std::vector<uint8_t> f1_hud;
     ref.configure(1088, 480, 452, 200, 2);   /* FeedConfig::scaled_level_bits */
+    ref.set_corner_radius(200 / 12);         /* FeedConfig::hud_round_corners */
     ref.set_black_background(true);          /* FeedConfig::hud_black_background */
     ref.scale(f1.data(), &f1_hud);
     const crs::Layer *bh = layer_on(2);

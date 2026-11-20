@@ -82,8 +82,6 @@ The app is in the head unit's display language.
   to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
   the row shows the zoom in use. By default it is as close as the HUD map's
   size allows, which is the cluster's own scale.
-- **Fade map edges:** how far the HUD map's edges fade out, 0 px (a hard edge)
-  to 60 px.
 - **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
   HUD's edges cut the map's sides.
 - **Move map left / right / up / down** and **Centre map:** where the

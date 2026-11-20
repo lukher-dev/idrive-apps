@@ -13,10 +13,10 @@
 
 namespace woc {
 
-const char *const kMapStateKeys[15] = {"cluster",          "hud",           "hud_width_pct", "hud_offset_x",
-                                       "hud_offset_y",     "hud_keep_shown", "hud_near_turn", "hud_zoom_pct",
-                                       "hud_edge_fade_px", "hud_clear",     "hud_clear_x",   "hud_clear_y",
-                                       "hud_clear_w",      "hud_clear_h",   "hud_near_m"};
+const char *const kMapStateKeys[14] = {"cluster",        "hud",            "hud_width_pct", "hud_offset_x",
+                                       "hud_offset_y",   "hud_keep_shown", "hud_near_turn", "hud_zoom_pct",
+                                       "hud_clear",      "hud_clear_x",    "hud_clear_y",   "hud_clear_w",
+                                       "hud_clear_h",    "hud_near_m"};
 
 namespace {
 
@@ -28,8 +28,7 @@ std::string trim(const std::string &s)
 
 /* A whole number in the key's range: the map on (1) or off (0), 0 or 20-135 %
  * wide, -800..800 px from the centre, kept shown (1) or not (0), only near
- * turns (1) or always (0), zoomed 100-250 %, its edges faded over 0-60 px,
- * cleared behind the speed readout (1) or not (0) in a rectangle of the HUD's
+ * turns (1) or always (0), zoomed 100-250 %, cleared behind the speed readout (1) or not (0) in a rectangle of the HUD's
  * 800x480 scene: x 0-799, y 0-479, 10-800 wide, 10-480 high, shown from
  * 200-2000 m before a turn. */
 bool valid(const std::string &key, const std::string &value)
@@ -44,8 +43,6 @@ bool valid(const std::string &key, const std::string &value)
         return v >= -800 && v <= 800;
     if (key == "hud_zoom_pct")
         return v >= 100 && v <= 250;
-    if (key == "hud_edge_fade_px")
-        return v >= 0 && v <= 60;
     if (key == "hud_clear_x")
         return v >= 0 && v <= 799;
     if (key == "hud_clear_y")

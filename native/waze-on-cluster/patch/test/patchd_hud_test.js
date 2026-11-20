@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings ({"cmd":"cluster"}, "hud", "hud-size", "hud-pos",
- * "hud-keep-shown", "hud-near-turn", "hud-zoom", "hud-fade", "hud-clear",
+ * "hud-keep-shown", "hud-near-turn", "hud-zoom", "hud-clear",
  * "hud-clear-rect", "hud-near-dist"):
  * each saved in map.state.conf for the render's next start, replacing an
  * earlier value and keeping the other lines, waze-on-cluster.local.conf
@@ -89,7 +89,7 @@ function ask(obj) {
             buf.split('\n').forEach(function (l) {
                 var m = null;
                 try { m = JSON.parse(l); } catch (e) {}
-                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-fade|hud-clear|hud-clear-rect|hud-near-dist)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
+                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-clear|hud-clear-rect|hud-near-dist)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
             });
         });
         s.on('error', reject);
@@ -171,19 +171,9 @@ function ok(name, cond) {
         fs.readFileSync(STATE, 'utf8') === state);
     r = await ask({ cmd: 'hud-near-turn', on: 2 });
     ok('a near-turn that is not 0 or 1 is refused, nothing written', !r.ok && fs.readFileSync(STATE, 'utf8') === state);
-    r = await ask({ cmd: 'hud-fade', px: 0 });
-    ok('the HUD map\'s edge fade, off, is saved next to them', r.ok && r.hud_edge_fade_px === 0 &&
-        /hud_zoom_pct = 250\nhud_edge_fade_px = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
-    r = await ask({ cmd: 'hud-fade', px: 60 });
-    ok('the widest fade, 60 px, is saved', r.ok && r.hud_edge_fade_px === 60 && /hud_edge_fade_px = 60\n$/.test(fs.readFileSync(STATE, 'utf8')));
-    state = fs.readFileSync(STATE, 'utf8');
-    r = await ask({ cmd: 'hud-fade', px: 61 });
-    r2 = await ask({ cmd: 'hud-fade', px: -1 }), r3 = await ask({ cmd: 'hud-fade', px: '30' }), r4 = await ask({ cmd: 'hud-fade', px: 2.5 });
-    ok('a fade outside 0-60, or not a whole number, is refused, nothing written', !r.ok && !r2.ok && !r3.ok && !r4.ok && !!r.reason &&
-        fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(r));
     r = await ask({ cmd: 'hud-clear', on: 0 });
     ok('the map shown behind the speed is saved next to them', r.ok && r.hud_clear === 0 &&
-        /hud_edge_fade_px = 60\nhud_clear = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+        /hud_zoom_pct = 250\nhud_clear = 0\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
     r = await ask({ cmd: 'hud-clear', on: 1 });
     ok('cleared behind the speed again replaces it', r.ok && r.hud_clear === 1 && /hud_clear = 1\n$/.test(fs.readFileSync(STATE, 'utf8')));
     state = fs.readFileSync(STATE, 'utf8');

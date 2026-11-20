@@ -43,10 +43,11 @@ public:
     /* src: a w x atlas_height(h) atlas; *dst is resized to dst_bytes(). */
     void scale(const uint8_t *src, std::vector<uint8_t> *dst);
 
-    /* The edges' fade: each edge of the output fades smoothly (smoothstep) to
-     * black over px output pixels, U and V over half as many (0: none).
-     * Applied by scale(). */
-    void set_edge_fade(uint32_t px);
+    /* Rounded corners of radius r output pixels (0: square), anti-aliased:
+     * the corners fade to black (Y 16, U and V 128), which a HUD shows as
+     * nothing, so the picture's corners look round. Applied by scale(). */
+    void set_corner_radius(uint32_t r);
+
     /* The speed patch: black inside the w x h rectangle at x, y in output
      * pixels, fading in over kClearFeather pixels from its edges (at most a
      * quarter of its smaller side); it may reach past the output, whose
@@ -74,6 +75,11 @@ private:
         void build(uint32_t src, uint32_t dst);
     };
     void plane(const uint8_t *src, uint32_t sp, uint32_t sh, uint8_t *dst, uint32_t dp, const Axis &x, const Axis &y);
+    /* The corner mask on one plane (pw x ph, pitch dp) of radius r with
+     * coverage table cov (r x r, 0-256, the top-left corner). */
+    static void corners(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, uint32_t r, const std::vector<uint16_t> &cov,
+                        uint8_t black);
+    static void coverage(uint32_t r, std::vector<uint16_t> *cov);
 
     uint32_t w_ = 0, h_ = 0, dw_ = 0, dh_ = 0;
     uint32_t crop_x_ = 0, crop_y_ = 0, crop_w_ = 0, crop_h_ = 0;   /* the part scaled; all of it without a crop */
@@ -81,15 +87,16 @@ private:
     Axis yx_, yy_, cx_, cy_;
     std::vector<uint16_t> rows_;   /* the horizontal pass, scaled 256 */
     std::vector<uint32_t> acc_;    /* one output row's vertical sums */
+    uint32_t radius_ = 0;
     bool black_bg_ = false;
     int bg_ = -1;   /* the background's Y, x 16 (smoothed) */
     void key_background(uint8_t *d);
-    uint32_t fade_ = 0;
+    std::vector<uint16_t> ycov_, ccov_;   /* corner coverage: Y at radius_, U and V at radius_ / 2 */
     int32_t clear_x_ = 0, clear_y_ = 0;
     uint32_t clear_w_ = 0, clear_h_ = 0;
-    /* The fade and the patch as one mask (0-256 of each pixel kept), Y's
-     * and U and V's (each the mean of its four Y); empty: none. Made again
-     * by scale() after a change. */
+    /* The patch as a mask (0-256 of each pixel kept), Y's and U and V's
+     * (each the mean of its four Y), applied after the corners; empty:
+     * none. Made again by scale() after a change. */
     std::vector<uint16_t> ymask_, cmask_;
     bool mask_due_ = false;
     void make_mask();
@@ -98,22 +105,22 @@ private:
 
 /* What a ScaleWorker makes of a frame: a w x h atlas (its crop_w x crop_h
  * part at crop_x, crop_y with crop_w) scaled to dw x dh, rounded to
- * level_bits, with AtlasScaler's background, edges' fade and speed
- * patch (clear_w x clear_h at clear_x, clear_y in output pixels; none with
+ * level_bits, with AtlasScaler's corners, background and speed patch
+ * (clear_w x clear_h at clear_x, clear_y in output pixels; none with
  * clear_w 0). */
 struct ScaleShape {
     uint32_t w = 0, h = 0, dw = 0, dh = 0;
     uint32_t crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
     unsigned level_bits = 0;
+    uint32_t radius = 0;
     bool black = false;
-    uint32_t fade = 0;
     int32_t clear_x = 0, clear_y = 0;
     uint32_t clear_w = 0, clear_h = 0;
     bool operator==(const ScaleShape &o) const
     {
         return w == o.w && h == o.h && dw == o.dw && dh == o.dh && crop_x == o.crop_x && crop_y == o.crop_y &&
-               crop_w == o.crop_w && crop_h == o.crop_h && level_bits == o.level_bits &&
-               black == o.black && fade == o.fade && clear_x == o.clear_x && clear_y == o.clear_y &&
+               crop_w == o.crop_w && crop_h == o.crop_h && level_bits == o.level_bits && radius == o.radius &&
+               black == o.black && clear_x == o.clear_x && clear_y == o.clear_y &&
                clear_w == o.clear_w && clear_h == o.clear_h;
     }
     bool operator!=(const ScaleShape &o) const { return !(*this == o); }

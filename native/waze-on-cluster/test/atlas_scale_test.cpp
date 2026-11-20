@@ -3,7 +3,7 @@
 /* Host test of AtlasScaler (atlas_scale.h): sizes, flat planes stay flat and
  * U, V and Y never mix, a 2:1 scale is the exact 2x2 average, non-integer
  * ratios keep a gradient's mean, rounding to level bits, refusals, a crop
- * (exact 1:1, scaled as the part cut out first), the edges' fade and the
+ * (exact 1:1, scaled as the part cut out first), rounded corners, the
  * speed patch, and the time a 1088x480 frame takes to scale to the HUD's
  * sizes. */
 #include <chrono>
@@ -98,6 +98,28 @@ int main()
     ok("and copies exactly", out == g);
 
     {
+        /* rounded corners: a white frame, its corners black (Y 16, U and V
+         * 128), the edges' middles and the inside untouched */
+        AtlasScaler rc;
+        rc.configure(1088, 480, 452, 200, 0);
+        rc.set_corner_radius(16);
+        std::vector<uint8_t> white(1088 * 720, 235);
+        for (size_t i = 1088 * 480; i < white.size(); i++) white[i] = 200;
+        rc.scale(white.data(), &out);
+        const uint8_t *y = out.data(), *u = y + 452 * 200;
+        ok("corners: the four corner pixels black", y[0] == 16 && y[451] == 16 && y[199 * 452] == 16 && y[199 * 452 + 451] == 16);
+        ok("corners: the chroma corner neutral", u[0] == 128 && u[99 * 452 + 225] == 128);
+        ok("corners: the edges' middles and the inside untouched", y[226] == 235 && y[100 * 452] == 235 && y[100 * 452 + 226] == 235 &&
+                                                                       y[16 * 452 + 16] == 235);
+        bool aa = false;
+        for (uint32_t x = 0; x < 16; x++) aa = aa || (y[x] > 16 && y[x] < 235);
+        ok("corners: anti-aliased along the curve", aa);
+        rc.set_corner_radius(0);
+        rc.scale(white.data(), &out);
+        ok("radius 0: square again", out[0] == 235);
+    }
+
+    {
         /* black background: a night map (navy field Y 60, a road Y 120, a
          * label Y 220): the field goes black with neutral chroma, the road
          * and label stay; a day map (field Y 200) is left alone */
@@ -186,36 +208,6 @@ int main()
     }
 
     {
-        /* the edges' fade: a white 800x476 picture (1088x480 1:1 but for the
-         * crop), its edges black, its middle untouched, the ramp rising
-         * smoothly from each edge over the band; U and V over half the band */
-        std::vector<uint8_t> white(1088 * 720, 235);
-        for (size_t i = 1088 * 480; i < white.size(); i++) white[i] = 200;
-        AtlasScaler fs;
-        fs.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
-        fs.set_edge_fade(30);
-        fs.scale(white.data(), &out);
-        const uint8_t *y = out.data(), *u = y + 800 * 476;
-        ok("fade: each edge's pixel black (Y 16, U and V 128)",
-           y[238 * 800] == 16 && y[238 * 800 + 799] == 16 && y[400] == 16 && y[475 * 800 + 400] == 16 && u[119 * 800] == 128 &&
-               u[119 * 800 + 399] == 128 && u[200] == 128 && u[237 * 800 + 200] == 128);
-        ok("fade: the middle and the band's inner edge untouched",
-           y[238 * 800 + 400] == 235 && y[238 * 800 + 30] == 235 && y[30 * 800 + 400] == 235 && u[119 * 800 + 15] == 200);
-        bool mono = true, ramp = false;
-        for (uint32_t x = 1; x < 31; x++) {
-            mono = mono && y[238 * 800 + x] >= y[238 * 800 + x - 1] && y[238 * 800 + 799 - x] >= y[238 * 800 + 800 - x];
-            ramp = ramp || (y[238 * 800 + x] > 16 && y[238 * 800 + x] < 235);
-        }
-        ok("fade: the ramp rises from each edge, never back", mono && ramp);
-        ok("fade: smooth at both ends (smoothstep): slow off the edge, slow into the middle",
-           y[238 * 800 + 3] - 16 < 10 && 235 - y[238 * 800 + 27] < 10 && y[238 * 800 + 15] > 110 && y[238 * 800 + 15] < 140);
-        ok("fade: a corner darker than either edge's middle at that depth", y[10 * 800 + 10] < y[10 * 800 + 400]);
-        fs.set_edge_fade(0);
-        fs.scale(white.data(), &out);
-        ok("fade 0: off", out[238 * 800] == 235);
-    }
-
-    {
         /* the speed patch: a rectangle black inside, a 12 px feather in from
          * its edges, clipped to the picture; the rest untouched */
         std::vector<uint8_t> white(1088 * 720, 235);
@@ -247,12 +239,13 @@ int main()
         ps.scale(white.data(), &out);
         ok("patch: a small one's feather at most a quarter of its smaller side (5 px), black in its middle",
            out[340 * 800 + 120] == 16 && out[340 * 800 + 115] == 16 && out[340 * 800 + 111] > 16);
-        /* with the fade: multiplied */
+        /* with the rounded corners: the patch applied after them, both black */
         ps.set_clear(0, 300, 200, 100);
-        ps.set_edge_fade(30);
+        ps.set_corner_radius(39);
         ps.scale(white.data(), &out);
-        ok("patch and fade together: black where either is, the rest as the fade alone", out[350 * 800 + 100] == 16 && out[350 * 800] == 16 &&
-                                                                                           out[100 * 800 + 400] == 235);
+        ok("patch and corners together: black where either is, the rest untouched", out[350 * 800 + 100] == 16 && out[0] == 16 &&
+                                                                                      out[475 * 800 + 799] == 16 && out[100 * 800 + 400] == 235 &&
+                                                                                      out[475 * 800 + 400] == 235);
     }
 
     const struct { uint32_t w, h; } sizes[] = {{452, 200}, {560, 244}, {680, 300}, {800, 352}, {320, 140}};
@@ -266,16 +259,16 @@ int main()
                     each, t.dst_bytes(), 783360.0 / t.dst_bytes());
     }
     {
-        /* 135 %: 804x480 of the picture to 800x476, the edges' fade and the speed patch */
+        /* 135 %: 804x480 of the picture to 800x476, rounded corners and the speed patch */
         AtlasScaler t;
         t.configure(1088, 480, 800, 476, 2, 142, 0, 804, 480);
-        t.set_edge_fade(30);
+        t.set_corner_radius(39);
         t.set_clear(110, 320, 220, 90);
         t.scale(ramp.data(), &out);
         const auto t0 = std::chrono::steady_clock::now();
         for (int i = 0; i < 20; i++) t.scale(ramp.data(), &out);
         const double each = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / 20;
-        std::printf("     1088x480 (804x480 of it) -> 800x476, fade and patch: %.2f ms a frame on this machine\n", each);
+        std::printf("     1088x480 (804x480 of it) -> 800x476, corners and patch: %.2f ms a frame on this machine\n", each);
     }
 
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);

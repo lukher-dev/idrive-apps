@@ -107,8 +107,6 @@
     "Waiting for a turn": "等待转弯",
     "No turn data": "无转弯数据",
     "Arrival time on the cluster": "仪表盘显示到达时间",
-    "Fade map edges: {0}": "地图边缘渐隐：{0}",
-    "{0} px": "{0} px",
     "Hide map behind BMW's speed": "隐藏 BMW 车速后方的地图",
     "Speed area: {0}": "车速区域：{0}",
     "{0}x{1} at {2},{3}": "{0}x{1}，位于 {2},{3}",

@@ -116,10 +116,10 @@ struct FeedConfig {
      * bits. */
     bool scale_down = true;
     unsigned scaled_level_bits = 2;
+    /* the HUD map's corners rounded (a twelfth of its height, at least 6 px) */
+    bool hud_round_corners = true;
     /* the HUD map's dark background made black (see-through on a HUD) */
     bool hud_black_background = true;
-    /* the HUD map's edges faded to black over this many pixels (0: none) */
-    unsigned hud_edge_fade_px = 30;
     /* The speed patch: on the HUD the map black inside this rectangle of the
      * HUD's scene (x, y from its top left, w x h), feathered at its edges,
      * so BMW's speed readout there stays clear; fixed to the scene, not to
@@ -162,8 +162,7 @@ struct FeedStatus {
     unsigned hud_near_m = 1000;    /* and how many metres before a turn the app shows it */
     unsigned hud_zoom_pct = 250;   /* the HUD map's zoom setting */
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
-    unsigned hud_edge_fade_px = 30;   /* the HUD map's edges' fade */
-    bool hud_clear = true;            /* and its speed patch, in the HUD scene's pixels */
+    bool hud_clear = true;            /* the HUD map's speed patch, in the HUD scene's pixels */
     unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
 };
 
@@ -218,10 +217,8 @@ public:
      * for the new part of the picture. */
     void set_hud_zoom(unsigned pct);
     unsigned hud_zoom_used() const { return zoom_used_; }
-    /* The HUD map's edges' fade (FeedConfig::hud_edge_fade_px) and its
-     * speed patch (FeedConfig::hud_clear*), at once: the same layer, the
-     * newest picture scaled again. */
-    void set_hud_edge_fade(unsigned px);
+    /* The HUD map's speed patch (FeedConfig::hud_clear*), at once: the
+     * same layer, the newest picture scaled again. */
     void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
     /* A layer to take frames: made, and not reported disabled by
      * cluster-render. */
@@ -304,9 +301,8 @@ private:
      * for the box q, and q made the place of the scaled picture. Above
      * 100 % also notes the pan it shows (placed_x_). */
     void hud_shape(crk::QuadRect *q);
-    /* The HUD's layer's place and shape again after a move, a fade or a
-     * patch: the same layer, the newest picture scaled again when its shape
-     * changed. */
+    /* The HUD's layer's place and shape again after a move or a patch: the
+     * same layer, the newest picture scaled again when its shape changed. */
     void restyle();
     void count_second(int64_t now_ms);
     /* The layer is visible or about to be, on a connection. */

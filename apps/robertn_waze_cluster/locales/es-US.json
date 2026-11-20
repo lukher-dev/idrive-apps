@@ -105,8 +105,6 @@
     "Waiting for a turn": "Esperando un giro",
     "No turn data": "Sin datos de giros",
     "Arrival time on the cluster": "Hora de llegada en el tablero",
-    "Fade map edges: {0}": "Difuminar bordes del mapa: {0}",
-    "{0} px": "{0} px",
     "Hide map behind BMW's speed": "Ocultar mapa tras la velocidad BMW",
     "Speed area: {0}": "Zona de velocidad: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} en {2},{3}",

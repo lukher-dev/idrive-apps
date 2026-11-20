@@ -307,8 +307,8 @@ void MapFeed::hud_shape(crk::QuadRect *q)
         shape_.crop_h = crop.h;
     }
     shape_.level_bits = cfg_.scaled_level_bits;
+    shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
     shape_.black = cfg_.hud_black_background;
-    shape_.fade = cfg_.hud_edge_fade_px;
     const int64_t cx = (int64_t)cfg_.hud_clear_x - q->x, cy = (int64_t)cfg_.hud_clear_y - q->y;
     if (cfg_.hud_clear && cfg_.hud_clear_w && cfg_.hud_clear_h && cx < (int64_t)dw && cy < (int64_t)dh &&
         cx + cfg_.hud_clear_w > 0 && cy + cfg_.hud_clear_h > 0) {
@@ -353,15 +353,6 @@ void MapFeed::set_hud_offset(int dx, int dy)
         return;
     cfg_.hud_offset_x = placed_x_ = dx;
     cfg_.hud_offset_y = placed_y_ = dy;
-    restyle();
-}
-
-void MapFeed::set_hud_edge_fade(unsigned px)
-{
-    if (px == cfg_.hud_edge_fade_px)
-        return;
-    cfg_.hud_edge_fade_px = px;
-    log_info("render: HUD map's edges faded over %u px", px);
     restyle();
 }
 
@@ -691,7 +682,6 @@ FeedStatus MapFeed::status(const std::string &decode, const std::string &stream)
     s.hud_keep_shown = cfg_.hud_keep_shown;
     s.hud_zoom_pct = cfg_.hud_zoom_pct;
     s.hud_zoom_used = zoom_used_;
-    s.hud_edge_fade_px = cfg_.hud_edge_fade_px;
     s.hud_clear = cfg_.hud_clear;
     s.hud_clear_x = cfg_.hud_clear_x;
     s.hud_clear_y = cfg_.hud_clear_y;

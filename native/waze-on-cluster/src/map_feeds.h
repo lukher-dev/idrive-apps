@@ -76,10 +76,8 @@ public:
     void set_turn_near(bool near, int64_t now_ms);
     /* The HUD map's zoom (FeedConfig::hud_zoom_pct), at once. */
     void set_hud_zoom(unsigned pct);
-    /* The HUD map's edges' fade (FeedConfig::hud_edge_fade_px) and its
-     * speed patch (FeedConfig::hud_clear*), at once, kept for a HUD feed
-     * made later. */
-    void set_hud_edge_fade(unsigned px);
+    /* The HUD map's speed patch (FeedConfig::hud_clear*), at once, kept
+     * for a HUD feed made later. */
     void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
     /* The HUD map's settings as asked last (the base of a HUD feed made later). */
     const FeedConfig &hud_settings() const { return base_; }

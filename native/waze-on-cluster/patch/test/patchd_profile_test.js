@@ -19,9 +19,12 @@
  * as a profile's own or the shared settings is switched to and from and kept
  * at the next start. The HUD map kept shown over BMW's pop-ups is a
  * profile's own setting like the others; a profiles.json saved before it is
- * taken, giving way. So are near turns, the zoom, the edge fade, the
- * map cleared behind the speed and how far before a turn the HUD map
- * shows: a set saved before them takes their defaults. */
+ * taken, giving way. So are near turns, the zoom, the map cleared behind
+ * the speed and how far before a turn the HUD map shows: a set saved before
+ * them takes their defaults. A profiles.json and a map.state.conf that still
+ * hold the HUD map's edge fade (hud_edge_fade_px, an earlier version's) are
+ * read without it: no set refused or dropped, the key gone from
+ * map.state.conf at the start and from profiles.json at its next write. */
 'use strict';
 var cp = require('child_process');
 var fs = require('fs');
@@ -111,13 +114,13 @@ function state() {
 function profiles() { var t = fs.readFileSync(PROFILES, 'utf8'); try { return JSON.parse(t); } catch (e) { throw new Error(e.message + ': ' + t); } }
 function settings(cluster, hud, pct, x, y, keep, near, zoom) {
     return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
-        hud_near_turn: near || 0, hud_zoom_pct: zoom || 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
+        hud_near_turn: near || 0, hud_zoom_pct: zoom || 100, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
         hud_clear_w: 250, hud_clear_h: 90, hud_near_m: 1000 };
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 /* A line of map.state.conf: one of the map keys, a whole number. */
 var MAP_LINE = new RegExp('^(cluster|hud|hud_width_pct|hud_offset_x|hud_offset_y|hud_keep_shown|hud_near_turn|hud_zoom_pct|' +
-    'hud_edge_fade_px|hud_clear|hud_clear_x|hud_clear_y|hud_clear_w|hud_clear_h|hud_near_m) = -?\\d+$');
+    'hud_clear|hud_clear_x|hud_clear_y|hud_clear_w|hud_clear_h|hud_near_m) = -?\\d+$');
 /* For a check that nothing is written: past the save's delay. */
 function saved() { return sleep(SAVE_MS + 150); }
 /* For a check that something is written: until it holds, at most 10 s
@@ -231,8 +234,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
 
     /* The format a patchd and render without profiles read. */
     var lines = fs.readFileSync(STATE, 'utf8').split('\n').filter(Boolean);
-    ok('map.state.conf: only "key = whole number" lines of the fifteen map keys (0.9.x reads them, leaving out the later ones)',
-        lines.length === 15 && lines.every(function (l) {
+    ok('map.state.conf: only "key = whole number" lines of the fourteen map keys (0.9.x reads them, leaving out the later ones)',
+        lines.length === 14 && lines.every(function (l) {
             return MAP_LINE.test(l);
         }), lines.join('|'));
 
@@ -428,7 +431,7 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     /* map.state.conf's settings, in whatever order its lines are; a later key it lacks (a file an
      * earlier version wrote) is what the render takes for it, its default */
     var sameKeys = function (a, b) {
-        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
+        a = Object.assign({ hud_near_turn: 0, hud_zoom_pct: 100, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320,
             hud_clear_w: 250, hud_clear_h: 90, hud_near_m: 1000 }, a);
         return Object.keys(b).length === Object.keys(a).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
     };
@@ -526,22 +529,21 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     ok('back to A: near turns, zoom 180', r.ok && r.own && r.settings.hud_near_turn === 1 && r.settings.hud_zoom_pct === 180 &&
         await when(function () { return state().hud_near_turn === 1 && state().hud_zoom_pct === 180; }), JSON.stringify(r));
 
-    /* The edge fade, the clear behind the speed and its rectangle, per profile; a profiles.json from before
-     * them: 30 px, cleared, 110, 320, 250 by 90. */
-    var CLEAR_DEFAULTS = { hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
+    /* The clear behind the speed and its rectangle, per profile; a profiles.json from before
+     * them: cleared, 110, 320, 250 by 90. */
+    var CLEAR_DEFAULTS = { hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
     var hasAll = function (o, want) { return Object.keys(want).every(function (k) { return o[k] === want[k]; }); };
-    ok('a profiles.json from before the fade and the clear: A\'s set read with their defaults', hasAll(r.settings, CLEAR_DEFAULTS),
+    ok('a profiles.json from before the clear: A\'s set read with their defaults', hasAll(r.settings, CLEAR_DEFAULTS),
         JSON.stringify(r));
-    var MINE = { hud_edge_fade_px: 12, hud_clear: 0, hud_clear_x: 40, hud_clear_y: 300, hud_clear_w: 260, hud_clear_h: 120 };
-    r = await ask({ cmd: 'hud-fade', px: 12 });
+    var MINE = { hud_clear: 0, hud_clear_x: 40, hud_clear_y: 300, hud_clear_w: 260, hud_clear_h: 120 };
     var rc = await ask({ cmd: 'hud-clear', on: 0 }), rr = await ask({ cmd: 'hud-clear-rect', x: 40, y: 300, w: 260, h: 120 });
-    ok('a fade of 12, not cleared and its own rectangle as A\'s own: in A\'s copy and map.state.conf', r.ok && rc.ok && rr.ok &&
+    ok('not cleared and its own rectangle as A\'s own: in A\'s copy and map.state.conf', rc.ok && rr.ok &&
         await when(function () { return hasAll(state(), MINE) && hasAll(profiles().own[A], MINE); }), JSON.stringify(profiles()));
     r = await ask({ cmd: 'profile', id: B });
     ok('B without its own: the defaults', r.ok && !r.own && hasAll(r.settings, CLEAR_DEFAULTS) &&
         await when(function () { return hasAll(state(), CLEAR_DEFAULTS); }), JSON.stringify(r));
     r = await ask({ cmd: 'profile', id: A });
-    ok('back to A: its fade, clear and rectangle', r.ok && r.own && hasAll(r.settings, MINE) &&
+    ok('back to A: its clear and rectangle', r.ok && r.own && hasAll(r.settings, MINE) &&
         await when(function () { return hasAll(state(), MINE); }), JSON.stringify(r));
 
     /* How far before a turn the HUD map shows, per profile; a profiles.json from before it: 1000 m. */
@@ -563,6 +565,37 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     r = await ask({ cmd: 'profile', id: A });
     ok('started again: A\'s 135 % kept', r.ok && r.own && r.settings.hud_width_pct === 135 && state().hud_width_pct === 135,
         JSON.stringify(r));
+    await stop();
+
+    /* The HUD map's edge fade an earlier version saved: hud_edge_fade_px in
+     * A's set, the shared set and map.state.conf. Every set is read without
+     * it, none refused or dropped; map.state.conf loses the line at the
+     * start, its other lines kept, and profiles.json at its next write. */
+    var A_FADE = Object.assign(settings(1, 1, 60, 0, 10, 1), { hud_edge_fade_px: 12 });
+    var SHARED_FADE = Object.assign(settings(1, 0, 0, 0, 40), { hud_edge_fade_px: 0 });
+    var withoutFade = function (o) { var c = Object.assign({}, o); delete c.hud_edge_fade_px; return c; };
+    fs.writeFileSync(PROFILES, JSON.stringify({ shared: SHARED_FADE, own: { [A]: A_FADE }, active: A }));
+    fs.writeFileSync(STATE, Object.keys(A_FADE).map(function (k) { return k + ' = ' + A_FADE[k]; }).join('\n') + '\n');
+    mark = out.length;
+    await start();
+    ok('map.state.conf with hud_edge_fade_px: the line dropped at the start, the others kept',
+        same(state(), withoutFade(A_FADE)) && !/hud_edge_fade_px/.test(fs.readFileSync(STATE, 'utf8')) &&
+        /map settings no longer used dropped from .*: hud_edge_fade_px/.test(out.slice(mark)), fs.readFileSync(STATE, 'utf8'));
+    r = await ask({ cmd: 'profile', id: A });
+    ok('profiles.json with hud_edge_fade_px: A keeps its own settings, read without it, unchanged, no warning',
+        r.ok && r.own && !r.changed && same(r.settings, withoutFade(A_FADE)) && !/WARNING: driver profiles/.test(out.slice(mark)),
+        JSON.stringify(r) + out.slice(mark));
+    r = await ask({ cmd: 'profile', id: B });
+    ok('B without its own: the shared set, read without it, changed', r.ok && !r.own && r.changed &&
+        same(r.settings, withoutFade(SHARED_FADE)) && await when(function () { return same(state(), withoutFade(SHARED_FADE)); }),
+        JSON.stringify(r));
+    ok('profiles.json written again: both sets kept, hud_edge_fade_px in neither', await when(function () {
+        pf = profiles();
+        return pf.active === null && same(pf.own[A], withoutFade(A_FADE)) && same(pf.shared, withoutFade(SHARED_FADE)) &&
+            !/hud_edge_fade_px/.test(fs.readFileSync(PROFILES, 'utf8'));
+    }), fs.readFileSync(PROFILES, 'utf8'));
+    r = await ask({ cmd: 'hud-fade', px: 30 }).then(function () { return 'answered'; }, function () { return 'no reply'; });
+    ok('hud-fade is no command: no reply, nothing written', r === 'no reply' && !/hud_edge_fade_px/.test(fs.readFileSync(STATE, 'utf8')));
 })().catch(function (e) {
     ok('no error: ' + e.message, false);
 }).then(function () {

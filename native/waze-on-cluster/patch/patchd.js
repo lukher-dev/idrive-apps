@@ -52,7 +52,6 @@
  *                  {"cmd":"hud-keep-shown","on":0|1}
  *                  {"cmd":"hud-near-turn","on":0|1}
  *                  {"cmd":"hud-zoom","pct":100..250}
- *                  {"cmd":"hud-fade","px":0..60}
  *                  {"cmd":"hud-clear","on":0|1}
  *                  {"cmd":"hud-clear-rect","x":0..799,"y":0..479,"w":10..800,"h":10..480}
  *                  {"cmd":"hud-near-dist","m":200..2000}
@@ -61,24 +60,22 @@
  *                                   (0: the default box), where it is moved from
  *                                   the centre (HUD pixels), whether it stays
  *                                   shown over BMW's pop-ups, whether it shows only
- *                                   near turns, its zoom, how many pixels its edges
- *                                   fade to black over (0: none), whether it is
- *                                   blacked out behind the speed and where (a
+ *                                   near turns, its zoom, whether it is blacked out behind the speed and where (a
  *                                   rectangle in HUD scene pixels), how many metres
  *                                   before a turn it shows (with near turns on; the
  *                                   app gates it), saved for the
  *                                   render's next start as "cluster", "hud",
  *                                   "hud_width_pct", "hud_offset_x", "hud_offset_y",
  *                                   "hud_keep_shown", "hud_near_turn",
- *                                   "hud_zoom_pct", "hud_edge_fade_px", "hud_clear",
- *                                   "hud_clear_x", "hud_clear_y", "hud_clear_w",
- *                                   "hud_clear_h" and "hud_near_m" in MAP_STATE
+ *                                   "hud_zoom_pct", "hud_clear", "hud_clear_x",
+ *                                   "hud_clear_y", "hud_clear_w", "hud_clear_h"
+ *                                   and "hud_near_m" in MAP_STATE
  *                                   (the app changes the running render itself).
  *                                   Changes are written together MAP_SAVE_MS
  *                                   after the last one; the reply (cluster-reply,
  *                                   hud-reply, hud-size-reply, hud-pos-reply,
  *                                   hud-keep-shown-reply, hud-near-turn-reply,
- *                                   hud-zoom-reply, hud-fade-reply, hud-clear-reply,
+ *                                   hud-zoom-reply, hud-clear-reply,
  *                                   hud-clear-rect-reply, hud-near-dist-reply)
  *                                   follows the write and carries ok, the values
  *                                   saved and reason.
@@ -271,14 +268,18 @@ var LOCAL_CONF = process.env.WOC_LOCAL_CONF || '/var/opt/waze-on-cluster/waze-on
  * start with any of MAP_KEYS in. */
 var MAP_STATE = path.join(STATE_DIR, 'map.state.conf');
 var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct',
-    'hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m'];
+    'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m'];
 /* Keys added after the first sets were saved: one missing from a saved set is its default. */
-var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct', 'hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y',
+var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct', 'hud_clear', 'hud_clear_x', 'hud_clear_y',
     'hud_clear_w', 'hud_clear_h', 'hud_near_m'];
+/* Keys an earlier version saved that this one no longer has (the HUD map's
+ * edge fade): a saved set that still holds one is read without it, and
+ * MAP_STATE loses it at the start and with each write (dropRetiredMapKeys). */
+var RETIRED_MAP_KEYS = ['hud_edge_fade_px'];
 /* The map settings' ranges (the commands' below); hud_width_pct is 0 or
  * within its range, any other key not here 0 or 1. */
 var MAP_RANGES = { hud_width_pct: [20, HUD_MAX_PCT], hud_offset_x: [-800, 800], hud_offset_y: [-800, 800], hud_zoom_pct: [100, 250],
-    hud_edge_fade_px: [0, 60], hud_clear_x: [0, 799], hud_clear_y: [0, 479], hud_clear_w: [10, 800], hud_clear_h: [10, 480],
+    hud_clear_x: [0, 799], hud_clear_y: [0, 479], hud_clear_w: [10, 800], hud_clear_h: [10, 480],
     hud_near_m: [200, 2000] };
 /* The opt-in settings: the render reads this file (its features_file) over
  * its configuration. Not in LOCAL_CONF, which every release up to 0.10.7
@@ -336,16 +337,27 @@ function mapValueOk(k, v) {
  * it. */
 function moveMapSettings() {
     var local = readConf(LOCAL_CONF), state = readConf(MAP_STATE), move = {};
-    var found = MAP_KEYS.filter(function (k) { return k in local; });
+    var found = MAP_KEYS.concat(RETIRED_MAP_KEYS).filter(function (k) { return k in local; });
     if (!found.length) return;
-    found.forEach(function (k) { if (!(k in state) && mapValueOk(k, local[k])) move[k] = local[k]; });
+    found.forEach(function (k) { if (MAP_KEYS.indexOf(k) >= 0 && !(k in state) && mapValueOk(k, local[k])) move[k] = local[k]; });
     try {
-        if (Object.keys(move).length) rewriteConf(MAP_STATE, move, []);
-        rewriteConf(LOCAL_CONF, {}, MAP_KEYS);
+        if (Object.keys(move).length) rewriteConf(MAP_STATE, move, RETIRED_MAP_KEYS);
+        rewriteConf(LOCAL_CONF, {}, MAP_KEYS.concat(RETIRED_MAP_KEYS));
         log('map settings moved from ' + LOCAL_CONF + ' to ' + MAP_STATE + ': ' + found.map(function (k) {
             return k + (k in move ? ' ' + move[k] : ' dropped');
         }).join(', '));
     } catch (e) { log('moving the map settings out of ' + LOCAL_CONF + ' failed: ' + e.message); }
+}
+
+/* RETIRED_MAP_KEYS out of MAP_STATE, its other lines kept: the render leaves
+ * a key it does not know out with a warning at each start. */
+function dropRetiredMapKeys() {
+    var state = readConf(MAP_STATE), found = RETIRED_MAP_KEYS.filter(function (k) { return k in state; });
+    if (!found.length) return;
+    try {
+        rewriteConf(MAP_STATE, {}, RETIRED_MAP_KEYS);
+        log('map settings no longer used dropped from ' + MAP_STATE + ': ' + found.join(', '));
+    } catch (e) { log('dropping ' + found.join(', ') + ' from ' + MAP_STATE + ' failed: ' + e.message); }
 }
 
 /* Moves any of FEATURE_KEYS found in LOCAL_CONF into FEATURES, a valid
@@ -414,7 +426,7 @@ function flushMapSettings() {
     var keys = Object.keys(m.settings);
     var whats = m.asked.map(function (a) { return a.what; }).filter(function (w, i, all) { return w && all.indexOf(w) === i; }).join(', ');
     if (m.profiles) try { saveFile(PROFILES_FILE, profilesText(profiles)); } catch (e) { err = e; log('saving the driver profiles failed: ' + e.message); }
-    if (!err && keys.length) try { rewriteConf(MAP_STATE, m.settings, []); } catch (e) { err = e; log('saving ' + (whats || 'the map settings') + ' failed: ' + e.message); }
+    if (!err && keys.length) try { rewriteConf(MAP_STATE, m.settings, RETIRED_MAP_KEYS); } catch (e) { err = e; log('saving ' + (whats || 'the map settings') + ' failed: ' + e.message); }
     if (!err && keys.length) log(whats + ': ' + keys.map(function (k) { return k + ' ' + m.settings[k]; }).join(', ') + ' (saved for the next start)');
     if (err) saveLater(m.settings, m.profiles);
     else {
@@ -460,7 +472,7 @@ var PROFILES_FILE = path.join(STATE_DIR, 'profiles.json');
 var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
 var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 100, hud_offset_x: 0, hud_offset_y: 40, hud_keep_shown: 0, hud_near_turn: 0,
-    hud_zoom_pct: 100, hud_edge_fade_px: 30, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90,
+    hud_zoom_pct: 100, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90,
     hud_near_m: 1000 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
@@ -476,7 +488,8 @@ function profilesKept(p) { return profilesInUse(p) || !!p.shared; }
 /* The settings in effect as PROFILES_FILE keeps them. */
 function profileEntry(p) { return p.active ? p.own[p.active] : p.shared; }
 /* Settings as PROFILES_FILE holds them, or null when any key is missing or
- * out of range; one of LATER_MAP_KEYS missing (a set saved before it) is its default. */
+ * out of range; one of LATER_MAP_KEYS missing (a set saved before it) is its default.
+ * Any other key (one of RETIRED_MAP_KEYS a set saved earlier holds) is left out. */
 function profileSettings(o) {
     if (!o || typeof o !== 'object') return null;
     var s = {};
@@ -530,7 +543,7 @@ function loadProfiles() {
     var want = profileEntry(profiles);
     if (want && !sameSettings(want, mapSettingsNow())) {
         try {
-            rewriteConf(MAP_STATE, want, []);
+            rewriteConf(MAP_STATE, want, RETIRED_MAP_KEYS);
             restored = true;
             log('driver profiles: the map settings of ' + (profiles.active ? 'driver profile ' + profileTag(profiles.active) : 'the shared settings') +
                 ' written again from ' + PROFILES_FILE);
@@ -1902,14 +1915,6 @@ function handle(line, sock) {
         saveMapSettings(sock, 'hud-zoom-reply', { hud_zoom_pct: zoom }, 'the HUD map zoom');
         return;
     }
-    if (msg.cmd === 'hud-fade') {
-        if (!mapNumberOk('hud_edge_fade_px', msg.px)) {
-            reply(sock, { ev: 'hud-fade-reply', ok: false, reason: 'the HUD edge fade must be a whole number from 0 to 60 px' });
-            return;
-        }
-        saveMapSettings(sock, 'hud-fade-reply', { hud_edge_fade_px: msg.px }, 'the HUD map edge fade');
-        return;
-    }
     if (msg.cmd === 'hud-clear') {
         if (msg.on !== 0 && msg.on !== 1) { reply(sock, { ev: 'hud-clear-reply', ok: false, reason: 'on must be 0 or 1' }); return; }
         saveMapSettings(sock, 'hud-clear-reply', { hud_clear: msg.on }, 'the HUD map cleared behind the speed');
@@ -2330,6 +2335,7 @@ function main() {
     ensureDir(dir);
     moveFeatures();
     moveMapSettings();
+    dropRetiredMapKeys();
     loadProfiles();
     try { if (fs.lstatSync(SOCK)) fs.unlinkSync(SOCK); } catch (e) {}
 

@@ -446,7 +446,7 @@ async function main() {
         const old = got.filter((m) => m.cmd === 'hud').pop();
         assert(!('hud_near_turn' in old) && !('hud_zoom_pct' in old), 'a patchd before them: not told');
     });
-    await check('ProfileSync: the edge fade and the clear behind the speed go to the render with the other HUD settings', async () => {
+    await check('ProfileSync: the clear behind the speed goes to the render with the other HUD settings; an earlier patchd\'s edge fade does not', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
             sender: { send: (msgs) => got.push.apply(got, msgs) } });
@@ -454,7 +454,7 @@ async function main() {
             hud_clear_w: 220, hud_clear_h: 90 }));
         const hud = got.filter((m) => m.cmd === 'hud').pop();
         assert.strictEqual(hud.hud_width_pct, '135');
-        assert.strictEqual(hud.hud_edge_fade_px, '0');
+        assert(!('hud_edge_fade_px' in hud), 'the edge fade an earlier patchd sends: not told');
         assert.strictEqual(hud.hud_clear, '1');
         assert.deepStrictEqual([hud.hud_clear_x, hud.hud_clear_y, hud.hud_clear_w, hud.hud_clear_h], ['110', '320', '220', '90']);
         got.length = 0;
@@ -465,7 +465,7 @@ async function main() {
         got.length = 0;
         s._toRender(settings(1, 1, 40, 0, 0, 0));
         const old = got.filter((m) => m.cmd === 'hud').pop();
-        assert(['hud_edge_fade_px', 'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].every((k) => !(k in old)),
+        assert(['hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'].every((k) => !(k in old)),
             'a patchd before them: not told');
     });
     await check('ProfileSync: how far before a turn the HUD map shows goes to the render with the other HUD settings', async () => {

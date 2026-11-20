@@ -105,8 +105,6 @@
     "Waiting for a turn": "Warten auf Abbiegehinweis",
     "No turn data": "Keine Abbiegedaten",
     "Arrival time on the cluster": "Ankunftszeit im Kombi",
-    "Fade map edges: {0}": "Kartenränder ausblenden: {0}",
-    "{0} px": "{0} px",
     "Hide map behind BMW's speed": "Karte hinter BMW-Tempo ausblenden",
     "Speed area: {0}": "Tempobereich: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} bei {2},{3}",

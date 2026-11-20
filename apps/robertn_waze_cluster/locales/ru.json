@@ -105,8 +105,6 @@
     "Waiting for a turn": "Ожидание поворота",
     "No turn data": "Нет данных о поворотах",
     "Arrival time on the cluster": "Время прибытия на приборах",
-    "Fade map edges: {0}": "Затухание краёв карты: {0}",
-    "{0} px": "{0} px",
     "Hide map behind BMW's speed": "Скрыть карту под скоростью BMW",
     "Speed area: {0}": "Поле скорости: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} в {2},{3}",

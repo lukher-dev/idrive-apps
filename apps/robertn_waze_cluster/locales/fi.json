@@ -105,8 +105,6 @@
     "Waiting for a turn": "Odotetaan käännöstä",
     "No turn data": "Ei käännöstietoja",
     "Arrival time on the cluster": "Saapumisaika mittaristossa",
-    "Fade map edges: {0}": "Kartan reunojen häivytys: {0}",
-    "{0} px": "{0} px",
     "Hide map behind BMW's speed": "Piilota kartta BMW:n nopeuden alta",
     "Speed area: {0}": "Nopeusalue: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} kohdassa {2},{3}",

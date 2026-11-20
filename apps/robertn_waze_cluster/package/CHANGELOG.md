@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+The HUD map's edge fade is gone, and its corners are rounded again.
+
 ## 0.6.19
 
 Every HUD row now says what it changes: Map size, Map zoom, Fade map edges,

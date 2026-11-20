@@ -12,7 +12,6 @@
  *                  {"cmd":"hud","hud_near_m":"200".."2000"}  how many metres before a turn the app shows it
  *                   (the app gates on it; the tool keeps it and reports it)
  *                  {"cmd":"hud","hud_zoom_pct":"100".."250"}  the HUD map's zoom
- *                  {"cmd":"hud","hud_edge_fade_px":"0".."60"}  its edges faded to black over that many px (0: none)
  *                  {"cmd":"hud","hud_clear":"0"|"1","hud_clear_x":"0".."799","hud_clear_y":"0".."479",
  *                   "hud_clear_w":"10".."800","hud_clear_h":"10".."480"}  the speed patch: the map black in
  *                   that rectangle of the HUD's scene, or not (any of them; those not sent stay)
@@ -22,8 +21,8 @@
  *                   "cluster":0|1,"hud":0|1,"hud_state":"off"|"disabled"|"turn_wait"|"idle"|"starting"|"showing"|...,
  *                   "hud_width_pct":...,"hud_x":...,"hud_y":...,"hud_keep_shown":0|1,
  *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...,
- *                   "hud_edge_fade_px":...,"hud_clear":0|1,"hud_clear_x":...,"hud_clear_y":...,
- *                   "hud_clear_w":...,"hud_clear_h":...,"hud_near_m":...}
+ *                   "hud_clear":0|1,"hud_clear_x":...,"hud_clear_y":...,"hud_clear_w":...,
+ *                   "hud_clear_h":...,"hud_near_m":...}
  *                  {"ev":"log","line":...}
  *
  * One connection is the owner; a second one is told "busy" and closed. */

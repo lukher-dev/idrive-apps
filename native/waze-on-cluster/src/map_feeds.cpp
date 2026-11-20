@@ -145,13 +145,6 @@ void MapFeeds::set_hud_zoom(unsigned pct)
         hud_->set_hud_zoom(pct);
 }
 
-void MapFeeds::set_hud_edge_fade(unsigned px)
-{
-    base_.hud_edge_fade_px = px;
-    if (hud_)
-        hud_->set_hud_edge_fade(px);
-}
-
 void MapFeeds::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h)
 {
     base_.hud_clear = on;
@@ -267,7 +260,6 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     s.hud_near_m = base_.hud_near_m;
     s.hud_zoom_pct = base_.hud_zoom_pct;
     s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
-    s.hud_edge_fade_px = base_.hud_edge_fade_px;
     s.hud_clear = base_.hud_clear;
     s.hud_clear_x = base_.hud_clear_x;
     s.hud_clear_y = base_.hud_clear_y;

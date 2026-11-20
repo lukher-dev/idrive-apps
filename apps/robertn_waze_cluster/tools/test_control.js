@@ -35,8 +35,8 @@
  * the HUD, both or Off, from the cluster and from both, the HUD's size and
  * place refused while Off) and the HUD's size slider, place, Keep HUD map
  * over BMW's pop-ups and guard; the near-turn distance slider (metres
- * below 1 km, kilometres from it, in the language's decimals); the HUD
- * map's edge fade slider; Hide map behind BMW's speed and the speed
+ * below 1 km, kilometres from it, in the language's decimals); Hide map
+ * behind BMW's speed and the speed
  * area's place and size, held inside the HUD; an asked HUD size the render does not show goes after a moment,
  * on a failed save and on a render reconnect. CarPlay Wi-Fi: the band patchd reports, 5 GHz or 2.4 GHz, the
  * line under it on 2.4 GHz only, nothing while the band is unknown, from a
@@ -529,40 +529,6 @@ test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom 
     assert.deepStrictEqual([c.hudZoomText(), c.hudZoomStep()], ['Map zoom: —', null], 'nothing known while closed');
 });
 
-test('the HUD map\'s edge fade as a slider: 10 px steps from Off to 60 px; greyed while the HUD is off and for a render without it',
-    async (render, patch) => {
-        const c = control();
-        c.open();
-        await until('connected', () => c.connectedRender() && c.connectedPatch());
-        render.stream(true);
-        await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
-        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep(), c.canChangeHudEdgeFade()], ['Fade map edges: 30 px', 3, false],
-            '30 px by default, greyed while the HUD is off');
-        c.setHudEdgeFadeStep(4);
-        assert.strictEqual(render.received.filter((m) => m.hud_edge_fade_px !== undefined).length, 0, 'nothing sent while greyed');
-        render.hud = 1;
-        render.announce(render.state, render.reason);
-        await until('on', () => c.canChangeHudEdgeFade());
-        c.setHudEdgeFadeStep(5);
-        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep()], ['Fade map edges: 50 px', 5], 'shown at once');
-        await until('50 px', () => render.hudFade === 50 && c.renderStatus.hud_edge_fade_px === 50 && patch.map.hud_edge_fade_px === 50);
-        c.setHudEdgeFadeStep(0);
-        await until('off', () => c.renderStatus.hud_edge_fade_px === 0 && c.hudEdgeFadeText() === 'Fade map edges: 0 px' && c.hudEdgeFadeStep() === 0);
-        c.setHudEdgeFadeStep(6);
-        await until('60 px', () => c.renderStatus.hud_edge_fade_px === 60 && c.hudEdgeFadeStep() === 6);
-        const sent = render.received.length;
-        [-1, 7, 2.5, '3', 6].forEach((step) => c.setHudEdgeFadeStep(step));
-        assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
-        assert.deepStrictEqual(render.received.filter((m) => m.hud_edge_fade_px !== undefined),
-            [{ cmd: 'hud', hud_edge_fade_px: '50' }, { cmd: 'hud', hud_edge_fade_px: '0' }, { cmd: 'hud', hud_edge_fade_px: '60' }]);
-        await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-fade').map((m) => m.px).join() === '50,0,60');
-        render.hudFade = null;
-        render.announce(render.state, render.reason);
-        await until('a render without it', () => c.hudEdgeFadeStep() === null && !c.canChangeHudEdgeFade() && c.hudEdgeFadeText() === 'Fade map edges: —');
-        c.close();
-        assert.deepStrictEqual([c.hudEdgeFadeText(), c.hudEdgeFadeStep()], ['Fade map edges: —', null], 'nothing known while closed');
-    });
-
 test('the near-turn distance as a slider: 200 m steps from 200 m to 2 km, 1 km by default, metres below 1 km and kilometres from it; ' +
     'greyed while the HUD is off, while near turns is off and for a render without it', async (render, patch) => {
     const c = control();
@@ -622,19 +588,6 @@ test('an asked near-turn distance the render does not show: the render\'s own af
     c.setHudNearDistStep(0);
     assert.strictEqual(c.hudNearDistText(), 'Show from 200 m before a turn', 'shown at once');
     await until('the render\'s own again', () => c.hudNearDistText() === 'Show from 1 km before a turn');
-    c.close();
-});
-
-test('an asked edge fade the render does not show: the render\'s own after a moment', async (render) => {
-    render.hud = 1;
-    const c = control();
-    c.open();
-    await until('on', () => c.renderStatus && c.canChangeHudEdgeFade());
-    const take = render._onCommand.bind(render);
-    render._onCommand = (msg) => (msg.cmd === 'hud' && msg.hud_edge_fade_px !== undefined ? render.received.push(msg) : take(msg));
-    c.setHudEdgeFadeStep(1);
-    assert.strictEqual(c.hudEdgeFadeText(), 'Fade map edges: 10 px', 'shown at once');
-    await until('the render\'s own again', () => c.hudEdgeFadeText() === 'Fade map edges: 30 px');
     c.close();
 });
 
@@ -1122,11 +1075,11 @@ test('no restart button when carplay restarts at once (never deferred)', async (
     c.close();
 });
 
-test('a refused save of near turns, the zoom, the edge fade or the speed patch is logged, as the other HUD settings', async () => {
+test('a refused save of near turns, the zoom or the speed patch is logged, as the other HUD settings', async () => {
     const lines = [];
     const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, pendingPath: PENDING, retryMs: 100,
         log: { info: (m) => lines.push(m), warn: (m) => lines.push(m) } });
-    const cmds = ['hud-keep-shown', 'hud-near-turn', 'hud-zoom', 'hud-fade', 'hud-clear', 'hud-clear-rect'];
+    const cmds = ['hud-keep-shown', 'hud-near-turn', 'hud-zoom', 'hud-clear', 'hud-clear-rect'];
     cmds.forEach((cmd) => c._onPatch({ ev: `${cmd}-reply`, ok: false, reason: `no ${cmd}` }));
     assert.deepStrictEqual(lines.filter((m) => /did not save/.test(m)), cmds.map((cmd) => `patchd did not save the setting: no ${cmd}`));
 });

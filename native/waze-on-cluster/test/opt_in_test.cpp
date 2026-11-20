@@ -94,9 +94,9 @@ int main()
     ok("shipped: the opt-in keys off", shipped.str("hosted_vpp_scale") == "0" && shipped.str("always_packed") == "0");
     ok("shipped: the HUD zoom's centre the picture's middle", shipped.str("hud_crop_cx_pm") == "500" &&
                                                                shipped.str("hud_crop_cy_pm") == "500");
-    ok("shipped: the HUD map's edges faded over 30 px, black behind the speed readout (250x90 at 110,320)",
-       shipped.str("hud_edge_fade_px") == "30" && shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" &&
-           shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
+    ok("shipped: the HUD map's corners rounded, black behind the speed readout (250x90 at 110,320), no edge fade",
+       shipped.str("hud_round_corners") == "1" && !sets("waze-on-cluster.conf", "hud_edge_fade_px") &&
+           shipped.str("hud_clear") == "1" && shipped.str("hud_clear_x") == "110" && shipped.str("hud_clear_y") == "320" && shipped.str("hud_clear_w") == "250" && shipped.str("hud_clear_h") == "90");
     ok("shipped: no local_conf, no target", !sets("waze-on-cluster.conf", "local_conf") && !sets("waze-on-cluster.conf", "target"));
     ok("shipped: the HUD map near turns shown from 1000 m before the turn", shipped.str("hud_near_m") == "1000");
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);

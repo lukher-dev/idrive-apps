@@ -107,7 +107,7 @@ both or neither (**Off**), at once. On the HUD the frames are scaled on the
 head unit to the size shown (**Map size**, 30 % to 135 % of the HUD's width, 100 %
 by default, or Standard, about 57 %), moved by **Map position** (40 px down by
 default, which on a G30 takes the phone's arrival-time card below what the
-HUD shows), and a
+HUD shows), the corners rounded and a
 night map's background made black, which the HUD shows as nothing. Above
 100 % the map keeps its shape and its sides are cut by the HUD's edges; at
 135 % it fills the HUD's height. There left and right **Map position** slides
@@ -139,14 +139,12 @@ use. The default, 100 %, shows the whole picture, the phone's turn card
 and arrival-time card with it. `make hud-preview` builds a host tool that runs the same crop and
 scaling on a 1088x480 BMP, to choose the centre.
 
-**Fade map edges** (`hud_edge_fade_px`, 0 to 60 px, 30 by default) fades the HUD
-map's four edges to black over that many pixels, so the map has no hard
-square edge. **Hide map behind BMW's speed** (`hud_clear`, on by default) makes the
+**Hide map behind BMW's speed** (`hud_clear`, on by default) makes the
 map black in a rectangle of the HUD (`hud_clear_x`, `hud_clear_y`,
 `hud_clear_w`, `hud_clear_h`, HUD pixels from its top left, 250x90 at
 110,320 by default), feathered at its edges, so BMW's speed readout stays
 readable over the map. The rectangle belongs to the HUD, not the map: moving
-or resizing the map leaves it in place. Both need `hud_scale_down`.
+or resizing the map leaves it in place. It needs `hud_scale_down`.
 
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md

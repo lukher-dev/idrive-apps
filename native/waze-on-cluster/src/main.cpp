@@ -93,7 +93,7 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_keep_shown\":" + (s.hud_keep_shown ? "1" : "0") +
            ",\"hud_near_turn\":" + (s.hud_near_turn ? "1" : "0") + ",\"hud_gate\":" + (s.hud_gate ? "1" : "0") +
            ",\"hud_zoom_pct\":" + std::to_string(s.hud_zoom_pct) + ",\"hud_zoom_used\":" + std::to_string(s.hud_zoom_used) +
-           ",\"hud_edge_fade_px\":" + std::to_string(s.hud_edge_fade_px) + ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
+           ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
            ",\"hud_clear_x\":" + std::to_string(s.hud_clear_x) + ",\"hud_clear_y\":" + std::to_string(s.hud_clear_y) +
            ",\"hud_clear_w\":" + std::to_string(s.hud_clear_w) + ",\"hud_clear_h\":" + std::to_string(s.hud_clear_h) +
            ",\"hud_near_m\":" + std::to_string(s.hud_near_m) +
@@ -117,7 +117,7 @@ public:
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
         auto near_turn = msg.find("hud_near_turn"), near = msg.find("near"), zoom = msg.find("hud_zoom_pct");
-        auto fade = msg.find("hud_edge_fade_px"), clear = msg.find("hud_clear"), near_m = msg.find("hud_near_m");
+        auto clear = msg.find("hud_clear"), near_m = msg.find("hud_near_m");
         auto cx = msg.find("hud_clear_x"), cy = msg.find("hud_clear_y"), cw = msg.find("hud_clear_w"), ch = msg.find("hud_clear_h");
         if (cmd == "guide" && hide != msg.end() && guide_->set(hide->second)) {
             log_info("guide: BMW's turn box %s while the map shows", guide_->hide() ? "hidden" : "shown");
@@ -129,7 +129,7 @@ public:
             feeds_->set_turn_near(near->second == "1", now_ms());
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
                                     keep != msg.end() || near_turn != msg.end() || zoom != msg.end() ||
-                                    fade != msg.end() || clear != msg.end() || cx != msg.end() || cy != msg.end() ||
+                                    clear != msg.end() || cx != msg.end() || cy != msg.end() ||
                                     cw != msg.end() || ch != msg.end() || near_m != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
@@ -187,14 +187,6 @@ public:
                     feeds_->set_hud_zoom((unsigned)v);
                 else
                     log_warn("hud: hud_zoom_pct must be 100-250, not %s", zoom->second.c_str());
-            }
-            /* and its edges' fade */
-            if (fade != msg.end()) {
-                long v = 0;
-                if (whole(fade->second, 0, 60, &v))
-                    feeds_->set_hud_edge_fade((unsigned)v);
-                else
-                    log_warn("hud: hud_edge_fade_px must be 0-60, not %s", fade->second.c_str());
             }
             /* and its speed patch: on or off and where, in the HUD scene's pixels; those not sent stay */
             if (clear != msg.end() || cx != msg.end() || cy != msg.end() || cw != msg.end() || ch != msg.end()) {
@@ -276,12 +268,12 @@ int serve(Config cfg)
         {"stall_ms", 1000, 600000},
         {"cluster", 0, 1},          {"hud", 0, 1},                   {"hud_fps", 1, 30},
         {"hud_width_pct", 0, 135},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
-        {"hud_scale_down", 0, 1},   {"hud_black_background", 0, 1},
+        {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_near_turn", 0, 1},       {"hud_near_expire_ms", 10000, 600000},
         {"hud_near_m", 200, 2000},
         {"hud_zoom_pct", 100, 250}, {"hud_crop_cx_pm", 0, 1000},     {"hud_crop_cy_pm", 0, 1000},
-        {"hud_edge_fade_px", 0, 60}, {"hud_clear", 0, 1},            {"hud_clear_x", 0, 799},
-        {"hud_clear_y", 0, 479},    {"hud_clear_w", 10, 800},        {"hud_clear_h", 10, 480},
+        {"hud_clear", 0, 1},        {"hud_clear_x", 0, 799},         {"hud_clear_y", 0, 479},
+        {"hud_clear_w", 10, 800},   {"hud_clear_h", 10, 480},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -332,8 +324,8 @@ int serve(Config cfg)
     fc.hud_crop_cx_pm = (unsigned)cfg.num("hud_crop_cx_pm");
     fc.hud_crop_cy_pm = (unsigned)cfg.num("hud_crop_cy_pm");
     fc.scale_down = cfg.num("hud_scale_down") != 0;
+    fc.hud_round_corners = cfg.num("hud_round_corners") != 0;
     fc.hud_black_background = cfg.num("hud_black_background") != 0;
-    fc.hud_edge_fade_px = (unsigned)cfg.num("hud_edge_fade_px");
     fc.hud_clear = cfg.num("hud_clear") != 0;
     fc.hud_clear_x = (unsigned)cfg.num("hud_clear_x");
     fc.hud_clear_y = (unsigned)cfg.num("hud_clear_y");
@@ -592,8 +584,8 @@ void define_keys(Config *cfg)
     cfg->define("hud_crop_cx_pm", "500");
     cfg->define("hud_crop_cy_pm", "500");
     cfg->define("hud_scale_down", "1");
+    cfg->define("hud_round_corners", "1");
     cfg->define("hud_black_background", "1");
-    cfg->define("hud_edge_fade_px", "30");
     cfg->define("hud_clear", "1");
     cfg->define("hud_clear_x", "110");
     cfg->define("hud_clear_y", "320");
