@@ -97,6 +97,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音频可能中断。请在 iPhone 上关闭再打开无线局域网。",
     "Own settings for this driver": "此驾驶员的专属设置",
     "Driver profile can't be read": "无法读取驾驶员档案",
-    "Keep HUD map over BMW's pop-ups": "HUD 地图保持在 BMW 弹窗之上"
+    "Keep HUD map over BMW's pop-ups": "HUD 地图保持在 BMW 弹窗之上",
+    "Show HUD map only near turns": "仅在转弯前于 HUD 显示地图",
+    "Show from {0} before a turn": "转弯前 {0} 开始显示",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0}.{1} km",
+    "Waiting for a turn": "等待转弯",
+    "No turn data": "无转弯数据"
   }
 }

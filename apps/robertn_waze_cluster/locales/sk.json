@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk sa môže prerušovať. Na iPhone vypnite a zapnite Wi-Fi.",
     "Own settings for this driver": "Vlastné nastavenia pre tohto vodiča",
     "Driver profile can't be read": "Profil vodiča sa nedá načítať",
-    "Keep HUD map over BMW's pop-ups": "Ponechať mapu na HUD nad kontextovými oknami BMW"
+    "Keep HUD map over BMW's pop-ups": "Ponechať mapu na HUD nad kontextovými oknami BMW",
+    "Show HUD map only near turns": "Mapa na HUD len pri odbočkách",
+    "Show from {0} before a turn": "Zobraziť {0} pred odbočkou",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Čaká sa na odbočku",
+    "No turn data": "Žiadne údaje o odbočkách"
   }
 }

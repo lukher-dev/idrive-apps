@@ -20,7 +20,8 @@
  * the shared ones, in effect and saves them for the render's next start;
  * when the render is to follow, this moves it to them: through the page's
  * own render connection while the page is open (it owns the render's
- * control socket), else through a short connection of its own. setOwn(on)
+ * control socket), else through a short connection (render_sender.js, the
+ * one it shares with the turn watch). setOwn(on)
  * asks patchd {"cmd":"profile-own","id","on"} the same way, for the Own
  * settings for this driver checkbox; refused, the profile is told again.
  *
@@ -51,6 +52,7 @@
 const EventEmitter = require('events');
 const net = require('net');
 const { RENDER_PATH, PATCH_PATH, renderCommands } = require('./waze_cluster_control.js');
+const { RenderSender } = require('./render_sender.js');
 
 const POLL_MS = 1000;
 /* a read that failed: read again after this */
@@ -67,8 +69,6 @@ const LOAD_TRIES = 4;
 /* reads in a row that fail or give no profile id before the profile counts
  * as unreadable */
 const UNREADABLE_READS = 3;
-/* how long a short render connection stays for its commands */
-const RENDER_HOLD_MS = 800;
 const IFACE = 'de.bmw.infotainment.personalization.SessionManager';
 const INSTANCE = 'de.bmw.infotainment.personalization.SessionManager';
 const FIELD = 'currentUserAccountReference';
@@ -280,6 +280,9 @@ class ProfileSync extends EventEmitter {
         this._read = o.readProfile;
         this._patchPath = o.patchPath || PATCH_PATH;
         this._renderPath = o.renderPath || RENDER_PATH;
+        /* the render's socket has one owner: the page's link while it is up, else a short connection */
+        this._sender = o.sender || new RenderSender({ path: this._renderPath, link: this._control ? this._control.render : null,
+            log: this._log });
         this._pollMs = o.pollMs || POLL_MS;
         this._readRetryMs = o.readRetryMs || READ_RETRY_MS;
         this._replyMs = o.replyMs || REPLY_MS;
@@ -534,8 +537,8 @@ class ProfileSync extends EventEmitter {
     /* The render to the settings stored for the profile in effect: through
      * the page's render connection while the page is open, where it shows
      * others (unless the page wrote one after asking), once it is up;
-     * else, when they changed, through a short connection. Resolves once
-     * the page's render shows them. */
+     * else, when they changed, through a short connection (render_sender.js).
+     * Resolves once the page's render shows them. */
     _toRender(s, changed, writes) {
         const c = this._control;
         if (c && c.isOpen()) {
@@ -544,16 +547,8 @@ class ProfileSync extends EventEmitter {
         if (!changed) {
             return undefined;
         }
-        const cmds = renderCommands(s);
-        /* the render down or owned by another: its next start reads the saved settings */
-        const sock = net.connect(this._renderPath);
-        const end = setTimeout(() => sock.destroy(), RENDER_HOLD_MS * 3);
-        sock.on('connect', () => {
-            cmds.forEach((m) => sock.write(JSON.stringify(m) + '\n'));
-            setTimeout(() => sock.end(), RENDER_HOLD_MS);
-        });
-        sock.on('error', () => {});
-        sock.on('close', () => clearTimeout(end));
+        /* the render down: its next start reads the saved settings */
+        this._sender.send(renderCommands(s));
         return undefined;
     }
 }

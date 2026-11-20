@@ -70,6 +70,15 @@
       "broadcasts": [
         "currentUserOnChange"
       ]
+    },
+    "de.bmw.infotainment.navigation.guiding.GuidanceEventList": {
+      "instances": [
+        "Main_Instance"
+      ],
+      "methods": [
+        "getViewConfig",
+        "queryContent"
+      ]
     }
   },
   "services": {

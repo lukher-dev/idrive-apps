@@ -34,7 +34,10 @@
  * greyed; Keep HUD map over BMW's pop-ups, a checkbox under HUD map,
  * unticked by default, each press one command to the render and one save,
  * ticked as the render reports, greyed with the size slider and for a render
- * without the setting; Own settings for this driver, a checkbox under Show on, greyed
+ * without the setting; Show HUD map only near turns and under it the Show
+ * from ... before a turn slider, a 200 m step a turn from 200 m to 2 km,
+ * 1 km by default, saved like the size, taken by the turn watch at once,
+ * greyed while the map shows always; Own settings for this driver, a checkbox under Show on, greyed
  * while no driver profile is detected, ticked for a profile with its own
  * map settings, a switch of profile moving the render to that profile's
  * (or the shared) settings, unticked the shared ones back; no label greyed (the HMI's labels have no setEnabled, its
@@ -60,11 +63,12 @@ const fs = require('fs');
 const net = require('net');
 const path = require('path');
 const { FakeRender, FakePatch, FakeLogs, RENDER_PAGE, RENDER_FPS } = require('./fakes.js');
-const { RENDER_PATH, PATCH_PATH, PENDING_PATH, SIZE, SAFE, HUD_SIZE_STEPS } = require('../src/waze_cluster_control.js');
+const { RENDER_PATH, PATCH_PATH, PENDING_PATH, SIZE, SAFE, HUD_SIZE_STEPS, HUD_NEAR_STEPS } = require('../src/waze_cluster_control.js');
 const { LOGS_PATH } = require('../src/logs_control.js');
 
 const MANIFEST = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'mgu-app.json'), 'utf8'));
 const PKG = path.join(__dirname, '..', MANIFEST.tree);
+const STATUS_FILE = `/tmp/woc-page-status-${process.pid}.json`;
 const UI_DIR = path.join(PKG, 'rhmiData', 'uiDescriptions', 'ID7');
 const UI = JSON.parse(fs.readFileSync(path.join(UI_DIR, 'uiDescription.json'), 'utf8'));
 const XML = fs.readFileSync(path.join(UI_DIR, 'application.xml'), 'utf8');
@@ -241,8 +245,20 @@ const hmiContexts = [];
 let displayLanguage = null;
 let sessionUser = '';
 const GUEST = 'de.bmw.infotainment.personalization.UserAccountManager.guest';
+/* GuidanceEventList: the reply queryContent gives (guidance), a build that fails (guidanceFails), the queries made. */
+let guidance = { viewContent: [] }, guidanceFails = false, guidanceQueries = 0;
+const turnReply = (metres) => ({ viewContent: [{ eventsInView: [{ intersection: { formattedDistance: { distance: String(metres), unit: 'METER' } } }] }] });
 const someipBuilders = {
-    buildTypedProxy: (iface, instance) => Promise.resolve(iface === 'de.bmw.infotainment.personalization.SessionManager' ? {
+    buildTypedProxy: (iface, instance) => (iface === 'de.bmw.infotainment.navigation.guiding.GuidanceEventList' ? (guidanceFails
+        ? Promise.reject(new Error('no navigation')) : Promise.resolve({
+            init: () => Promise.resolve(),
+            waitUntilAvailable: () => Promise.resolve(),
+            shutdown() {},
+            _someIpProxy: {
+                callMethod: (name) => (name === 'getViewConfig' ? Promise.resolve({ viewConfig: { viewport: {} } })
+                    : (guidanceQueries++, Promise.resolve(guidance)))
+            }
+        })) : Promise.resolve(iface === 'de.bmw.infotainment.personalization.SessionManager' ? {
         init: () => Promise.resolve(),
         waitUntilAvailable: () => Promise.resolve(),
         currentUserAccountReference: { getValue: () => Promise.resolve(sessionUser) }
@@ -253,7 +269,7 @@ const someipBuilders = {
             subscribe: (cb) => { displayLanguage = cb; hmiContexts.push(`${iface} ${instance}`); return Promise.resolve(); },
             getValue: () => Promise.resolve('ENGLISCH__UK')
         }
-    })
+    }))
 };
 
 const FAKE_MODULES = {
@@ -286,7 +302,8 @@ async function main() {
     assert.deepStrictEqual(main.map(([id, type, name, text]) => (type === 'title' ? name : `${name} ${text}`)), [
         'wocTitle',
         'wocHeadGeneral General', 'wocShowOn Show on: Cluster', 'wocProfile Own settings for this driver', 'wocProfileStatus ', 'wocMap Cluster map: Off', "wocGuide Hide BMW's turn box", 'wocLogs Logs',
-        'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudSize Size: \u2014', 'wocHudPos Position: \u2014', 'wocHudLeft Move left',
+        'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudNearTurn Show HUD map only near turns',
+        'wocHudNearDist Show from \u2014 before a turn', 'wocHudSize Size: \u2014', 'wocHudPos Position: \u2014', 'wocHudLeft Move left',
         'wocHudRight Move right', 'wocHudUp Move up', 'wocHudDown Move down', 'wocHudCentre Centre',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch', 'wocWifi ', 'wocWifiHint ',
         'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch',
@@ -307,8 +324,13 @@ async function main() {
         .find((id) => components[id].name === n)].properties.Focusable.value]), Array(4).fill(['0', 0]), 'the section headers take no focus');
     assert.strictEqual(main.find(([, , name]) => focus[name] === '3')[2], 'wocShowOn', 'the first row the controller stops on: Show on');
     assert(!main.some(([, , name]) => /^wocRow|^wocSetup|^wocCapture/.test(name)), 'no log rows, setup line or capture on the main page');
-    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep'].map((n) => widgets[n]), Array(4).fill('LT_CheckBox_1Row'),
-        'the on/off settings are checkboxes');
+    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep', 'wocHudNearTurn'].map((n) => widgets[n]),
+        Array(5).fill('LT_CheckBox_1Row'), 'the on/off settings are checkboxes');
+    assert.strictEqual(widgets.wocHudNearDist, 'LT_Slider_LeftJustified_Fill_Steps', 'the near-turn distance a slider like the size');
+    const nearDesc = Object.values(components).find((d) => d.name === 'wocHudNearDist');
+    assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => nearDesc.rows[0][k].value), [0, HUD_NEAR_STEPS, HUD_NEAR_STEPS],
+        'the near-turn distance: one step for each 200 m, 200 m to 2 km');
+    assert.strictEqual(HUD_NEAR_STEPS, 9);
     assert.deepStrictEqual([widgets.wocShowOn, widgets.wocHudSize], ['LT_DropDownMenu_1Row_2Col3070', 'LT_Slider_LeftJustified_Fill_Steps'],
         'where the map shows: a drop-down of four; the HUD\'s size: a slider');
     assert.deepStrictEqual(components['62'].rows.map((r) => r.ItemText.value), ['Cluster', 'HUD (experimental)', 'Cluster and HUD (experimental)', 'Off']);
@@ -353,12 +375,14 @@ async function main() {
         process.exit = (code) => { throw new Error(`process.exit(${code})`); };
         runSource();
         OnlineApp.instance._profiles._pollMs = 20;
+        OnlineApp.instance._turns._queryMs = 20;
+        OnlineApp.instance._statusFile = STATUS_FILE;
         const status = byName.wocStatus;
         await until('page shows the map', () => byName.wocMap.text === `Cluster map: Showing ${RENDER_PAGE} — ${RENDER_FPS}` && status.text === 'Status: Patched');
         assert(!logs.some((l) => /^error/.test(l)), logs.filter((l) => /^error/.test(l)).join('\n'));
         const bound = logs.filter((l) => l.startsWith('info: BIND OK: ')).map((l) => l.split(' ')[3]).sort();
         assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture', 'wocDisable', 'wocEnable',
-            'wocGuide', 'wocHudCentre', 'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
+            'wocGuide', 'wocHudCentre', 'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudNearTurn', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
             'wocRestart'],
             'bound buttons and checkbox');
         assert.strictEqual(byName.wocRestart.visible, false, 'restart button hidden while the map shows');
@@ -446,7 +470,8 @@ async function main() {
         /* ---- where the map shows, and the HUD ---- */
         const showOn = byName.wocShowOn;
         const size = byName.wocHudSize;
-        const hudRows = () => ['wocHudKeep', 'wocHudSize', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocHudDown'].map((n) => byName[n].enabled);
+        const hudRows = () => ['wocHudKeep', 'wocHudNearTurn', 'wocHudSize', 'wocHudLeft', 'wocHudRight', 'wocHudUp', 'wocHudDown']
+            .map((n) => byName[n].enabled);
         const own = byName.wocProfile;
         const sync = OnlineApp.instance._profiles;
         const mapWrites = () => patch.received.filter((m) => ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'].includes(m.cmd));
@@ -543,6 +568,85 @@ async function main() {
         render.hudKeep = 0;
         render.announce(render.state, render.reason);
         await until('enabled again', () => keep.enabled === true);
+        /* the HUD map only near turns, and how far before a turn */
+        const nearBox = byName.wocHudNearTurn, nearDist = byName.wocHudNearDist;
+        assert(nearBox.enabled === true && nearBox.selected === false && nearBox.text === 'Show HUD map only near turns', 'always by default');
+        assert(nearDist.enabled === false && nearDist.text === 'Show from 1 km before a turn' && nearDist.cells['0:Value'] === 4,
+            'the distance 1 km by default, greyed while the map shows always');
+        nearDist.turn(-1);
+        await until('a greyed distance turned: back where it was', () => nearDist.cells['0:Value'] === 4);
+        assert.strictEqual(guidanceQueries, 0, 'the turn list not read while always');
+        guidanceFails = true;
+        await sleep(450);
+        nearBox.press();
+        await until('near turns, no turn list: says so', () => render.hudNearTurn === 1 && nearBox.selected === true &&
+            patch.map.hud_near_turn === 1 && byName.wocHud.text === 'HUD map: No turn data');
+        guidanceFails = false;
+        guidance = turnReply(1500);
+        await sleep(450);
+        nearBox.press();
+        await until('always again', () => render.hudNearTurn === 0 && nearBox.selected === false && byName.wocHud.text === 'HUD map: Showing');
+        await sleep(450);
+        nearBox.press();
+        await until('near turns, the next turn far: waiting for a turn', () => render.hudNearTurn === 1 && guidanceQueries > 0 &&
+            byName.wocHud.text === 'HUD map: Waiting for a turn');
+        assert.strictEqual(nearDist.enabled, true, 'the distance enabled while only near turns');
+        render.received.length = 0;
+        nearDist.turn(-1);
+        nearDist.turn(-1);
+        nearDist.turn(-1);
+        await until('400 m: told to the render, saved', () => render.hudNearM === 400 && nearDist.text === 'Show from 400 m before a turn' &&
+            nearDist.cells['0:Value'] === 1 && patch.map.hud_near_m === 400);
+        assert.deepStrictEqual(render.received.filter((m) => m.hud_near_m !== undefined).map((m) => m.hud_near_m), ['800', '600', '400'],
+            'one command to the render a step');
+        await until('the watch at 400 m', () => OnlineApp.instance._turns._gate.showM === 400);
+        guidance = turnReply(600);
+        await sleep(150);
+        assert(render.turnNear === false && byName.wocHud.text === 'HUD map: Waiting for a turn', '600 m: not near at 400 m');
+        nearDist.turn(1);
+        nearDist.turn(1);
+        await until('800 m: the turn at 600 m near, told to the render, the HUD map shows', () => render.hudNearM === 800 &&
+            nearDist.text === 'Show from 800 m before a turn' && render.turnNear === true && byName.wocHud.text === 'HUD map: Showing');
+        nearDist.turn(1);
+        nearDist.turn(1);
+        nearDist.turn(1);
+        await until('1.4 km', () => render.hudNearM === 1400 && nearDist.text === 'Show from 1.4 km before a turn');
+        for (let i = 0; i < 3; i++) nearDist.turn(1);
+        await until('2 km at the top', () => render.hudNearM === 2000 && nearDist.text === 'Show from 2 km before a turn' && nearDist.cells['0:Value'] === 9);
+        nearDist.turn(1);
+        await sleep(100);
+        assert(render.hudNearM === 2000 && nearDist.cells['0:Value'] === 9, 'no step past 2 km');
+        guidance = turnReply(300);
+        render.received.length = 0;
+        render.dropClients();
+        await until('the render again: told at once that the turn is near', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
+        fs.writeFileSync(STATUS_FILE, JSON.stringify(render._status()));   /* the render's status file */
+        byName.ST_OnlineApps_WazeCluster.emit('visible', { visible: false });
+        await until('the page hidden', () => render._clients.size === 0);
+        await sleep(100);
+        assert.strictEqual(OnlineApp.instance._turns.status, 'available', 'the page hidden: the watch goes on, as the status file says');
+        render.received.length = 0;
+        OnlineApp.instance._turns.resend();
+        await until('the page hidden: still told, on a connection of its own', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
+        byName.ST_OnlineApps_WazeCluster.emit('visible', { visible: true });
+        await until('the page again', () => nearBox.selected === true && nearBox.enabled === true);
+        const gate = OnlineApp.instance._turns._gate;
+        OnlineApp.instance._control._onRender({ ev: 'status', state: 'error', target: null, page: null, reason: 'busy' });
+        await sleep(50);
+        assert(OnlineApp.instance._turns.status === 'available' && OnlineApp.instance._turns._gate === gate,
+            'the render answering busy: the watch and its gate go on, as the status file says');
+        render.announce(render.state, render.reason);
+        await until('the render\'s status again', () => nearBox.selected === true && nearBox.enabled === true);
+        await sleep(450);
+        nearBox.press();
+        await until('always again: the turn taken back', () => render.hudNearTurn === 0 && render.turnNear === false && nearBox.selected === false);
+        await until('the distance greyed again', () => nearDist.enabled === false && nearDist.text === 'Show from 2 km before a turn');
+        const queries = guidanceQueries;
+        await sleep(150);
+        assert.strictEqual(guidanceQueries, queries, 'the turn list not read once always again');
+        console.log('ok   only near turns: the turn list read while ticked with the HUD on, the near turn told to the render (again when it ' +
+            'reconnects, and with the page hidden), No turn data without the list; the distance a slider saved like the size, taken by ' +
+            'the turn watch at once and greyed while the map shows always');
         await sleep(450);
         showOn.pick(2);
         await until('both', () => render.cluster === 1 && showOn.shown() === 'Show on: Cluster and HUD (experimental)' &&
@@ -776,7 +880,7 @@ async function main() {
         Object.values(components).filter((d) => !/^(wocRestart|wocWifi|wocProfileStatus)/.test(d.name) && d.type !== 'title')
             .forEach((d) => assert.strictEqual(byName[d.name].visible, true, `${d.name} stays on the page`));
         ['wocEnable', 'wocDisable', 'wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard', 'wocGuide', 'wocShowOn', 'wocProfile', 'wocHudSize',
-            'wocHudLeft', 'wocHudCentre', 'wocHudKeep']
+            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudNearTurn', 'wocHudNearDist']
             .forEach((n) => assert.deepStrictEqual([...byName[n].enabledSeen].sort(), [false, true], `${n} greyed and enabled in place`));
         const valueRow = /^[A-Z][A-Za-z ]+: [A-Z0-9\u2014]/;
         ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudPos', 'wocRestartStatus']
@@ -894,7 +998,7 @@ async function main() {
     } finally {
         await render.close();
         await patch.close();
-        [RSOCK, PSOCK, PENDING, LSOCK].forEach((p) => { try { fs.unlinkSync(p); } catch (e) { /* gone */ } });
+        [RSOCK, PSOCK, PENDING, LSOCK, STATUS_FILE].forEach((p) => { try { fs.unlinkSync(p); } catch (e) { /* gone */ } });
     }
 }
 

@@ -15,10 +15,13 @@
  * checkbox, slider and position buttons are greyed until the driver profile
  * is settled (profile_sync.js), and the line under Own settings says when
  * it cannot be read. HUD: HUD map (the map
- * on the HUD), the Keep HUD map over BMW's pop-ups checkbox, the Size
- * slider, Position with Move left, Move right, Move up, Move down and
- * Centre; the checkbox, the slider and the position buttons are greyed
- * while the HUD is off or disabled after errors. CarPlay and Android Auto
+ * on the HUD), the Keep HUD map over BMW's pop-ups and Show HUD map only
+ * near turns checkboxes, the Show from ... before a turn slider (200 m to
+ * 2 km, the distance the turn watch opens at), the Size slider, Position
+ * with Move left, Move right, Move up, Move down and Centre; the
+ * checkboxes, the sliders and the position buttons are greyed
+ * while the HUD is off or disabled after errors, the distance slider also
+ * while the map shows always. CarPlay and Android Auto
  * have the same rows: Status, Patch, Remove patch; CarPlay adds CarPlay
  * Wi-Fi (the band, 5 GHz or 2.4 GHz) and, on 2.4 GHz, the line under it;
  * Android Auto adds Zoom with Zoom out and Zoom in, and the Hide phone's
@@ -69,6 +72,8 @@ const logging = require('oap-sdk/src/logging/logging');
 const someipBuilders = require('oap-sdk/src/someip/someipBuilders');
 const i18n = require('./i18n.js');
 const { WazeClusterControl, ZOOM_STEP, SHOWN_ON } = require('./waze_cluster_control.js');
+const { RenderSender } = require('./render_sender.js');
+const { TurnWatch } = require('./turn_watch.js');
 const { LogsControl, ROWS: LOGS_ROWS } = require('./logs_control.js');
 const { qrPng } = require('./qr.js');
 const { ProfileSync, sessionReader } = require('./profile_sync.js');
@@ -96,6 +101,12 @@ const HEAD_GENERAL_NAME = 'wocHeadGeneral';
 const HEAD_HUD_NAME = 'wocHeadHud';
 const HUD_NAME = 'wocHud';
 const HUD_KEEP_NAME = 'wocHudKeep';
+const HUD_NEAR_NAME = 'wocHudNearTurn';
+const HUD_NEAR_DIST_NAME = 'wocHudNearDist';
+/* The render's status, written once a second (world-readable): where the
+ * map shows while the page, the render's one owner, is closed. */
+const STATUS_FILE = '/run/waze-on-cluster/status.json';
+const TURN_MODE_MS = 2000;
 const SHOW_ON_NAME = 'wocShowOn';
 const PROFILE_NAME = 'wocProfile';
 const PROFILE_STATUS_NAME = 'wocProfileStatus';
@@ -150,13 +161,24 @@ class WazeClusterApp extends OnlineApp {
         this._control.on('change', () => this._render());
         this._logs = new LogsControl({ log: logger });
         this._logs.on('change', () => this._renderLogs());
+        /* the render's control socket has one owner: the page's link while it is up, else short connections */
+        this._sender = new RenderSender({ path: this._control.render.path, link: this._control.render, log: logger });
         /* the map settings per driver profile, page shown or not */
-        this._profiles = new ProfileSync({ control: this._control, log: logger, readProfile: sessionReader(someipBuilders, logger) });
+        this._profiles = new ProfileSync({ control: this._control, log: logger, readProfile: sessionReader(someipBuilders, logger),
+            sender: this._sender });
         this._profiles.on('change', () => this._render());
         this._control.setWriteTarget(() => this._profiles.writeTarget(), (w) => this._profiles.confirmWrite(w),
             () => this._profiles.loading());
         this._control.on('refused', () => this._profiles.load());
         this._control.patch.on('connect', () => this._profiles.load());
+        /* the HUD map only near turns: the turn list read, page shown or not, while the HUD shows the map with
+         * Show HUD map only near turns ticked (the render's status, or its status file while the page is closed) */
+        this._turns = new TurnWatch({ builders: someipBuilders, log: logger, send: (m) => this._sender.send([m]) });
+        this._turns.on('change', () => this._render());
+        this._control.render.on('connect', () => this._turns.resend());
+        this._control.on('change', () => this._followTurnMode());
+        this._statusFile = STATUS_FILE;
+        this._turnModeTimer = null;
 
         this.on('initialized', () => {
             this._appInitialized()
@@ -175,6 +197,8 @@ class WazeClusterApp extends OnlineApp {
     _appInitialized() {
         logger.info(`robertn_waze_cluster ${this.getAppId()} v${this._packageJson.version} starting`);
         this._profiles.start();
+        this._turnModeTimer = setInterval(() => this._followTurnMode(), TURN_MODE_MS);
+        this._followTurnMode();
         if (!this.rhmiApplication) {
             logger.info('no RhmiApplication for this start reason; initializing without a screen');
             return this.initialized();
@@ -220,7 +244,8 @@ class WazeClusterApp extends OnlineApp {
         }
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
             AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, RESTART_NAME, GUIDE_NAME,
-            HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, PROFILE_STATUS_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_SIZE_NAME, HUD_POS_NAME]
+            HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, PROFILE_STATUS_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME,
+            HUD_NEAR_DIST_NAME, HUD_SIZE_NAME, HUD_POS_NAME]
             .concat(Object.values(HUD_MOVE_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
                 LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES);
         names.forEach((name) => { this._components[name] = rhmi.getByName(name); });
@@ -252,6 +277,12 @@ class WazeClusterApp extends OnlineApp {
             this._control.toggleHudKeep();
             this._render();
         });
+        this._bind(HUD_NEAR_NAME, () => {
+            /* as for the turn box: the render's answer decides the tick */
+            delete this._written[`selected:${HUD_NEAR_NAME}`];
+            this._control.toggleHudNearTurn();
+            this._render();
+        });
         this._bind(PROFILE_NAME, () => {
             /* as for the turn box: patchd's answer decides the tick */
             delete this._written[`selected:${PROFILE_NAME}`];
@@ -273,6 +304,14 @@ class WazeClusterApp extends OnlineApp {
                 logger.info(`SLIDER ${HUD_SIZE_NAME} ${step}`);
                 delete this._written[`cell:${HUD_SIZE_NAME}:0:Value`];
                 this._control.setHudSizeStep(step);
+                setImmediate(() => this._render());
+            }
+        });
+        this._components[HUD_NEAR_DIST_NAME].on('changed', (step) => {
+            if (step !== this._written[`cell:${HUD_NEAR_DIST_NAME}:0:Value`]) {
+                logger.info(`SLIDER ${HUD_NEAR_DIST_NAME} ${step}`);
+                delete this._written[`cell:${HUD_NEAR_DIST_NAME}:0:Value`];
+                this._control.setHudNearDistStep(step);
                 setImmediate(() => this._render());
             }
         });
@@ -477,6 +516,24 @@ class WazeClusterApp extends OnlineApp {
             logger.warn(`app status report failed: ${err && err.message}`)));
     }
 
+    /* The turn watch on while the HUD shows the map only near turns, at the
+     * distance before a turn the render says (1 km while it says none): as
+     * the render says while the page holds its socket, else as its status
+     * file says (the page closed, or never opened since the head unit
+     * started, or a status without the field: the render answering busy). */
+    _followTurnMode() {
+        let rs = this._control.renderStatus;
+        if (!rs || rs.hud_near_turn === undefined) {
+            try {
+                rs = JSON.parse(fs.readFileSync(this._statusFile, 'utf8'));
+            } catch (e) {
+                rs = null;
+            }
+        }
+        this._turns.setDistance(rs ? rs.hud_near_m : undefined);
+        this._turns.setActive(!!rs && rs.hud === 1 && rs.hud_near_turn === 1);
+    }
+
     /* ---- rendering ---- */
     /* Writes text into a component's row unless it already shows it. */
     _write(name, text) {
@@ -586,10 +643,20 @@ class WazeClusterApp extends OnlineApp {
         this._setEnabled(GUIDE_NAME, hide !== null && !unavailable && c.clusterOn() !== false);
         this._write(GUIDE_NAME, t("Hide BMW's turn box"));
         this._setSelected(GUIDE_NAME, !!hide && !unavailable);
-        this._write(HUD_NAME, c.hudText());
+        /* only near turns without BMW's turn list: no turn will show the map */
+        this._write(HUD_NAME, c.hudNearTurn() && this._turns.status === 'unavailable' ? t('HUD map: {0}', t('No turn data')) : c.hudText());
         this._write(HUD_KEEP_NAME, t("Keep HUD map over BMW's pop-ups"));
         this._setSelected(HUD_KEEP_NAME, c.hudKeepShown() === true);
         this._setEnabled(HUD_KEEP_NAME, c.canKeepHud());
+        this._write(HUD_NEAR_NAME, t('Show HUD map only near turns'));
+        this._setSelected(HUD_NEAR_NAME, c.hudNearTurn() === true);
+        this._setEnabled(HUD_NEAR_NAME, c.canNearTurn());
+        /* how far before a turn: greyed also while the map shows always */
+        this._writeCell(HUD_NEAR_DIST_NAME, 'TextDescription', c.hudNearDistText(), 'Text', 0);
+        if (c.hudNearDistStep() !== null) {
+            this._writeCell(HUD_NEAR_DIST_NAME, 'Value', c.hudNearDistStep(), 'SInt', 0);
+        }
+        this._setEnabled(HUD_NEAR_DIST_NAME, c.canChangeHudNearDist());
         /* the size slider and the place buttons: greyed while the HUD is off
          * or disabled (the HMI greys no label) */
         const adjust = c.canChangeHudSize();
@@ -682,6 +749,8 @@ class WazeClusterApp extends OnlineApp {
         }
         logger.info(`robertn_waze_cluster shutdown: ${JSON.stringify(reason)}`);
         clearTimeout(this._hideTimer);
+        clearInterval(this._turnModeTimer);
+        this._turns.stop();
         this._control.close();
         this._logs.close();
         this._profiles.stop();

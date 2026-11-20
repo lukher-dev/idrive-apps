@@ -97,6 +97,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Het geluid kan wegvallen. Zet Wi-Fi op je iPhone uit en weer aan.",
     "Own settings for this driver": "Eigen instellingen voor deze bestuurder",
     "Driver profile can't be read": "Bestuurdersprofiel kan niet worden gelezen",
-    "Keep HUD map over BMW's pop-ups": "Kaart in HUD boven BMW-pop-ups houden"
+    "Keep HUD map over BMW's pop-ups": "Kaart in HUD boven BMW-pop-ups houden",
+    "Show HUD map only near turns": "HUD-kaart alleen bij afslagen",
+    "Show from {0} before a turn": "Tonen vanaf {0} voor een afslag",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Wachten op afslag",
+    "No turn data": "Geen afslaggegevens"
   }
 }

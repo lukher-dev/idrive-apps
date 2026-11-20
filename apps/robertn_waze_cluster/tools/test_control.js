@@ -34,7 +34,9 @@
  * cluster renderer holds the box shown. Where the map shows (the cluster,
  * the HUD, both or Off, from the cluster and from both, the HUD's size and
  * place refused while Off) and the HUD's size slider, place, Keep HUD map
- * over BMW's pop-ups and guard; an asked HUD size the render does not show goes after a moment,
+ * over BMW's pop-ups and guard; Show HUD map only near turns and the
+ * near-turn distance slider (metres below 1 km, kilometres from it, in the
+ * language's decimals); an asked HUD size the render does not show goes after a moment,
  * on a failed save and on a render reconnect. CarPlay Wi-Fi: the band patchd reports, 5 GHz or 2.4 GHz, the
  * line under it on 2.4 GHz only, nothing while the band is unknown, from a
  * patchd before it, or with patchd gone.
@@ -46,6 +48,7 @@ const assert = require('assert');
 const fs = require('fs');
 const { WazeClusterControl, SIZE, SAFE, ZOOM_STEP, HUD_SIZE_STEPS } = require('../src/waze_cluster_control.js');
 const { LogsControl } = require('../src/logs_control.js');
+const i18n = require('../src/i18n.js');
 const { FakeRender, FakePatch, FakeLogs, RENDER_PAGE, RENDER_FPS } = require('./fakes.js');
 
 /* short: macOS limits a socket path to 104 bytes */
@@ -468,6 +471,97 @@ test('the HUD map over BMW\'s pop-ups: gives way by default; a flip goes to the 
     c.close();
 });
 
+test('the HUD map only near turns: off by default; a flip goes to the render and patchd, the render\'s status shows it; ' +
+    'greyed while the HUD is off and for a render without it; waiting for a turn reads so', async (render, patch) => {
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+    assert.deepStrictEqual([c.hudNearTurn(), c.canNearTurn()], [false, false], 'always, greyed while the HUD is off');
+    c.toggleHudNearTurn();
+    assert.strictEqual(render.received.filter((m) => m.hud_near_turn !== undefined).length, 0, 'nothing sent while greyed');
+    render.hud = 1; patch.map.hud = 1;
+    render.announce('showing', render.reason);
+    await until('on', () => c.canNearTurn());
+    c.toggleHudNearTurn();
+    await until('near turns', () => c.hudNearTurn() === true && render.hudNearTurn === 1 && patch.map.hud_near_turn === 1);
+    await until('waiting for a turn', () => c.hudText() === 'HUD map: Waiting for a turn');
+    render._onCommand({ cmd: 'turn', near: '1' });
+    await until('a turn near: showing', () => c.hudText() === 'HUD map: Showing' && c.renderStatus.hud_gate === 1);
+    render._onCommand({ cmd: 'turn', near: '0' });
+    c.toggleHudNearTurn();
+    await until('always again', () => c.hudNearTurn() === false && patch.map.hud_near_turn === 0);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_near_turn !== undefined), [{ cmd: 'hud', hud_near_turn: '1' }, { cmd: 'hud', hud_near_turn: '0' }]);
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-near-turn'), [{ cmd: 'hud-near-turn', on: 1 }, { cmd: 'hud-near-turn', on: 0 }]);
+    render.hudNearTurn = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudNearTurn() === null && !c.canNearTurn());
+    c.close();
+});
+
+test('the near-turn distance as a slider: 200 m steps from 200 m to 2 km, 1 km by default, metres below 1 km and kilometres from it; ' +
+    'greyed while the HUD is off, while near turns is off and for a render without it', async (render, patch) => {
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('the HUD off', () => c.renderStatus && c.hudOn() === false);
+    assert.deepStrictEqual([c.hudNearDistText(), c.hudNearDistStep(), c.canChangeHudNearDist()], ['Show from 1 km before a turn', 4, false],
+        '1 km by default, greyed while the HUD is off');
+    render.hud = 1; patch.map.hud = 1;
+    render.announce('showing', render.reason);
+    await until('on', () => c.canNearTurn());
+    assert.strictEqual(c.canChangeHudNearDist(), false, 'greyed while near turns is off');
+    c.setHudNearDistStep(0);
+    assert.strictEqual(render.received.filter((m) => m.hud_near_m !== undefined).length, 0, 'nothing sent while greyed');
+    c.toggleHudNearTurn();
+    await until('near turns', () => c.hudNearTurn() === true && c.canChangeHudNearDist());
+    c.setHudNearDistStep(0);
+    assert.deepStrictEqual([c.hudNearDistText(), c.hudNearDistStep()], ['Show from 200 m before a turn', 0], 'shown at once');
+    await until('200 m', () => render.hudNearM === 200 && c.renderStatus.hud_near_m === 200 && patch.map.hud_near_m === 200);
+    const steps = [[3, 800, 'Show from 800 m before a turn'], [5, 1200, 'Show from 1.2 km before a turn'],
+        [9, 2000, 'Show from 2 km before a turn'], [4, 1000, 'Show from 1 km before a turn']];
+    for (const [step, m, text] of steps) {
+        c.setHudNearDistStep(step);
+        await until(`${m} m`, () => c.renderStatus.hud_near_m === m && c.hudNearDistStep() === step && c.hudNearDistText() === text);
+    }
+    const sent = render.received.length;
+    [-1, 10, 2.5, '3', 4].forEach((step) => c.setHudNearDistStep(step));
+    assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_near_m !== undefined),
+        ['200', '800', '1200', '2000', '1000'].map((m) => ({ cmd: 'hud', hud_near_m: m })), 'each one to the render at once');
+    await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-near-dist').map((m) => m.m).join() === '200,800,1200,2000,1000');
+    assert(patch.received.filter((m) => m.cmd === 'hud-near-dist').every((m) => Object.keys(m).join() === 'cmd,m'), 'patchd: {"cmd":"hud-near-dist","m":N}');
+    i18n.setHmiLanguage('POLNISCH');
+    c.setHudNearDistStep(5);
+    assert.strictEqual(c.hudNearDistText(), 'Pokazuj od 1,2 km przed skrętem', 'the locale\'s decimal separator');
+    c.setHudNearDistStep(1);
+    assert.strictEqual(c.hudNearDistText(), 'Pokazuj od 400 m przed skrętem');
+    i18n.setHmiLanguage(null);
+    c.toggleHudNearTurn();
+    await until('always again: greyed', () => c.hudNearTurn() === false && !c.canChangeHudNearDist());
+    render.hudNearM = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudNearDistStep() === null && c.hudNearDistText() === 'Show from — before a turn');
+    c.close();
+    assert.deepStrictEqual([c.hudNearDistText(), c.hudNearDistStep()], ['Show from — before a turn', null], 'nothing known while closed');
+});
+
+test('an asked near-turn distance the render does not show: the render\'s own after a moment', async (render, patch) => {
+    render.hud = 1; patch.map.hud = 1;
+    render.hudNearTurn = 1; patch.map.hud_near_turn = 1;
+    const c = control();
+    c.open();
+    await until('on', () => c.renderStatus && c.canChangeHudNearDist());
+    const take = render._onCommand.bind(render);
+    render._onCommand = (msg) => (msg.cmd === 'hud' && msg.hud_near_m !== undefined ? render.received.push(msg) : take(msg));
+    c.setHudNearDistStep(0);
+    assert.strictEqual(c.hudNearDistText(), 'Show from 200 m before a turn', 'shown at once');
+    await until('the render\'s own again', () => c.hudNearDistText() === 'Show from 1 km before a turn');
+    c.close();
+});
+
 test('an asked HUD size the render does not show: the render\'s own after a moment, at once on a render reconnect; ' +
     'the same step taken again', async (render, patch) => {
     render.hud = 1; patch.map.hud = 1;
@@ -861,6 +955,15 @@ test('no restart button when carplay restarts at once (never deferred)', async (
     await sleep(50);
     assert.strictEqual(patch.count('reboot'), 0, 'no reboot is sent when none is needed');
     c.close();
+});
+
+test('a refused save of near turns or its distance is logged, as the other HUD settings', async () => {
+    const lines = [];
+    const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, pendingPath: PENDING, retryMs: 100,
+        log: { info: (m) => lines.push(m), warn: (m) => lines.push(m) } });
+    const cmds = ['hud-keep-shown', 'hud-near-turn', 'hud-near-dist'];
+    cmds.forEach((cmd) => c._onPatch({ ev: `${cmd}-reply`, ok: false, reason: `no ${cmd}` }));
+    assert.deepStrictEqual(lines.filter((m) => /did not save/.test(m)), cmds.map((cmd) => `patchd did not save the setting: no ${cmd}`));
 });
 
 test('a refused restart reply clears the asked flag so the button returns', async (render, patch) => {

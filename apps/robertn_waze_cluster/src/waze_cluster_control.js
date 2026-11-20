@@ -12,12 +12,18 @@
  *
  *   Render control socket (RENDER_PATH)
  *     app  -> tool  {"cmd":"guide","hide":0|1}  BMW's turn box hidden while the map shows, or not
- *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"}
+ *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"|
+ *                    "hud_near_turn"|"hud_near_m"}
  *                    the map's settings (patchd saves them)
+ *                   {"cmd":"turn","near":"0"|"1"}  a turn near, or not (turn_watch.js, through render_sender.js)
  *     tool -> app   {"ev":"status","state":"idle"|"starting"|"showing"|"frozen"|"error"|"unsupported",
  *                    "target","page","reason","hide_bmw_guidance","guide_disabled","cluster","hud",
- *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown"}
- *                   (hud_keep_shown 0|1, absent from a tool before it)
+ *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_near_turn","hud_gate",
+ *                    "hud_near_m"}
+ *                   (hud_keep_shown 0|1, absent from a tool before it; hud_near_turn 0|1, the HUD
+ *                    map only near turns, hud_gate 0|1, a turn near, and hud_near_m 200..2000, how
+ *                    far before a turn it shows, likewise; hud_state turn_wait: a picture the HUD
+ *                    holds back until a turn is near)
  *                   (unsupported: the head unit refuses the tool, which stays idle)
  *                   (idle's reason: why a live stream shows no map; hide_bmw_guidance 0|1,
  *                    absent from a tool before the switch; guide_disabled 1: the cluster
@@ -94,6 +100,8 @@ const PENDING_PATH = '/dev/shm/waze-on-cluster/activation-pending';
 const AA_PENDING_PATH = '/dev/shm/waze-on-cluster/aa-pending';
 const BOOT_ID_PATH = '/proc/sys/kernel/random/boot_id';
 const RETRY_MS = 1000;
+/* how long a closed connection may take to be let go before it is cut */
+const CLOSE_MS = 1000;
 /* One Zoom in or Zoom out press, in dpi: the densities' own step. */
 const ZOOM_STEP = 10;
 /* Why a restart failed, by patchd's code (English keys of src/i18n.js). */
@@ -108,6 +116,9 @@ const SAFE = '504x368+286+72';
  * whole), HUD_SIZE_STEPS of them. Standard (0) counts as HUD_STANDARD_PCT, about what the fitted box is. */
 const HUD_MIN_PCT = 30, HUD_MAX_PCT = 85, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
 const HUD_SIZE_STEPS = (HUD_MAX_PCT - HUD_MIN_PCT) / HUD_STEP_PCT;
+/* How far before a turn the HUD map shows only near turns: HUD_NEAR_STEP_M steps from HUD_NEAR_MIN_M to HUD_NEAR_MAX_M. */
+const HUD_NEAR_MIN_M = 200, HUD_NEAR_MAX_M = 2000, HUD_NEAR_STEP_M = 200;
+const HUD_NEAR_STEPS = (HUD_NEAR_MAX_M - HUD_NEAR_MIN_M) / HUD_NEAR_STEP_M;
 /* Where the map can show, the choices in their order on the page. */
 const SHOWN_ON = ['cluster', 'hud', 'both', 'off'];
 /* The HUD map moved from its centre, HUD_MOVE_PX a press, within +-HUD_MOVE_MAX; the render holds it inside the
@@ -133,8 +144,12 @@ class LineSocket extends EventEmitter {
         this.linkCode = null;
         this._open = false;
         this._socket = null;
+        this._closing = null;
+        this._waiting = false;
         this._buf = '';
         this._retryTimer = null;
+        /* a function each connection waits for first: null, or a promise of the way being clear */
+        this.beforeConnect = null;
     }
 
     open() {
@@ -144,16 +159,45 @@ class LineSocket extends EventEmitter {
         }
     }
 
+    /* Emits 'closed' once the other end has let the connection go (a
+     * single-owner socket takes the next one only then), or CLOSE_MS on. */
     close() {
         this._open = false;
         clearTimeout(this._retryTimer);
         this._retryTimer = null;
-        if (this._socket) {
-            /* forgotten here, so its late events cannot touch a new connection */
-            this._socket.end();
-            this._socket = null;
-        }
         this.link = 'down';
+        /* forgotten here, so its late events cannot touch a new connection */
+        const socket = this._socket;
+        this._socket = null;
+        if (!socket) {
+            this.emit('closed');
+            return;
+        }
+        this._closing = socket;
+        const gone = () => {
+            if (this._closing === socket) {
+                clearTimeout(timer);
+                this._closing = null;
+                this.emit('closed');
+                this._connect();
+            }
+        };
+        const timer = setTimeout(() => {
+            socket.destroy();
+            gone();
+        }, CLOSE_MS);
+        socket.on('close', gone);
+        socket.end();
+    }
+
+    /* Open: connected, or connecting again until it is. */
+    isOpen() {
+        return this._open;
+    }
+
+    /* Closed, but its connection not let go yet. */
+    closing() {
+        return !!this._closing;
     }
 
     connected() {
@@ -167,7 +211,17 @@ class LineSocket extends EventEmitter {
     }
 
     _connect() {
-        if (!this._open || this._socket) {
+        if (!this._open || this._socket || this._closing || this._waiting) {
+            return;
+        }
+        const wait = this.beforeConnect && this.beforeConnect();
+        if (wait) {
+            this._waiting = true;
+            const go = () => {
+                this._waiting = false;
+                this._connect();
+            };
+            wait.then(go, go);
             return;
         }
         const socket = net.connect(this.path);
@@ -283,14 +337,21 @@ function shownOnOf(rs) {
 
 /* The render's commands for map settings as patchd keeps them: a display
  * turned on first, so a switch from one display to the other never passes
- * through neither, then the HUD's size, place and whether it stays shown
- * over BMW's pop-ups (from a patchd that has it). */
+ * through neither, then the HUD's size, place, whether it stays shown over
+ * BMW's pop-ups, whether it shows only near turns and how far before a turn
+ * (each from a patchd that has it). */
 function renderCommands(s) {
     const on = (v) => (v ? '1' : '0');
     const shows = ['cluster', 'hud'].sort((a, b) => s[b] - s[a]);
     const hud = { cmd: 'hud', hud_width_pct: String(s.hud_width_pct), hud_x: String(s.hud_offset_x), hud_y: String(s.hud_offset_y) };
     if (s.hud_keep_shown === 0 || s.hud_keep_shown === 1) {
         hud.hud_keep_shown = on(s.hud_keep_shown);
+    }
+    if (s.hud_near_turn === 0 || s.hud_near_turn === 1) {
+        hud.hud_near_turn = on(s.hud_near_turn);
+    }
+    if (typeof s.hud_near_m === 'number') {
+        hud.hud_near_m = String(s.hud_near_m);
     }
     return shows.map((d) => ({ cmd: d, on: on(s[d]) })).concat([hud]);
 }
@@ -300,6 +361,17 @@ function renderShows(rs, s) {
     return rs.cluster === s.cluster && rs.hud === s.hud && rs.hud_width_pct === s.hud_width_pct &&
         rs.hud_x === s.hud_offset_x && rs.hud_y === s.hud_offset_y &&
         (!(s.hud_keep_shown === 0 || s.hud_keep_shown === 1) || rs.hud_keep_shown === undefined || rs.hud_keep_shown === s.hud_keep_shown);
+}
+
+/* A distance in the language's words: whole metres below 1 km ("800 m"),
+ * kilometres to a tenth from it ("1 km", "1.2 km", the decimal separator
+ * the language's own). */
+function distanceText(m) {
+    const tenths = Math.round(m / 100);
+    if (tenths < 10) {
+        return t('{0} m', Math.round(m));
+    }
+    return tenths % 10 ? t('{0}.{1} km', Math.floor(tenths / 10), tenths % 10) : t('{0} km', tenths / 10);
 }
 
 /* After a zoom or turn-card value that waits for the next head-unit start. */
@@ -591,6 +663,8 @@ class WazeClusterControl extends EventEmitter {
             return t('Error');
         case 'frozen':
             return t('Frozen');
+        case 'turn_wait':
+            return t('Waiting for a turn');
         case 'off':
             return t('Off');
         default:
@@ -651,6 +725,8 @@ class WazeClusterControl extends EventEmitter {
     _clearAskedHud() {
         clearTimeout(this._askedHudTimer);
         this._askedHud = null;
+        clearTimeout(this._askedNearTimer);
+        this._askedNear = null;
     }
 
     /* ---- where the HUD map is: moved from its centre, in HUD pixels ---- */
@@ -713,6 +789,68 @@ class WazeClusterControl extends EventEmitter {
             const keep = !this.hudKeepShown();
             this._write([[{ cmd: 'hud', hud_keep_shown: keep ? '1' : '0' }, { cmd: 'hud-keep-shown', on: keep ? 1 : 0 }]]);
         }
+    }
+
+    /* ---- the HUD map only near turns ---- */
+    /* True while it shows only near turns, false while always; null while
+     * the render has not said (or has not got it). */
+    hudNearTurn() {
+        const v = this.renderStatus && this.renderStatus.hud_near_turn;
+        return v === 0 || v === 1 ? v === 1 : null;
+    }
+    /* Changes as the size and place do. */
+    canNearTurn() {
+        return this.canChangeHudSize() && this.hudNearTurn() !== null;
+    }
+    /* Flips it: the render at once, patchd saves it; the render's next status shows it. */
+    toggleHudNearTurn() {
+        if (this.canNearTurn()) {
+            const on = !this.hudNearTurn();
+            this.render.send({ cmd: 'hud', hud_near_turn: on ? '1' : '0' });
+            this.patch.send({ cmd: 'hud-near-turn', on: on ? 1 : 0 });
+        }
+    }
+
+    /* ---- how far before a turn the HUD map shows, only near turns ---- */
+    /* The distance in metres, as just asked until the render shows it; null while it has not said. */
+    hudNearDist() {
+        if (this._askedNear != null) {
+            return this._askedNear;
+        }
+        const v = this.renderStatus && this.renderStatus.hud_near_m;
+        return typeof v === 'number' ? v : null;
+    }
+    hudNearDistText() {
+        const m = this.hudNearDist();
+        return t('Show from {0} before a turn', m == null ? '—' : distanceText(m));
+    }
+    /* The distance as a slider position, 0 (HUD_NEAR_MIN_M) to HUD_NEAR_STEPS (HUD_NEAR_MAX_M); null while unknown. */
+    hudNearDistStep() {
+        const m = this.hudNearDist();
+        if (m == null) {
+            return null;
+        }
+        return Math.round((Math.max(HUD_NEAR_MIN_M, Math.min(HUD_NEAR_MAX_M, m)) - HUD_NEAR_MIN_M) / HUD_NEAR_STEP_M);
+    }
+    /* Changes as the size and place do, and only while the map shows only near turns. */
+    canChangeHudNearDist() {
+        return this.canNearTurn() && this.hudNearTurn() === true && this.hudNearDist() !== null;
+    }
+    /* The distance at a slider position: the render at once, patchd saves it. */
+    setHudNearDistStep(step) {
+        if (!Number.isInteger(step) || step < 0 || step > HUD_NEAR_STEPS || !this.canChangeHudNearDist() || step === this.hudNearDistStep()) {
+            return;
+        }
+        const m = HUD_NEAR_MIN_M + step * HUD_NEAR_STEP_M;
+        this._askedNear = m;
+        clearTimeout(this._askedNearTimer);
+        this._askedNearTimer = setTimeout(() => {
+            this._askedNear = null;
+            this.emit('change');
+        }, HUD_ASKED_MS);
+        this.render.send({ cmd: 'hud', hud_near_m: String(m) });
+        this.patch.send({ cmd: 'hud-near-dist', m });
+        this.emit('change');
     }
 
     hudPositionText() {
@@ -1221,6 +1359,10 @@ class WazeClusterControl extends EventEmitter {
             if (this._askedPos && msg.hud_x === this._askedPos[0] && msg.hud_y === this._askedPos[1]) {
                 this._askedPos = null;
             }
+            if (this._askedNear != null && msg.hud_near_m === this._askedNear) {
+                clearTimeout(this._askedNearTimer);
+                this._askedNear = null;
+            }
             this._applyStored();
             this._storedShown();
             this.emit('change');
@@ -1241,7 +1383,7 @@ class WazeClusterControl extends EventEmitter {
             this._noteCardAsked(msg);
             this._wake();
             this.emit('change');
-        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown)-reply$/.test(msg.ev)) {
+        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-near-dist)-reply$/.test(msg.ev)) {
             if (!msg.ok) {
                 this._log.info(`patchd did not save the setting: ${msg.reason || 'refused'}`);
             }
@@ -1278,5 +1420,5 @@ class WazeClusterControl extends EventEmitter {
 module.exports = {
     WazeClusterControl, LineSocket,
     RENDER_PATH, PATCH_PATH, PENDING_PATH, AA_PENDING_PATH, BOOT_ID_PATH,
-    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, renderCommands
+    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_NEAR_STEPS, renderCommands
 };

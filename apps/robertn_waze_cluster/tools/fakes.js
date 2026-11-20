@@ -35,7 +35,8 @@
  * before profiles); its status says whether any profile has own settings,
  * sent again `statusDelayMs` after a tick changes that;
  * cluster,
- * hud, hud-size, hud-pos and hud-keep-shown change `map`, and one that names
+ * hud, hud-size, hud-pos, hud-keep-shown, hud-near-turn and hud-near-dist
+ * change `map`; one of PROFILE_CMDS that names
  * a profile and set ("profile", "own") other than the ones in effect is
  * refused as patchd refuses it (one naming none while a profile has own
  * settings too), with the settings in effect; one saved is answered
@@ -54,15 +55,19 @@ const STEP_MS = 40;
 const BACKLOG = 60;
 const RENDER_PAGE = 'map';
 const RENDER_FPS = '30 updates/s';
+/* The map settings patchd saves only for the driver profile they name (its MAP_CMDS). */
+const PROFILE_CMDS = ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'];
 
 class LineServer extends EventEmitter {
-    constructor(path) {
+    /* opts.halfOpen: a connection's end comes to the subclass, which ends its side itself */
+    constructor(path, opts) {
         super();
         this.path = path;
         this.received = [];
         this.backlog = [];
+        this.connections = 0;   /* every connection taken, for the render's single owner */
         this._clients = new Set();
-        this._server = net.createServer((socket) => this._onClient(socket));
+        this._server = net.createServer({ allowHalfOpen: !!(opts && opts.halfOpen) }, (socket) => this._onClient(socket));
     }
 
     listen() {
@@ -105,6 +110,7 @@ class LineServer extends EventEmitter {
     }
 
     _onClient(socket) {
+        this.connections++;
         this._clients.add(socket);
         let buf = '';
         socket.setEncoding('utf8');
@@ -131,8 +137,16 @@ class LineServer extends EventEmitter {
 }
 
 class FakeRender extends LineServer {
-    constructor(path) {
-        super(path);
+    /* opts.singleOwner: one connection at a time, as the render's control.h:
+     * a second one is told busy and closed (refused counts them); the owner
+     * is let go releaseLagMs after its end comes, and only then is its side
+     * closed. */
+    constructor(path, opts) {
+        super(path, { halfOpen: !!(opts && opts.singleOwner) });
+        this.singleOwner = !!(opts && opts.singleOwner);
+        this.releaseLagMs = 0;
+        this.refused = 0;
+        this._owner = null;
         this.state = 'idle';
         this.target = null;
         this.page = null;
@@ -145,6 +159,11 @@ class FakeRender extends LineServer {
         this.hudState = null;
         /* the HUD map kept shown over BMW's pop-ups (null: a tool without the field) */
         this.hudKeep = 0;
+        /* the HUD map only near turns and how far before a turn, in metres (null: a tool without them);
+         * a turn near as the app said */
+        this.hudNearTurn = 0;
+        this.hudNearM = 1000;
+        this.turnNear = false;
         this._showTimer = null;
     }
 
@@ -170,6 +189,12 @@ class FakeRender extends LineServer {
             Object.assign(s, { cluster: this.cluster, hud: this.hud, hud_state: this.hud ? this.hudState || this.state : 'off',
                 hud_width_pct: this.hudWidth || 0, hud_x: this.hudX || 0, hud_y: this.hudY || 0 });
             if (this.hudKeep !== null) s.hud_keep_shown = this.hudKeep;
+            if (this.hudNearTurn !== null) {
+                const gate = !this.hudNearTurn || this.turnNear;
+                Object.assign(s, { hud_near_turn: this.hudNearTurn, hud_gate: gate ? 1 : 0 });
+                if (this.hud && !gate && !this.hudState && this.state === 'showing') s.hud_state = 'turn_wait';
+            }
+            if (this.hudNearM !== null) s.hud_near_m = this.hudNearM;
         }
         if (this.hide !== null) {
             s.hide_bmw_guidance = this.hide;
@@ -187,15 +212,33 @@ class FakeRender extends LineServer {
     }
 
     _onConnect(socket) {
+        if (this.singleOwner) {
+            if (this._owner) {
+                this.refused++;
+                socket.refused = true;
+                this._clients.delete(socket);
+                socket.end(JSON.stringify({ ev: 'status', state: 'error', target: null, page: null, reason: 'busy' }) + '\n');
+                return;
+            }
+            this._owner = socket;
+            socket.on('end', () => setTimeout(() => {
+                if (this._owner === socket) this._owner = null;
+                socket.end();
+            }, this.releaseLagMs));
+        }
         this._send(socket, this._status());
         this.backlog.forEach((line) => this._send(socket, { ev: 'log', line }));
     }
 
     _onClose(socket) {
         this._clients.delete(socket);
+        if (this._owner === socket) this._owner = null;
     }
 
-    _onCommand(msg) {
+    _onCommand(msg, socket) {
+        if (socket && socket.refused) {
+            return;
+        }
         this.received.push(msg);
         this.emit('command', msg);
         this.log(`control: ${JSON.stringify(msg)}`);
@@ -221,7 +264,13 @@ class FakeRender extends LineServer {
             if (msg.hud_x !== undefined) this.hudX = lim(Number(msg.hud_x));
             if (msg.hud_y !== undefined) this.hudY = Number(msg.hud_y);
             if (msg.hud_keep_shown !== undefined && this.hudKeep !== null) this.hudKeep = Number(msg.hud_keep_shown);
+            if (msg.hud_near_turn !== undefined && this.hudNearTurn !== null) this.hudNearTurn = Number(msg.hud_near_turn);
+            if (msg.hud_near_m !== undefined && this.hudNearM !== null) this.hudNearM = Number(msg.hud_near_m);
             if (!this.statusDelayMs) this._broadcast(this._status());
+        }
+        if (msg.cmd === 'turn' && this.hudNearTurn !== null) {
+            this.turnNear = msg.near === '1';
+            this._broadcast(this._status());
         }
     }
 }
@@ -249,7 +298,8 @@ class FakePatch extends LineServer {
         this.mute = false;         /* commands received and not answered */
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
-        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0 };
+        this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0,
+            hud_near_m: 1000 };
         this.shared = null;
         this.own = {};
         this.active = null;
@@ -370,15 +420,16 @@ class FakePatch extends LineServer {
             return;
         }
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
-            'hud-keep-shown': ['hud_keep_shown'] };
+            'hud-keep-shown': ['hud_keep_shown'], 'hud-near-turn': ['hud_near_turn'], 'hud-near-dist': ['hud_near_m'] };
         if (MAP[msg.cmd]) {
-            if (!('profile' in msg) ? this._ownSettings() : this.current === undefined || msg.profile !== this.current ||
-                    (msg.own === 1) !== !!(msg.profile && this.own[msg.profile])) {
+            if (PROFILE_CMDS.indexOf(msg.cmd) >= 0 && (!('profile' in msg) ? this._ownSettings() : this.current === undefined ||
+                    msg.profile !== this.current || (msg.own === 1) !== !!(msg.profile && this.own[msg.profile]))) {
                 this._send(socket, { ev: `${msg.cmd}-reply`, ok: false, refused: 'profile', reason: 'not the driver profile in effect',
                     settings: this.map, own_settings: this._ownSettings() });
                 return;
             }
-            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y] : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.on];
+            const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y]
+                : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-near-dist' ? msg.m : msg.on];
             this.map = Object.assign({}, this.map);
             MAP[msg.cmd].forEach((k, i) => { this.map[k] = v[i]; });
             /* answered once saved, with the settings in effect */

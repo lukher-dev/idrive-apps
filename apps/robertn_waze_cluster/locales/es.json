@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "El audio puede cortarse. En tu iPhone, desactiva y vuelve a activar la Wi-Fi.",
     "Own settings for this driver": "Ajustes propios para este conductor",
     "Driver profile can't be read": "No se puede leer el perfil del conductor",
-    "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW"
+    "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW",
+    "Show HUD map only near turns": "Mapa del HUD solo cerca de giros",
+    "Show from {0} before a turn": "Mostrar desde {0} antes del giro",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Esperando un giro",
+    "No turn data": "Sin datos de giros"
   }
 }

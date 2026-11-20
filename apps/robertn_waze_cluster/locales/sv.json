@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ljudet kan försvinna. Stäng av och slå på Wi-Fi på din iPhone.",
     "Own settings for this driver": "Egna inställningar för den här föraren",
     "Driver profile can't be read": "Förarprofilen kan inte läsas",
-    "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster"
+    "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster",
+    "Show HUD map only near turns": "HUD-karta bara nära svängar",
+    "Show from {0} before a turn": "Visa från {0} före en sväng",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Väntar på en sväng",
+    "No turn data": "Ingen svängdata"
   }
 }

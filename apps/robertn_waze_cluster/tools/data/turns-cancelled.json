@@ -1,0 +1,20 @@
+{
+  "about": "Synthetic: the route cancelled 300 m before a roundabout.",
+  "stepMs": 1000,
+  "replies": [
+    {"viewContent":[{"eventsInView":[{"roundabout":{"formattedDistance":{"distance":"500","unit":"m"},"description":{"text":""}}}]}]},
+    {"viewContent":[{"eventsInView":[{"roundabout":{"formattedDistance":{"distance":"380","unit":"m"},"description":{"text":""}}}]}]},
+    {"viewContent":[{"eventsInView":[{"roundabout":{"formattedDistance":{"distance":"300","unit":"m"},"description":{"text":""}}}]}]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]},
+    {"viewContent":[]}
+  ]
+}

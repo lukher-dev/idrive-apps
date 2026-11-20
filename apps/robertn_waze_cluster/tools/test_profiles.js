@@ -22,7 +22,12 @@
  * read. The SessionManager reader: the field's id; none for good without
  * the proxy or the field; a value that is not an id, a read that fails, and
  * a proxy slow to set up or failing to start rejected (nothing changes), the
- * proxy set up again later.
+ * proxy set up again later. RenderSender, the one way to the render's
+ * single-owner socket: the page's link while it is up, the messages waiting
+ * while it comes up, else one short connection; a newer turn replaces one
+ * still waiting; no render, dropped; the page's link and a short connection
+ * never refused busy for each other. Near turns and how far before a turn
+ * go to the render with the other HUD settings.
  *
  *   node tools/test_profiles.js
  */
@@ -31,6 +36,7 @@ const fs = require('fs');
 const { ProfileSync, sessionReader, IFACE, INSTANCE, FIELD } = require('../src/profile_sync.js');
 const { WazeClusterControl, renderCommands } = require('../src/waze_cluster_control.js');
 const { FakeRender, FakePatch } = require('./fakes.js');
+const { RenderSender } = require('../src/render_sender.js');
 
 const RSOCK = `/tmp/woc-sr-${process.pid}.sock`;
 const PSOCK = `/tmp/woc-sp-${process.pid}.sock`;
@@ -766,6 +772,130 @@ async function main() {
         await until('taken', () => sync4.profile === 'driverB');
         sync4.stop();
         await p2.close();
+    });
+
+    /* ---- RenderSender: one serialized way to the render's single-owner socket ---- */
+    await check('RenderSender: the page link up, written there', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        await until('the page link', () => c.render.connected());
+        const before = render.connections, n = render.count('probe-a');
+        new RenderSender({ path: RSOCK, link: c.render }).send([{ cmd: 'probe-a' }]);
+        await until('probe-a', () => render.count('probe-a') === n + 1);
+        assert.strictEqual(render.connections, before);
+        c.close();
+    });
+    await check('RenderSender: queued while the page link connects, no second socket, a newer turn replaces an older', async () => {
+        const path = `/tmp/woc-sr2-${process.pid}.sock`;
+        const r2 = new FakeRender(path);
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        const sender = new RenderSender({ path, link: c.render, holdMs: 50 });
+        sender.send([{ cmd: 'turn', near: '1' }, { cmd: 'probe-b' }]);
+        sender.send([{ cmd: 'turn', near: '0' }]);
+        await sleep(150);
+        await r2.listen();
+        await until('both', () => r2.count('turn') === 1 && r2.count('probe-b') === 1);
+        await sleep(100);
+        assert.strictEqual(r2.connections, 1);
+        assert.deepStrictEqual(r2.received.filter((m) => m.cmd === 'turn' || m.cmd === 'probe-b').map((m) => m.cmd + (m.near || '')),
+            ['probe-b', 'turn0']);
+        c.close();
+        await r2.close();
+    });
+    await check('RenderSender: the page closed, one short connection carries every queued message', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        const before = render.connections, a = render.count('probe-c'), b = render.count('probe-d');
+        const sender = new RenderSender({ path: RSOCK, link: c.render, holdMs: 100 });
+        sender.send([{ cmd: 'probe-c' }]);
+        sender.send([{ cmd: 'probe-d' }]);
+        await until('both', () => render.count('probe-c') === a + 1 && render.count('probe-d') === b + 1);
+        await sleep(200);
+        assert.strictEqual(render.connections, before + 1);
+    });
+    await check('RenderSender: the page closing with messages queued sends them on a short connection', async () => {
+        const c = new WazeClusterControl({ renderPath: RSOCK, patchPath: PSOCK, retryMs: 50 });
+        c.open();
+        const sender = new RenderSender({ path: RSOCK, link: c.render, holdMs: 50 });
+        const n = render.count('probe-e');
+        sender.send([{ cmd: 'probe-e' }]);
+        c.close();
+        await until('probe-e', () => render.count('probe-e') === n + 1);
+    });
+    await check('RenderSender: no render, the messages are dropped, nothing thrown', async () => {
+        const c = new WazeClusterControl({ renderPath: `/tmp/woc-nowhere-${process.pid}.sock`, patchPath: PSOCK, retryMs: 50 });
+        const sender = new RenderSender({ path: `/tmp/woc-nowhere-${process.pid}.sock`, link: c.render, holdMs: 50 });
+        sender.send([{ cmd: 'probe-f' }]);
+        await sleep(150);
+        sender.send([{ cmd: 'probe-g' }]);
+        await sleep(150);
+    });
+    await check('RenderSender: the page opening while a short connection is held waits for it to end, not refused busy', async () => {
+        const path = `/tmp/woc-sr3-${process.pid}.sock`;
+        const r3 = new FakeRender(path, { singleOwner: true });
+        r3.releaseLagMs = 50;
+        await r3.listen();
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 1000 });
+        const sender = new RenderSender({ path, link: c.render, holdMs: 800 });
+        sender.send([{ cmd: 'turn', near: '1' }]);
+        await until('the short connection', () => r3.count('turn') === 1);
+        const t0 = Date.now();
+        c.open();
+        await until('the page link', () => c.render.connected(), 1500);
+        assert(Date.now() - t0 < 500, `the page link up in ${Date.now() - t0} ms, after the short connection, not a refusal's retry`);
+        assert.strictEqual(r3.refused, 0);
+        sender.send([{ cmd: 'probe-h' }]);
+        await until('probe-h on the page link', () => r3.count('probe-h') === 1);
+        assert.strictEqual(r3.connections, 2);
+        c.close();
+        await r3.close();
+    });
+    await check('RenderSender: the page closing, a short connection waits for the render to let the page go', async () => {
+        const path = `/tmp/woc-sr4-${process.pid}.sock`;
+        const r4 = new FakeRender(path, { singleOwner: true });
+        r4.releaseLagMs = 50;
+        await r4.listen();
+        const c = new WazeClusterControl({ renderPath: path, patchPath: PSOCK, retryMs: 1000 });
+        const sender = new RenderSender({ path, link: c.render, holdMs: 50 });
+        c.open();
+        await until('the page link', () => c.render.connected());
+        c.close();
+        sender.send([{ cmd: 'probe-i' }]);
+        await until('probe-i', () => r4.count('probe-i') === 1, 1500);
+        assert.strictEqual(r4.refused, 0);
+        await r4.close();
+    });
+    await check('ProfileSync: near turns goes to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_near_turn: 1 }), true);
+        const hud = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(hud.hud_near_turn, '1');
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0), true);
+        const old = got.filter((m) => m.cmd === 'hud').pop();
+        assert(!('hud_near_turn' in old), 'a patchd before it: not told');
+    });
+    await check('ProfileSync: how far before a turn the HUD map shows goes to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_near_turn: 1, hud_near_m: 600 }), true);
+        const hud = got.filter((m) => m.cmd === 'hud').pop();
+        assert.strictEqual(hud.hud_near_m, '600');
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0), true);
+        const old = got.filter((m) => m.cmd === 'hud').pop();
+        assert(!('hud_near_m' in old), 'a patchd before it: not told');
+    });
+    await check('ProfileSync: settings go to the render through its RenderSender', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(settings(1, 1, 40, 0, 0, 1), true);
+        assert.deepStrictEqual(got.map((m) => m.cmd), ['cluster', 'hud', 'hud']);
+        assert.strictEqual(got[2].hud_keep_shown, '1');
     });
 
     await render.close();

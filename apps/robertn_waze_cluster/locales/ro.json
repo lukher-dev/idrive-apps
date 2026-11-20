@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Sunetul se poate întrerupe. Pe iPhone, dezactivați și reactivați Wi-Fi.",
     "Own settings for this driver": "Setări proprii pentru acest șofer",
     "Driver profile can't be read": "Profilul șoferului nu poate fi citit",
-    "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW"
+    "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW",
+    "Show HUD map only near turns": "Hartă HUD doar lângă viraje",
+    "Show from {0} before a turn": "Afișează cu {0} înainte de viraj",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Se așteaptă un viraj",
+    "No turn data": "Fără date despre viraje"
   }
 }

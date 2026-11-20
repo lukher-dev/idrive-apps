@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvok se lahko prekinja. Na iPhonu izklopite in vklopite Wi-Fi.",
     "Own settings for this driver": "Lastne nastavitve za tega voznika",
     "Driver profile can't be read": "Profila voznika ni mogoče prebrati",
-    "Keep HUD map over BMW's pop-ups": "Ohrani zemljevid na HUD nad pojavnimi okni BMW"
+    "Keep HUD map over BMW's pop-ups": "Ohrani zemljevid na HUD nad pojavnimi okni BMW",
+    "Show HUD map only near turns": "Zemljevid na HUD samo blizu zavojev",
+    "Show from {0} before a turn": "Prikaži {0} pred zavojem",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Čakanje na zavoj",
+    "No turn data": "Ni podatkov o zavojih"
   }
 }

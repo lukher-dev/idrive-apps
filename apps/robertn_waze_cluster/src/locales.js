@@ -99,7 +99,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "قد ينقطع الصوت. على iPhone، أوقف Wi-Fi ثم شغّله.",
    "Own settings for this driver": "إعدادات خاصة لهذا السائق",
    "Driver profile can't be read": "تعذّرت قراءة ملف السائق",
-   "Keep HUD map over BMW's pop-ups": "إبقاء خريطة HUD فوق النوافذ المنبثقة من BMW"
+   "Keep HUD map over BMW's pop-ups": "إبقاء خريطة HUD فوق النوافذ المنبثقة من BMW",
+   "Show HUD map only near turns": "خريطة HUD قرب المنعطفات فقط",
+   "Show from {0} before a turn": "العرض من {0} قبل المنعطف",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "بانتظار منعطف",
+   "No turn data": "لا توجد بيانات منعطفات"
   }
  },
  {
@@ -200,7 +207,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk se může přerušovat. Na iPhonu vypněte a zapněte Wi-Fi.",
    "Own settings for this driver": "Vlastní nastavení pro tohoto řidiče",
    "Driver profile can't be read": "Profil řidiče nelze načíst",
-   "Keep HUD map over BMW's pop-ups": "Ponechat mapu na HUD přes vyskakovací okna BMW"
+   "Keep HUD map over BMW's pop-ups": "Ponechat mapu na HUD přes vyskakovací okna BMW",
+   "Show HUD map only near turns": "Mapa na HUD jen u odboček",
+   "Show from {0} before a turn": "Zobrazit {0} před odbočkou",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Čeká se na odbočku",
+   "No turn data": "Žádná data o odbočkách"
   }
  },
  {
@@ -301,7 +315,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Lyden kan falde ud. Slå Wi-Fi fra og til på din iPhone.",
    "Own settings for this driver": "Egne indstillinger for denne fører",
    "Driver profile can't be read": "Førerprofilen kan ikke læses",
-   "Keep HUD map over BMW's pop-ups": "Behold kort i HUD over BMW's pop-ups"
+   "Keep HUD map over BMW's pop-ups": "Behold kort i HUD over BMW's pop-ups",
+   "Show HUD map only near turns": "HUD-kort kun nær sving",
+   "Show from {0} before a turn": "Vis fra {0} før et sving",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Venter på et sving",
+   "No turn data": "Ingen svingdata"
   }
  },
  {
@@ -402,7 +423,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Der Ton kann aussetzen. Am iPhone WLAN aus- und wieder einschalten.",
    "Own settings for this driver": "Eigene Einstellungen für diesen Fahrer",
    "Driver profile can't be read": "Fahrerprofil kann nicht gelesen werden",
-   "Keep HUD map over BMW's pop-ups": "Karte im HUD vor BMW-Pop-ups behalten"
+   "Keep HUD map over BMW's pop-ups": "Karte im HUD vor BMW-Pop-ups behalten",
+   "Show HUD map only near turns": "Karte im HUD nur vor dem Abbiegen",
+   "Show from {0} before a turn": "Anzeigen ab {0} vor dem Abbiegen",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Warten auf Abbiegehinweis",
+   "No turn data": "Keine Abbiegedaten"
   }
  },
  {
@@ -503,7 +531,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ο ήχος μπορεί να διακόπτεται. Στο iPhone, απενεργοποιήστε και ενεργοποιήστε ξανά το Wi-Fi.",
    "Own settings for this driver": "Δικές ρυθμίσεις για αυτόν τον οδηγό",
    "Driver profile can't be read": "Δεν είναι δυνατή η ανάγνωση του προφίλ οδηγού",
-   "Keep HUD map over BMW's pop-ups": "Διατήρηση χάρτη στο HUD πάνω από τα αναδυόμενα της BMW"
+   "Keep HUD map over BMW's pop-ups": "Διατήρηση χάρτη στο HUD πάνω από τα αναδυόμενα της BMW",
+   "Show HUD map only near turns": "Χάρτης HUD μόνο κοντά σε στροφές",
+   "Show from {0} before a turn": "Εμφάνιση από {0} πριν τη στροφή",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Αναμονή για στροφή",
+   "No turn data": "Δεν υπάρχουν δεδομένα στροφών"
   }
  },
  {
@@ -604,7 +639,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "El audio puede cortarse. En tu iPhone, desactiva y vuelve a activar el Wi-Fi.",
    "Own settings for this driver": "Configuración propia para este conductor",
    "Driver profile can't be read": "No se puede leer el perfil del conductor",
-   "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW"
+   "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW",
+   "Show HUD map only near turns": "Mapa del HUD solo cerca de giros",
+   "Show from {0} before a turn": "Mostrar desde {0} antes del giro",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "Esperando un giro",
+   "No turn data": "Sin datos de giros"
   }
  },
  {
@@ -705,7 +747,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "El audio puede cortarse. En tu iPhone, desactiva y vuelve a activar la Wi-Fi.",
    "Own settings for this driver": "Ajustes propios para este conductor",
    "Driver profile can't be read": "No se puede leer el perfil del conductor",
-   "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW"
+   "Keep HUD map over BMW's pop-ups": "Mantener mapa en el HUD sobre ventanas emergentes de BMW",
+   "Show HUD map only near turns": "Mapa del HUD solo cerca de giros",
+   "Show from {0} before a turn": "Mostrar desde {0} antes del giro",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Esperando un giro",
+   "No turn data": "Sin datos de giros"
   }
  },
  {
@@ -806,7 +855,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ääni voi katkeilla. Laita iPhonen Wi-Fi pois ja takaisin päälle.",
    "Own settings for this driver": "Omat asetukset tälle kuljettajalle",
    "Driver profile can't be read": "Kuljettajaprofiilia ei voi lukea",
-   "Keep HUD map over BMW's pop-ups": "Pidä HUD-kartta BMW:n ponnahdusikkunoiden päällä"
+   "Keep HUD map over BMW's pop-ups": "Pidä HUD-kartta BMW:n ponnahdusikkunoiden päällä",
+   "Show HUD map only near turns": "HUD-kartta vain käännösten lähellä",
+   "Show from {0} before a turn": "Näytä {0} ennen käännöstä",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Odotetaan käännöstä",
+   "No turn data": "Ei käännöstietoja"
   }
  },
  {
@@ -907,7 +963,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Le son peut se couper. Sur votre iPhone, désactivez puis réactivez le Wi-Fi.",
    "Own settings for this driver": "Réglages propres à ce conducteur",
    "Driver profile can't be read": "Impossible de lire le profil du conducteur",
-   "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les fenêtres contextuelles BMW"
+   "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les fenêtres contextuelles BMW",
+   "Show HUD map only near turns": "Carte HUD seulement aux virages",
+   "Show from {0} before a turn": "Afficher dès {0} avant un virage",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "En attente d'un virage",
+   "No turn data": "Aucune donnée de virage"
   }
  },
  {
@@ -1008,7 +1071,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Le son peut se couper. Sur votre iPhone, désactivez puis réactivez le Wi-Fi.",
    "Own settings for this driver": "Réglages propres à ce conducteur",
    "Driver profile can't be read": "Impossible de lire le profil du conducteur",
-   "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les pop-up BMW"
+   "Keep HUD map over BMW's pop-ups": "Garder la carte sur le HUD devant les pop-up BMW",
+   "Show HUD map only near turns": "Carte HUD seulement aux virages",
+   "Show from {0} before a turn": "Afficher dès {0} avant un virage",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "En attente d'un virage",
+   "No turn data": "Aucune donnée de virage"
   }
  },
  {
@@ -1109,7 +1179,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "השמע עלול להיקטע. ב-iPhone, כבו את ה-Wi-Fi והפעילו אותו מחדש.",
    "Own settings for this driver": "הגדרות נפרדות לנהג זה",
    "Driver profile can't be read": "לא ניתן לקרוא את פרופיל הנהג",
-   "Keep HUD map over BMW's pop-ups": "השארת המפה ב-HUD מעל החלונות הקופצים של BMW"
+   "Keep HUD map over BMW's pop-ups": "השארת המפה ב-HUD מעל החלונות הקופצים של BMW",
+   "Show HUD map only near turns": "מפת HUD רק ליד פניות",
+   "Show from {0} before a turn": "הצגה מ-{0} לפני הפנייה",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "ממתין לפנייה",
+   "No turn data": "אין נתוני פניות"
   }
  },
  {
@@ -1210,7 +1287,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "A hang akadozhat. Az iPhone-on kapcsolja ki, majd be a Wi-Fi-t.",
    "Own settings for this driver": "Saját beállítások ennek a vezetőnek",
    "Driver profile can't be read": "A vezetői profil nem olvasható",
-   "Keep HUD map over BMW's pop-ups": "Térkép megtartása a HUD-on a BMW felugró ablakai felett"
+   "Keep HUD map over BMW's pop-ups": "Térkép megtartása a HUD-on a BMW felugró ablakai felett",
+   "Show HUD map only near turns": "HUD-térkép csak kanyarok előtt",
+   "Show from {0} before a turn": "Megjelenítés kanyar előtt: {0}",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Várakozás kanyarra",
+   "No turn data": "Nincs kanyaradat"
   }
  },
  {
@@ -1311,7 +1395,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Audio mungkin terputus. Di iPhone Anda, matikan lalu nyalakan Wi-Fi.",
    "Own settings for this driver": "Pengaturan sendiri untuk pengemudi ini",
    "Driver profile can't be read": "Profil pengemudi tidak dapat dibaca",
-   "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW"
+   "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW",
+   "Show HUD map only near turns": "Peta HUD hanya dekat belokan",
+   "Show from {0} before a turn": "Tampil mulai {0} sebelum belokan",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Menunggu belokan",
+   "No turn data": "Tidak ada data belokan"
   }
  },
  {
@@ -1412,7 +1503,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "L'audio potrebbe interrompersi. Sull'iPhone, disattiva e riattiva il Wi-Fi.",
    "Own settings for this driver": "Impostazioni proprie per questo conducente",
    "Driver profile can't be read": "Impossibile leggere il profilo del conducente",
-   "Keep HUD map over BMW's pop-ups": "Mantieni la mappa sull'HUD sopra i pop-up BMW"
+   "Keep HUD map over BMW's pop-ups": "Mantieni la mappa sull'HUD sopra i pop-up BMW",
+   "Show HUD map only near turns": "Mappa HUD solo vicino alle svolte",
+   "Show from {0} before a turn": "Mostra da {0} prima della svolta",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "In attesa di una svolta",
+   "No turn data": "Nessun dato sulle svolte"
   }
  },
  {
@@ -1513,7 +1611,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音声が途切れることがあります。iPhoneでWi-Fiをオフにしてからオンにしてください。",
    "Own settings for this driver": "このドライバー専用の設定",
    "Driver profile can't be read": "ドライバープロファイルを読み取れません",
-   "Keep HUD map over BMW's pop-ups": "HUDの地図をBMWのポップアップより優先"
+   "Keep HUD map over BMW's pop-ups": "HUDの地図をBMWのポップアップより優先",
+   "Show HUD map only near turns": "曲がり角の手前のみHUDに地図を表示",
+   "Show from {0} before a turn": "曲がり角の{0}手前から表示",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "曲がり角待ち",
+   "No turn data": "曲がり角データなし"
   }
  },
  {
@@ -1614,7 +1719,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "오디오가 끊길 수 있습니다. iPhone에서 Wi-Fi를 껐다가 다시 켜십시오.",
    "Own settings for this driver": "이 운전자 전용 설정",
    "Driver profile can't be read": "운전자 프로필을 읽을 수 없습니다",
-   "Keep HUD map over BMW's pop-ups": "BMW 팝업 위에 HUD 지도 유지"
+   "Keep HUD map over BMW's pop-ups": "BMW 팝업 위에 HUD 지도 유지",
+   "Show HUD map only near turns": "회전 지점 근처에서만 HUD 지도 표시",
+   "Show from {0} before a turn": "회전 {0} 전부터 표시",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "회전 대기 중",
+   "No turn data": "회전 데이터 없음"
   }
  },
  {
@@ -1715,7 +1827,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Lyden kan falle ut. Slå Wi-Fi av og på igjen på iPhone.",
    "Own settings for this driver": "Egne innstillinger for denne føreren",
    "Driver profile can't be read": "Førerprofilen kan ikke leses",
-   "Keep HUD map over BMW's pop-ups": "Behold kart i HUD over BMWs popup-vinduer"
+   "Keep HUD map over BMW's pop-ups": "Behold kart i HUD over BMWs popup-vinduer",
+   "Show HUD map only near turns": "HUD-kart bare nær svinger",
+   "Show from {0} before a turn": "Vis fra {0} før en sving",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Venter på en sving",
+   "No turn data": "Ingen svingdata"
   }
  },
  {
@@ -1818,7 +1937,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Het geluid kan wegvallen. Zet Wi-Fi op je iPhone uit en weer aan.",
    "Own settings for this driver": "Eigen instellingen voor deze bestuurder",
    "Driver profile can't be read": "Bestuurdersprofiel kan niet worden gelezen",
-   "Keep HUD map over BMW's pop-ups": "Kaart in HUD boven BMW-pop-ups houden"
+   "Keep HUD map over BMW's pop-ups": "Kaart in HUD boven BMW-pop-ups houden",
+   "Show HUD map only near turns": "HUD-kaart alleen bij afslagen",
+   "Show from {0} before a turn": "Tonen vanaf {0} voor een afslag",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Wachten op afslag",
+   "No turn data": "Geen afslaggegevens"
   }
  },
  {
@@ -1919,7 +2045,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Dźwięk może się przerywać. Na iPhonie wyłącz i włącz Wi-Fi.",
    "Own settings for this driver": "Własne ustawienia dla tego kierowcy",
    "Driver profile can't be read": "Nie można odczytać profilu kierowcy",
-   "Keep HUD map over BMW's pop-ups": "Zachowaj mapę na HUD nad wyskakującymi oknami BMW"
+   "Keep HUD map over BMW's pop-ups": "Zachowaj mapę na HUD nad wyskakującymi oknami BMW",
+   "Show HUD map only near turns": "Mapa na HUD tylko przed skrętami",
+   "Show from {0} before a turn": "Pokazuj od {0} przed skrętem",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Oczekiwanie na skręt",
+   "No turn data": "Brak danych o skrętach"
   }
  },
  {
@@ -2020,7 +2153,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "O áudio pode falhar. No iPhone, desative e ative o Wi-Fi.",
    "Own settings for this driver": "Configurações próprias para este motorista",
    "Driver profile can't be read": "Não é possível ler o perfil do motorista",
-   "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups da BMW"
+   "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups da BMW",
+   "Show HUD map only near turns": "Mapa no HUD só perto das curvas",
+   "Show from {0} before a turn": "Mostrar a partir de {0} da curva",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Aguardando uma curva",
+   "No turn data": "Sem dados de curvas"
   }
  },
  {
@@ -2121,7 +2261,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "O áudio pode falhar. No iPhone, desative e volte a ativar o Wi-Fi.",
    "Own settings for this driver": "Definições próprias para este condutor",
    "Driver profile can't be read": "Não é possível ler o perfil do condutor",
-   "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups BMW"
+   "Keep HUD map over BMW's pop-ups": "Manter mapa no HUD sobre pop-ups BMW",
+   "Show HUD map only near turns": "Mapa no HUD só perto das viragens",
+   "Show from {0} before a turn": "Mostrar a {0} da viragem",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "À espera de uma viragem",
+   "No turn data": "Sem dados de viragens"
   }
  },
  {
@@ -2222,7 +2369,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Sunetul se poate întrerupe. Pe iPhone, dezactivați și reactivați Wi-Fi.",
    "Own settings for this driver": "Setări proprii pentru acest șofer",
    "Driver profile can't be read": "Profilul șoferului nu poate fi citit",
-   "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW"
+   "Keep HUD map over BMW's pop-ups": "Păstrare hartă pe HUD peste ferestrele pop-up BMW",
+   "Show HUD map only near turns": "Hartă HUD doar lângă viraje",
+   "Show from {0} before a turn": "Afișează cu {0} înainte de viraj",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Se așteaptă un viraj",
+   "No turn data": "Fără date despre viraje"
   }
  },
  {
@@ -2323,7 +2477,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Звук может прерываться. На iPhone выключите и снова включите Wi-Fi.",
    "Own settings for this driver": "Свои настройки для этого водителя",
    "Driver profile can't be read": "Не удаётся прочитать профиль водителя",
-   "Keep HUD map over BMW's pop-ups": "Оставлять карту на HUD поверх всплывающих окон BMW"
+   "Keep HUD map over BMW's pop-ups": "Оставлять карту на HUD поверх всплывающих окон BMW",
+   "Show HUD map only near turns": "Карта на HUD только у поворотов",
+   "Show from {0} before a turn": "Показывать за {0} до поворота",
+   "{0} m": "{0} м",
+   "{0} km": "{0} км",
+   "{0}.{1} km": "{0},{1} км",
+   "Waiting for a turn": "Ожидание поворота",
+   "No turn data": "Нет данных о поворотах"
   }
  },
  {
@@ -2424,7 +2585,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvuk sa môže prerušovať. Na iPhone vypnite a zapnite Wi-Fi.",
    "Own settings for this driver": "Vlastné nastavenia pre tohto vodiča",
    "Driver profile can't be read": "Profil vodiča sa nedá načítať",
-   "Keep HUD map over BMW's pop-ups": "Ponechať mapu na HUD nad kontextovými oknami BMW"
+   "Keep HUD map over BMW's pop-ups": "Ponechať mapu na HUD nad kontextovými oknami BMW",
+   "Show HUD map only near turns": "Mapa na HUD len pri odbočkách",
+   "Show from {0} before a turn": "Zobraziť {0} pred odbočkou",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Čaká sa na odbočku",
+   "No turn data": "Žiadne údaje o odbočkách"
   }
  },
  {
@@ -2525,7 +2693,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Zvok se lahko prekinja. Na iPhonu izklopite in vklopite Wi-Fi.",
    "Own settings for this driver": "Lastne nastavitve za tega voznika",
    "Driver profile can't be read": "Profila voznika ni mogoče prebrati",
-   "Keep HUD map over BMW's pop-ups": "Ohrani zemljevid na HUD nad pojavnimi okni BMW"
+   "Keep HUD map over BMW's pop-ups": "Ohrani zemljevid na HUD nad pojavnimi okni BMW",
+   "Show HUD map only near turns": "Zemljevid na HUD samo blizu zavojev",
+   "Show from {0} before a turn": "Prikaži {0} pred zavojem",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Čakanje na zavoj",
+   "No turn data": "Ni podatkov o zavojih"
   }
  },
  {
@@ -2626,7 +2801,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ljudet kan försvinna. Stäng av och slå på Wi-Fi på din iPhone.",
    "Own settings for this driver": "Egna inställningar för den här föraren",
    "Driver profile can't be read": "Förarprofilen kan inte läsas",
-   "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster"
+   "Keep HUD map over BMW's pop-ups": "Behåll karta i HUD över BMW:s popup-fönster",
+   "Show HUD map only near turns": "HUD-karta bara nära svängar",
+   "Show from {0} before a turn": "Visa från {0} före en sväng",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Väntar på en sväng",
+   "No turn data": "Ingen svängdata"
   }
  },
  {
@@ -2727,7 +2909,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "เสียงอาจขาดหาย ให้ปิดแล้วเปิด Wi-Fi บน iPhone",
    "Own settings for this driver": "การตั้งค่าเฉพาะสำหรับผู้ขับขี่คนนี้",
    "Driver profile can't be read": "ไม่สามารถอ่านโปรไฟล์ผู้ขับขี่ได้",
-   "Keep HUD map over BMW's pop-ups": "คงแผนที่บน HUD ไว้เหนือป๊อปอัปของ BMW"
+   "Keep HUD map over BMW's pop-ups": "คงแผนที่บน HUD ไว้เหนือป๊อปอัปของ BMW",
+   "Show HUD map only near turns": "แผนที่ HUD เฉพาะใกล้ทางเลี้ยว",
+   "Show from {0} before a turn": "แสดงก่อนถึงทางเลี้ยว {0}",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "กำลังรอทางเลี้ยว",
+   "No turn data": "ไม่มีข้อมูลทางเลี้ยว"
   }
  },
  {
@@ -2828,7 +3017,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Ses kesilebilir. iPhone'unuzda Wi-Fi'yi kapatıp açın.",
    "Own settings for this driver": "Bu sürücüye özel ayarlar",
    "Driver profile can't be read": "Sürücü profili okunamıyor",
-   "Keep HUD map over BMW's pop-ups": "HUD haritasını BMW açılır pencerelerinin üstünde tut"
+   "Keep HUD map over BMW's pop-ups": "HUD haritasını BMW açılır pencerelerinin üstünde tut",
+   "Show HUD map only near turns": "HUD haritası sadece dönüş öncesi",
+   "Show from {0} before a turn": "Dönüşten {0} önce göster",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Dönüş bekleniyor",
+   "No turn data": "Dönüş verisi yok"
   }
  },
  {
@@ -2929,7 +3125,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Звук може перериватися. На iPhone вимкніть і знову ввімкніть Wi-Fi.",
    "Own settings for this driver": "Власні налаштування для цього водія",
    "Driver profile can't be read": "Не вдається прочитати профіль водія",
-   "Keep HUD map over BMW's pop-ups": "Залишати карту на HUD поверх спливних вікон BMW"
+   "Keep HUD map over BMW's pop-ups": "Залишати карту на HUD поверх спливних вікон BMW",
+   "Show HUD map only near turns": "Карта на HUD лише біля поворотів",
+   "Show from {0} before a turn": "Показувати за {0} до повороту",
+   "{0} m": "{0} м",
+   "{0} km": "{0} км",
+   "{0}.{1} km": "{0},{1} км",
+   "Waiting for a turn": "Очікування повороту",
+   "No turn data": "Немає даних про повороти"
   }
  },
  {
@@ -3030,7 +3233,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Âm thanh có thể bị ngắt. Trên iPhone, hãy tắt rồi bật lại Wi-Fi.",
    "Own settings for this driver": "Cài đặt riêng cho người lái này",
    "Driver profile can't be read": "Không thể đọc hồ sơ người lái",
-   "Keep HUD map over BMW's pop-ups": "Giữ bản đồ trên HUD phía trên cửa sổ bật lên của BMW"
+   "Keep HUD map over BMW's pop-ups": "Giữ bản đồ trên HUD phía trên cửa sổ bật lên của BMW",
+   "Show HUD map only near turns": "Bản đồ HUD chỉ gần chỗ rẽ",
+   "Show from {0} before a turn": "Hiện từ {0} trước chỗ rẽ",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0},{1} km",
+   "Waiting for a turn": "Đang chờ chỗ rẽ",
+   "No turn data": "Không có dữ liệu chỗ rẽ"
   }
  },
  {
@@ -3133,7 +3343,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音频可能中断。请在 iPhone 上关闭再打开无线局域网。",
    "Own settings for this driver": "此驾驶员的专属设置",
    "Driver profile can't be read": "无法读取驾驶员档案",
-   "Keep HUD map over BMW's pop-ups": "HUD 地图保持在 BMW 弹窗之上"
+   "Keep HUD map over BMW's pop-ups": "HUD 地图保持在 BMW 弹窗之上",
+   "Show HUD map only near turns": "仅在转弯前于 HUD 显示地图",
+   "Show from {0} before a turn": "转弯前 {0} 开始显示",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "等待转弯",
+   "No turn data": "无转弯数据"
   }
  },
  {
@@ -3236,7 +3453,14 @@ module.exports = [
    "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "音訊可能中斷。請在 iPhone 上關閉再開啟 Wi-Fi。",
    "Own settings for this driver": "此駕駛的專屬設定",
    "Driver profile can't be read": "無法讀取駕駛設定檔",
-   "Keep HUD map over BMW's pop-ups": "HUD 地圖保持在 BMW 彈出視窗之上"
+   "Keep HUD map over BMW's pop-ups": "HUD 地圖保持在 BMW 彈出視窗之上",
+   "Show HUD map only near turns": "僅在轉彎前於 HUD 顯示地圖",
+   "Show from {0} before a turn": "轉彎前 {0} 開始顯示",
+   "{0} m": "{0} m",
+   "{0} km": "{0} km",
+   "{0}.{1} km": "{0}.{1} km",
+   "Waiting for a turn": "等待轉彎",
+   "No turn data": "無轉彎資料"
   }
  }
 ];

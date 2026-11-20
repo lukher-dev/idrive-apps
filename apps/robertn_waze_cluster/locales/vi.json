@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Âm thanh có thể bị ngắt. Trên iPhone, hãy tắt rồi bật lại Wi-Fi.",
     "Own settings for this driver": "Cài đặt riêng cho người lái này",
     "Driver profile can't be read": "Không thể đọc hồ sơ người lái",
-    "Keep HUD map over BMW's pop-ups": "Giữ bản đồ trên HUD phía trên cửa sổ bật lên của BMW"
+    "Keep HUD map over BMW's pop-ups": "Giữ bản đồ trên HUD phía trên cửa sổ bật lên của BMW",
+    "Show HUD map only near turns": "Bản đồ HUD chỉ gần chỗ rẽ",
+    "Show from {0} before a turn": "Hiện từ {0} trước chỗ rẽ",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Đang chờ chỗ rẽ",
+    "No turn data": "Không có dữ liệu chỗ rẽ"
   }
 }

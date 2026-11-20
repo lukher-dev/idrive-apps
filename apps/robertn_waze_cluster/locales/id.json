@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Audio mungkin terputus. Di iPhone Anda, matikan lalu nyalakan Wi-Fi.",
     "Own settings for this driver": "Pengaturan sendiri untuk pengemudi ini",
     "Driver profile can't be read": "Profil pengemudi tidak dapat dibaca",
-    "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW"
+    "Keep HUD map over BMW's pop-ups": "Pertahankan peta di HUD di atas pop-up BMW",
+    "Show HUD map only near turns": "Peta HUD hanya dekat belokan",
+    "Show from {0} before a turn": "Tampil mulai {0} sebelum belokan",
+    "{0} m": "{0} m",
+    "{0} km": "{0} km",
+    "{0}.{1} km": "{0},{1} km",
+    "Waiting for a turn": "Menunggu belokan",
+    "No turn data": "Tidak ada data belokan"
   }
 }

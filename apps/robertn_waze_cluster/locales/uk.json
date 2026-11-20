@@ -95,6 +95,13 @@
     "Audio may cut out. On your iPhone, turn Wi-Fi off and on.": "Звук може перериватися. На iPhone вимкніть і знову ввімкніть Wi-Fi.",
     "Own settings for this driver": "Власні налаштування для цього водія",
     "Driver profile can't be read": "Не вдається прочитати профіль водія",
-    "Keep HUD map over BMW's pop-ups": "Залишати карту на HUD поверх спливних вікон BMW"
+    "Keep HUD map over BMW's pop-ups": "Залишати карту на HUD поверх спливних вікон BMW",
+    "Show HUD map only near turns": "Карта на HUD лише біля поворотів",
+    "Show from {0} before a turn": "Показувати за {0} до повороту",
+    "{0} m": "{0} м",
+    "{0} km": "{0} км",
+    "{0}.{1} km": "{0},{1} км",
+    "Waiting for a turn": "Очікування повороту",
+    "No turn data": "Немає даних про повороти"
   }
 }

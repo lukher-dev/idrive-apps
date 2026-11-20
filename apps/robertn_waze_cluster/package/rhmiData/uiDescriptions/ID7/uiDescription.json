@@ -283,6 +283,74 @@
             }
           ]
         },
+        "94": {
+          "type": "checkBox",
+          "name": "wocHudNearTurn",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "Text": {
+                "value": "Show HUD map only near turns",
+                "type": "Text"
+              },
+              "eParam_RowSelected": {
+                "value": false,
+                "type": "Bool"
+              }
+            }
+          ]
+        },
+        "109": {
+          "type": "slider",
+          "name": "wocHudNearDist",
+          "properties": {
+            "Visible": {
+              "value": 1,
+              "type": "UInt"
+            },
+            "Focusable": {
+              "value": 3,
+              "type": "UInt"
+            }
+          },
+          "rows": [
+            {
+              "TextDescription": {
+                "value": "Show from — before a turn",
+                "type": "Text"
+              },
+              "TextDescriptionVisible": {
+                "value": true,
+                "type": "Bool"
+              },
+              "MiddleIndicatorVisible": {
+                "value": false,
+                "type": "Bool"
+              },
+              "MinValue": {
+                "value": 0,
+                "type": "SInt"
+              },
+              "MaxValue": {
+                "value": 9,
+                "type": "SInt"
+              },
+              "NumberOfSteps": {
+                "value": 9,
+                "type": "SInt"
+              }
+            }
+          ]
+        },
         "52": {
           "type": "slider",
           "name": "wocHudSize",
