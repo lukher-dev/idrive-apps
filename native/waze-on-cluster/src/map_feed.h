@@ -93,6 +93,14 @@ struct FeedConfig {
     /* On the HUD: kept shown over the stock HMI's pop-ups (the layer's
      * yield 0); else it gives way to them (cluster-render's hud_yield_slots). */
     bool hud_keep_shown = false;
+    /* The HUD map only near turns (MapFeeds): hidden until the app says a
+     * turn is near ({"cmd":"turn","near":"1"}), and again when it says the
+     * turn is past or has not said so again for hud_near_expire_ms. */
+    bool hud_near_turn = false;
+    int64_t hud_near_expire_ms = 90000;
+    /* How many metres before a turn the app says it is near (200-2000): the
+     * app's own gate, kept and reported here for it to read back. */
+    unsigned hud_near_m = 1000;
     /* A target shown smaller than the decoded frame (the HUD) gets the frame
      * scaled on the head unit to the size it is shown at (atlas_scale.h), on
      * a worker thread, at most video.fps a second, rounded to these level
@@ -134,6 +142,9 @@ struct FeedStatus {
     unsigned hud_width_pct = 0;   /* the HUD map's size setting (0: the default) */
     int hud_offset_x = 0, hud_offset_y = 0;   /* and where it is moved to from the centre */
     bool hud_keep_shown = false;   /* the HUD map kept shown over the stock HMI's pop-ups */
+    bool hud_near_turn = false;    /* the HUD map only near turns */
+    bool hud_gate = true;          /* and whether a turn is near (always, with hud_near_turn off) */
+    unsigned hud_near_m = 1000;    /* and how many metres before a turn the app shows it */
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs
@@ -228,6 +239,10 @@ public:
      * what it has to show: the layer is visible only while it is live, not
      * frozen and shows a picture. */
     void set_stream(bool live, bool frozen, Picture picture);
+    /* Whether the map may show at all (MapFeeds' turn gate on the HUD):
+     * closed, the layer is hidden as with no stream; opened, the newest
+     * picture goes first, then the layer shows. Open from the start. */
+    void set_gate(bool open);
 
     /* The status for the app, with decode the capture and decode part of
      * the line and stream why the picture is not whole (empty: it is). */
@@ -269,6 +284,8 @@ private:
     void send_newest();
     /* Makes the layer visible once the newest frame has gone. */
     void show_when_sent();
+    /* The layer shown or hidden to match the stream and the gate. */
+    void apply_visible();
 
     FeedConfig cfg_;
     cr::Client client_;
@@ -284,6 +301,7 @@ private:
     uint32_t layer_ = 0;
     cr::LayerOptions lo_;   /* the layer's options as last sent */
     bool show_due_ = false;   /* visible once the frame waiting has gone */
+    bool gate_open_ = true;   /* set_gate */
     /* The newest frame, while held_new_; on a layer that scales, once there
      * is one, unless another feed or the worker has it. */
     std::vector<uint8_t> held_;
