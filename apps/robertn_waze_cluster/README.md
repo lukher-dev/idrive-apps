@@ -60,7 +60,7 @@ The app is in the head unit's display language.
   (experimental)**, **Cluster and HUD (experimental)** or **Off**. The
   change is immediate. **Off** shows BMW's own content on both.
 - **Own settings for this driver:** ticked, the current driver profile
-  keeps its own Show on, HUD size and HUD position.
+  keeps its own Show on, HUD size, HUD zoom and HUD position.
 - **Hide BMW's turn box:** ticked (the default), BMW's turn-by-turn box on
   the cluster is hidden while the map shows.
 - **Logs:** opens the Logs page (see below).
@@ -72,6 +72,9 @@ The app is in the head unit's display language.
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
 - **Size:** how wide the map is on the HUD.
+- **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
+  the default) to 250 %. The map is never scaled up, so a wide HUD map
+  takes less zoom: the row shows the zoom in use.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
   map sits on the HUD.
 

@@ -112,6 +112,10 @@ starts, and `/usr/bin/carplay` stays as it ships: no write of the system
 partition to patch, remove or recover it. Updating from an earlier version
 puts the original file back and keeps the map, with at most one head-unit
 restart; where CarPlay already runs the earlier patch, none.
+The HUD map can be zoomed in, 100 to 250 %, from the app's Map zoom
+slider: it shows the middle of the map, never scaled up, and each driver
+profile keeps its own zoom. 100 % (the default) shows the whole map as
+before.
 
 ## 0.10.12
 

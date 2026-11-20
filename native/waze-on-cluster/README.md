@@ -130,6 +130,15 @@ unless **Keep HUD map over BMW's pop-ups** is ticked. **Own settings for
 this driver** gives the driver profile in use its own copy of these
 settings.
 
+**Map zoom** (`hud_zoom_pct`, 100 to 250 %) shows the picture's middle
+100/zoom of each side, centred on `hud_crop_cx_pm`, `hud_crop_cy_pm`
+(per mille of the picture, 500 and 500 by default; opt-in keys in
+`features.conf`) and held inside it, scaled to the HUD map's size. A size
+takes at most the zoom whose part is as wide as the map is shown (240 % at
+Standard, 160 % at 85 %), so the picture is never scaled up; the status's
+`hud_zoom_used` is the zoom in use. The default, 100 %, shows the whole
+picture, the phone's turn card and arrival-time card with it.
+
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md
 "Hosting another target"), and so can an app that draws a target with

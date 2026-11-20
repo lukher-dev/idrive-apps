@@ -17,6 +17,10 @@ A Patch or Remove patch that fails shows the reason.
 on cluster patches every software version of the car it can check, and
 removes the patch by itself if the head unit then fails to start. Requires
 the next waze-on-cluster.
+Map zoom, a slider in HUD: 100 to 250 %, a closer part of the map on the
+HUD. 100 % (the default) shows the whole map as before. The map is never
+scaled up, so a wide HUD map takes less zoom; the row shows the zoom in use.
+Own settings for this driver keeps the zoom too.
 
 ## 0.6.12
 
