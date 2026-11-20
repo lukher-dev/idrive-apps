@@ -492,7 +492,7 @@ class WazeClusterControl extends EventEmitter {
 
     hudSizeText() {
         const w = this.hudWidth();
-        return t('Size: {0}', w == null ? '—' : w === 0 ? t('Standard') : t('{0} %', w));
+        return t('Map size: {0}', w == null ? '—' : w === 0 ? t('Standard') : t('{0} %', w));
     }
 
     /* The size and place change only while the HUD is on and not disabled. */
@@ -706,15 +706,15 @@ class WazeClusterControl extends EventEmitter {
     hudPositionText() {
         const at = this.hudOffset();
         if (!at) {
-            return t('Position: {0}', '—');
+            return t('Map position: {0}', '—');
         }
         const [x, y] = at;
         if (!x && !y) {
-            return t('Position: {0}', t('Centre'));
+            return t('Map position: {0}', t('Centre'));
         }
         const h = x > 0 ? t('{0} px right', x) : x < 0 ? t('{0} px left', -x) : '';
         const v = y > 0 ? t('{0} px down', y) : y < 0 ? t('{0} px up', -y) : '';
-        return t('Position: {0}', h && v ? t('{0}, {1}', h, v) : h || v);
+        return t('Map position: {0}', h && v ? t('{0}, {1}', h, v) : h || v);
     }
 
     /* CarPlay's Patch button is offered for an original (never patched, or reverted), an
@@ -911,9 +911,9 @@ class WazeClusterControl extends EventEmitter {
     zoomText() {
         const aa = this.aa();
         if (!aa || aa.dpi == null) {
-            return t('Zoom: {0}', '—');
+            return t('Cluster map zoom: {0}', '—');
         }
-        return t('Zoom: {0}', t('{0} dpi', aa.dpi)) + afterRestart(aa.pending === 'apply' && aa.runDpi !== aa.dpi);
+        return t('Cluster map zoom: {0}', t('{0} dpi', aa.dpi)) + afterRestart(aa.pending === 'apply' && aa.runDpi !== aa.dpi);
     }
 
     cardText() {

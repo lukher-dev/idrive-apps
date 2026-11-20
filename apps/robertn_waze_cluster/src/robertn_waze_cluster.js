@@ -12,20 +12,20 @@
  * profile is detected), Cluster map (the shared render's map), the Hide
  * BMW's turn box checkbox (the render's setting; a press asks the render to
  * flip it), Logs. HUD: HUD map (the map
- * on the HUD), the Keep HUD map over BMW's pop-ups checkbox, the Size
- * slider, the Map zoom slider, Position with Move left, Move right, Move
- * up, Move down and Centre, then the Hide map behind BMW's speed checkbox
- * (the map hidden in a rectangle of the HUD, where BMW's speed is) and the
- * Speed area row with Move speed area left, right, up and down and Speed
- * area wider, narrower, taller and shorter for its rectangle; the
- * checkboxes, the sliders and the buttons are greyed while the HUD is off
- * or disabled after errors, the speed area's buttons also while it is
- * unticked. CarPlay and Android Auto
- * have the same rows: Status, Patch, Remove patch; CarPlay adds CarPlay
- * Wi-Fi (the band, 5 GHz or 2.4 GHz) and, on 2.4 GHz, the line under it;
- * Android Auto adds Zoom with Zoom out and Zoom in, and the Hide phone's
- * turn card checkbox. Info rows read "Name: Value"; every on/off setting is
- * a checkbox. One that cannot act now is greyed, and while patchd runs any
+ * on the HUD), the Keep HUD map over BMW's pop-ups checkbox, the Map size
+ * slider, the Map zoom slider, Map position with Move map left, Move map
+ * right, Move map up, Move map down and Centre map, then the Hide map behind
+ * BMW's speed checkbox (the map hidden in a rectangle of the HUD, where
+ * BMW's speed is) and the Speed area row with Move speed area left, right,
+ * up and down and Speed area wider, narrower, taller and shorter for its
+ * rectangle; the checkboxes, the sliders and the buttons are greyed while
+ * the HUD is off or disabled after errors, the speed area's buttons also
+ * while it is unticked. CarPlay and Android Auto have the same rows:
+ * Status, Patch, Remove patch; CarPlay adds CarPlay Wi-Fi (the band, 5 GHz
+ * or 2.4 GHz) and, on 2.4 GHz, the line under it; Android Auto adds Cluster
+ * map zoom with Zoom out and Zoom in, and the Hide phone's turn card
+ * checkbox. Info rows read "Name: Value"; every on/off setting is a
+ * checkbox. One that cannot act now is greyed, and while patchd runs any
  * operation every operation is. Every row stays on the page but four, the
  * only rows shown and hidden: CarPlay Wi-Fi while CarPlay runs over Wi-Fi
  * and patchd knows the band, and its line on 2.4 GHz, CarPlay's last two
@@ -553,8 +553,8 @@ class WazeClusterApp extends OnlineApp {
         [[ENABLE_NAME, t('Patch')], [DISABLE_NAME, t('Remove patch')], [AA_ENABLE_NAME, t('Patch')], [AA_DISABLE_NAME, t('Remove patch')],
             [AA_ZOOM_OUT_NAME, t('Zoom out')], [AA_ZOOM_IN_NAME, t('Zoom in')], [HEAD_GENERAL_NAME, t('General')], [LOGS_NAME, t('Logs')],
             [HEAD_HUD_NAME, t('HUD')],
-            [HUD_MOVE_NAMES.left, t('Move left')], [HUD_MOVE_NAMES.right, t('Move right')], [HUD_MOVE_NAMES.up, t('Move up')],
-            [HUD_MOVE_NAMES.down, t('Move down')], [HUD_CENTRE_NAME, t('Centre')],
+            [HUD_MOVE_NAMES.left, t('Move map left')], [HUD_MOVE_NAMES.right, t('Move map right')], [HUD_MOVE_NAMES.up, t('Move map up')],
+            [HUD_MOVE_NAMES.down, t('Move map down')], [HUD_CENTRE_NAME, t('Centre map')],
             [HUD_CLEAR_NAMES.left, t('Move speed area left')], [HUD_CLEAR_NAMES.right, t('Move speed area right')],
             [HUD_CLEAR_NAMES.up, t('Move speed area up')], [HUD_CLEAR_NAMES.down, t('Move speed area down')],
             [HUD_CLEAR_NAMES.wider, t('Speed area wider')], [HUD_CLEAR_NAMES.narrower, t('Speed area narrower')],

@@ -288,16 +288,16 @@ async function main() {
     assert.deepStrictEqual(main.map(([id, type, name, text]) => (type === 'title' ? name : `${name} ${text}`)), [
         'wocTitle',
         'wocHeadGeneral General', 'wocShowOn Show on: Cluster', 'wocProfile Own settings for this driver', 'wocMap Cluster map: Off', "wocGuide Hide BMW's turn box", 'wocLogs Logs',
-        'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudSize Size: \u2014',
-        'wocHudZoom Map zoom: \u2014', 'wocHudPos Position: \u2014', 'wocHudLeft Move left',
-        'wocHudRight Move right', 'wocHudUp Move up', 'wocHudDown Move down', 'wocHudCentre Centre',
+        'wocHeadHud HUD', 'wocHud HUD map: —', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudSize Map size: —',
+        'wocHudZoom Map zoom: —', 'wocHudPos Map position: —', 'wocHudLeft Move map left',
+        'wocHudRight Move map right', 'wocHudUp Move map up', 'wocHudDown Move map down', 'wocHudCentre Centre map',
         "wocHudClear Hide map behind BMW's speed", 'wocHudClearRect Speed area: \u2014', 'wocHudClearLeft Move speed area left',
         'wocHudClearRight Move speed area right', 'wocHudClearUp Move speed area up', 'wocHudClearDown Move speed area down',
         'wocHudClearWider Speed area wider', 'wocHudClearNarrower Speed area narrower', 'wocHudClearTaller Speed area taller',
         'wocHudClearShorter Speed area shorter',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch', 'wocWifi ', 'wocWifiHint ',
         'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch',
-        'wocAaZoom Zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
+        'wocAaZoom Cluster map zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
         'wocRestart Restart head unit', 'wocRestartStatus '],
         'the main page: four sections, in order');
     assert.deepStrictEqual(xmlIds('1').map(([id, type]) => `${id} ${type}`).sort(),
@@ -391,14 +391,14 @@ async function main() {
         /* Android Auto next to CarPlay: its line, Patch, then Remove patch, the zoom and the card. */
         const aaRow = () => ['wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard'].map((n) => byName[n].enabled);
         await until('Android Auto off, Patch enabled', () => byName.wocAaStatus.text === 'Status: Not patched' &&
-            JSON.stringify(aaRow()) === JSON.stringify([true, false, false, false, false]) && byName.wocAaZoom.text === 'Zoom: —' &&
+            JSON.stringify(aaRow()) === JSON.stringify([true, false, false, false, false]) && byName.wocAaZoom.text === 'Cluster map zoom: —' &&
             byName.wocAaCard.text === "Hide phone's turn card" && byName.wocAaCard.selected === false);
         byName.wocAaEnable.emit('action');
         await until('Android Auto on', () => byName.wocAaStatus.text === 'Status: Patched' &&
             JSON.stringify(aaRow()) === JSON.stringify([false, true, true, true, true]));
         byName.wocAaZoomOut.emit('action');
         await until('zoomed out', () => patch.received.some((m) => m.cmd === 'aa-density' && m.value === 170) &&
-            byName.wocAaZoom.text === 'Zoom: 170 dpi');
+            byName.wocAaZoom.text === 'Cluster map zoom: 170 dpi');
         assert(status.text !== '' && !/Android Auto/.test(status.text), 'CarPlay\'s line is its own');
         await until('the card shown', () => byName.wocAaCard.enabled === true && byName.wocAaCard.selected === false);
         const card = byName.wocAaCard;
@@ -411,7 +411,7 @@ async function main() {
         assert(card.ticks.every((t) => t === true), `ticked from the press on, never unticked meanwhile: ${JSON.stringify(card.ticks)}`);
         patch.aa = Object.assign({}, patch.aa, { state: 'unknown', pending: 'apply', aapd: 'deferred', dpi: 160, density: 160, runDpi: 170, runCard: 'shown' });
         patch.announce('patched', 'high', null);
-        await until('waiting for a restart', () => byName.wocAaZoom.text === 'Zoom: 160 dpi (after restart)' &&
+        await until('waiting for a restart', () => byName.wocAaZoom.text === 'Cluster map zoom: 160 dpi (after restart)' &&
             byName.wocAaCard.text === "Hide phone's turn card (after restart)" && byName.wocAaCard.selected === true &&
             byName.wocAaStatus.text === 'Status: Patched after restart' && byName.wocRestart.visible === true);
         patch.aa = { state: 'original', density: 160, densities: [150, 400, 10], conflict: 'not supported on this car (KI_KOMBI_VARIANT 9)' };
@@ -457,8 +457,8 @@ async function main() {
         const clearMoves = ['wocHudClearLeft', 'wocHudClearRight', 'wocHudClearUp', 'wocHudClearDown', 'wocHudClearWider', 'wocHudClearNarrower',
             'wocHudClearTaller', 'wocHudClearShorter'];
         await until('the cluster, the HUD off', () => showOn.shown() === 'Show on: Cluster' && showOn.enabled === true &&
-            byName.wocHud.text === 'HUD map: Off' && size.text === 'Size: Standard' && size.cells['0:Value'] === 5 &&
-            byName.wocHudPos.text === 'Position: Centre');
+            byName.wocHud.text === 'HUD map: Off' && size.text === 'Map size: Standard' && size.cells['0:Value'] === 5 &&
+            byName.wocHudPos.text === 'Map position: Centre');
         assert(hudRows().every((e) => e === false) && byName.wocHudCentre.enabled === false, 'the size and position greyed while off');
         render.received.length = 0;
         size.turn(1);
@@ -471,16 +471,16 @@ async function main() {
         assert.deepStrictEqual(render.received, [{ cmd: 'hud', on: '1' }, { cmd: 'cluster', on: '0' }], 'the HUD on, then the cluster off');
         await until('saved', () => patch.count('hud') === 1 && patch.count('cluster') === 1);
         size.turn(1);
-        await until('larger', () => size.text === 'Size: 60 %' && render.hudWidth === 60 && size.cells['0:Value'] === 6);
+        await until('larger', () => size.text === 'Map size: 60 %' && render.hudWidth === 60 && size.cells['0:Value'] === 6);
         await until('saved', () => patch.received.some((m) => m.cmd === 'hud-size' && m.hud_width_pct === 60));
         size.turn(-1);
         size.turn(-1);
-        await until('smaller', () => size.text === 'Size: 50 %' && render.hudWidth === 50);
+        await until('smaller', () => size.text === 'Map size: 50 %' && render.hudWidth === 50);
         for (let step = 5; step <= HUD_SIZE_STEPS; step++) {
             size.turn(1);
             await until('a step larger', () => size.cells['0:Value'] === step);
         }
-        await until('the widest, past the HUD\'s sides', () => size.text === 'Size: 135 %' && render.hudWidth === 135);
+        await until('the widest, past the HUD\'s sides', () => size.text === 'Map size: 135 %' && render.hudWidth === 135);
         await until('saved', () => patch.received.some((m) => m.cmd === 'hud-size' && m.hud_width_pct === 135));
         size.turn(1);
         assert.strictEqual(size.cells['0:Value'], HUD_SIZE_STEPS, 'no further');
@@ -488,9 +488,9 @@ async function main() {
             size.turn(-1);
             await until('a step smaller', () => size.cells['0:Value'] === step);
         }
-        await until('back to 50 %', () => size.text === 'Size: 50 %' && render.hudWidth === 50);
+        await until('back to 50 %', () => size.text === 'Map size: 50 %' && render.hudWidth === 50);
         byName.wocHudLeft.emit('action');
-        await until('moved', () => byName.wocHudPos.text === 'Position: 10 px left' && byName.wocHudCentre.enabled === true);
+        await until('moved', () => byName.wocHudPos.text === 'Map position: 10 px left' && byName.wocHudCentre.enabled === true);
         /* the HUD map over BMW's pop-ups: gives way by default; a press keeps it shown, the render's answer ticks it, patchd saves it */
         const keep = byName.wocHudKeep;
         await until('the move at the render', () => render.hudX === -10);
@@ -846,7 +846,7 @@ async function main() {
         const deWords = de.words;
         de.words = { Patch: 'Patchen', 'Remove patch': 'Patch entfernen', General: 'Allgemein', 'Save logs': 'Logs speichern',
             'Status: {0}': 'Zustand: {0}', 'Saved logs: {0}': 'Gespeicherte Logs: {0}', "Hide BMW's turn box": 'BMW-Abbiegebox ausblenden',
-            'HUD map: {0}': 'Karte im HUD: {0}', 'Show on': 'Anzeigen auf', 'HUD (experimental)': 'HUD (experimentell)', 'Move left': 'Nach links' };
+            'HUD map: {0}': 'Karte im HUD: {0}', 'Show on': 'Anzeigen auf', 'HUD (experimental)': 'HUD (experimentell)', 'Move map left': 'Karte nach links' };
         const before = ['wocStatus', 'wocAaStatus', 'wocMap', 'wocLogsStatus', 'wocHud'].map((n) => byName[n].text);
         displayLanguage('DEUTSCH');
         await until('German', () => byName.wocEnable.text === 'Patchen' && byName.wocAaDisable.text === 'Patch entfernen' &&
@@ -855,13 +855,13 @@ async function main() {
             byName.wocAaStatus.text === before[1].replace(/^Status:/, 'Zustand:') && byName.wocLogsStatus.text.startsWith('Gespeicherte Logs: ') &&
             byName.wocHud.text === before[4].replace(/^HUD map:/, 'Karte im HUD:') && byName.wocShowOn.cells.HeaderText === 'Anzeigen auf' &&
             byName.wocShowOn.cells['1:ItemText'] === 'HUD (experimentell)' && byName.wocShowOn.cells['0:ItemText'] === 'Cluster' &&
-            byName.wocHudLeft.text === 'Nach links');
+            byName.wocHudLeft.text === 'Karte nach links');
         assert.strictEqual(byName.wocMap.text, before[2], 'a word German lacks: its English');
         assert.strictEqual(byName.wocAaZoomIn.text, 'Zoom in', 'a word German lacks: its English');
         displayLanguage('ENGLISCH__US');
         await until('English again', () => byName.wocEnable.text === 'Patch' && byName.wocHeadGeneral.text === 'General' &&
             byName.wocLogsSave.text === 'Save logs' && byName.wocGuide.text === "Hide BMW's turn box" && byName.wocStatus.text === before[0] &&
-            byName.wocHud.text === before[4] && byName.wocHudLeft.text === 'Move left');
+            byName.wocHud.text === before[4] && byName.wocHudLeft.text === 'Move map left');
         de.words = deWords;
         console.log('ok   a display language change writes every row again in its words, English for a word it lacks');
         await lserver.close();

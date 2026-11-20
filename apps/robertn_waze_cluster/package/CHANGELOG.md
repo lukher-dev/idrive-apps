@@ -33,6 +33,10 @@ default (where a G30 LCI shows its speed and speed-limit sign), and its
 buttons move and size it 10 px a press. Own settings for this driver keeps
 it too.
 
+The HUD rows say what they change: Map size, Map position, Move map left /
+right / up / down and Centre map (Size, Position, Move left / right / up /
+down and Centre before). Android Auto's Zoom row is now Cluster map zoom.
+
 ## 0.6.12
 
 The cluster's safe area is back to 504x368 at (286, 72); a smaller area made

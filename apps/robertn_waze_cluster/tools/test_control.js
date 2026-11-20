@@ -412,21 +412,21 @@ test('the HUD map size as a slider: 5 % steps from 30 to 135 %, Standard at the 
     await until('connected', () => c.connectedRender() && c.connectedPatch());
     render.stream(true);
     await until('on', () => c.renderStatus && c.canChangeHudSize());
-    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: Standard', 5], 'Standard at 55 %');
+    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Map size: Standard', 5], 'Standard at 55 %');
     c.setHudSizeStep(6);
-    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: 60 %', 6], 'shown at once');
+    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Map size: 60 %', 6], 'shown at once');
     await until('60 %', () => render.hudWidth === 60 && c.renderStatus.hud_width_pct === 60);
     assert.strictEqual(HUD_SIZE_STEPS, 21, 'past 100 %: the HUD\'s edges cut the map\'s sides');
     c.setHudSizeStep(HUD_SIZE_STEPS);
-    await until('135 %', () => c.renderStatus.hud_width_pct === 135 && c.hudSizeStep() === HUD_SIZE_STEPS && c.hudSizeText() === 'Size: 135 %');
+    await until('135 %', () => c.renderStatus.hud_width_pct === 135 && c.hudSizeStep() === HUD_SIZE_STEPS && c.hudSizeText() === 'Map size: 135 %');
     c.setHudSizeStep(0);
-    await until('30 %', () => c.renderStatus.hud_width_pct === 30 && c.hudSizeText() === 'Size: 30 %');
+    await until('30 %', () => c.renderStatus.hud_width_pct === 30 && c.hudSizeText() === 'Map size: 30 %');
     const sent = render.received.length;
     [-1, HUD_SIZE_STEPS + 1, 2.5, '3', 0].forEach((step) => c.setHudSizeStep(step));
     assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
     await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-size').map((m) => m.hud_width_pct).join() === '60,135,30');
     c.close();
-    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: —', null], 'nothing known while closed');
+    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Map size: —', null], 'nothing known while closed');
 });
 
 test('the HUD map over BMW\'s pop-ups: gives way by default; a flip goes to the render and patchd, the render\'s status shows it; ' +
@@ -576,26 +576,26 @@ test('an asked HUD size the render does not show: the render\'s own after a mome
     render.hudWidth = 50;
     const c = control();
     c.open();
-    await until('on', () => c.renderStatus && c.canChangeHudSize() && c.hudSizeText() === 'Size: 50 %');
+    await until('on', () => c.renderStatus && c.canChangeHudSize() && c.hudSizeText() === 'Map size: 50 %');
     /* a render that takes no size */
     const take = render._onCommand.bind(render);
     render._onCommand = (msg) => (msg.cmd === 'hud' && msg.hud_width_pct !== undefined ? render.received.push(msg) : take(msg));
     const asked = () => render.received.filter((m) => m.cmd === 'hud' && m.hud_width_pct !== undefined).length;
     c.setHudSizeStep(6);
-    assert.strictEqual(c.hudSizeText(), 'Size: 60 %', 'shown at once');
-    await until('the render\'s own again', () => c.hudSizeText() === 'Size: 50 %');
+    assert.strictEqual(c.hudSizeText(), 'Map size: 60 %', 'shown at once');
+    await until('the render\'s own again', () => c.hudSizeText() === 'Map size: 50 %');
     c.setHudSizeStep(6);
-    assert.strictEqual(c.hudSizeText(), 'Size: 60 %');
+    assert.strictEqual(c.hudSizeText(), 'Map size: 60 %');
     await until('the same step taken again', () => asked() === 2);
     let t0 = Date.now();
     render.dropClients();
-    await until('the render reconnecting: nothing asked kept', () => c.hudSizeText() === 'Size: —');
+    await until('the render reconnecting: nothing asked kept', () => c.hudSizeText() === 'Map size: —');
     assert(Date.now() - t0 < 250, 'at once, not after the wait');
-    await until('the render\'s own after it reconnects', () => c.hudSizeText() === 'Size: 50 %');
+    await until('the render\'s own after it reconnects', () => c.hudSizeText() === 'Map size: 50 %');
     c.setHudSizeStep(6);
     await until('taken again after the reconnect', () => asked() === 3);
     c.close();
-    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: —', null], 'nothing asked kept while closed');
+    assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Map size: —', null], 'nothing asked kept while closed');
 });
 
 test('the HUD map position: 10 px a press each way, Centre back; the render moves it and patchd saves it', async (render, patch) => {
@@ -605,18 +605,18 @@ test('the HUD map position: 10 px a press each way, Centre back; the render move
     await until('connected', () => c.connectedRender() && c.connectedPatch());
     render.stream(true);
     await until('on', () => c.renderStatus && c.canChangeHudSize());
-    assert.strictEqual(c.hudPositionText(), 'Position: Centre');
+    assert.strictEqual(c.hudPositionText(), 'Map position: Centre');
     assert(!c.canCentreHud(), 'Centre greyed while centred');
     c.moveHud('right'); c.moveHud('right'); c.moveHud('up');
     await until('moved', () => c.renderStatus.hud_x === 20 && c.renderStatus.hud_y === -10);
-    assert.strictEqual(c.hudPositionText(), 'Position: 20 px right, 10 px up');
+    assert.strictEqual(c.hudPositionText(), 'Map position: 20 px right, 10 px up');
     assert(c.canCentreHud());
     c.moveHud('down'); c.moveHud('down'); c.moveHud('left');
     await until('moved back past the centre', () => c.renderStatus.hud_x === 10 && c.renderStatus.hud_y === 10);
     await until('saved', () => { const p = patch.received.filter((m) => m.cmd === 'hud-pos').slice(-1)[0]; return p && p.hud_x === 10 && p.hud_y === 10; });
     c.centreHud();
     await until('centred', () => c.renderStatus.hud_x === 0 && c.renderStatus.hud_y === 0);
-    assert.strictEqual(c.hudPositionText(), 'Position: Centre');
+    assert.strictEqual(c.hudPositionText(), 'Map position: Centre');
     for (let i = 0; i < 50; i++) c.moveHud('left');
     await until('held at the limit', () => c.renderStatus.hud_x === -400);
     /* the render holds the map inside the HUD: past its edge, the place it reports */
@@ -624,8 +624,8 @@ test('the HUD map position: 10 px a press each way, Centre back; the render move
     c.centreHud();
     await until('centred again', () => c.renderStatus.hud_x === 0);
     for (let i = 0; i < 9; i++) c.moveHud('right');
-    assert.strictEqual(c.hudPositionText(), 'Position: 90 px right', 'as asked at first');
-    await until('as far as it goes', () => c.hudPositionText() === 'Position: 60 px right');
+    assert.strictEqual(c.hudPositionText(), 'Map position: 90 px right', 'as asked at first');
+    await until('as far as it goes', () => c.hudPositionText() === 'Map position: 60 px right');
     c.moveHud('left');
     await until('the next press moves it back at once', () => c.renderStatus.hud_x === 50);
     c.close();
@@ -1016,7 +1016,7 @@ test('Android Auto: its line per state; Patch, Remove patch and zoom only where 
     patch.aa = { state: 'patched', dpi: 180, diskCard: 'shown', density: 180, card: 'shown', densities: D };
     patch.announce('patched', 'high', null);
     await until('patched', () => c.canZoom(-10) && !c.aa().error);
-    assert.strictEqual(c.zoomText(), 'Zoom: 180 dpi');
+    assert.strictEqual(c.zoomText(), 'Cluster map zoom: 180 dpi');
     assert.deepStrictEqual([c.cardText(), c.cardHidden()], ["Hide phone's turn card", false]);
     c.zoom(-10);
     await until('zoom sent', () => patch.count('aa-density') === 1);
@@ -1032,7 +1032,7 @@ test('Android Auto: its line per state; Patch, Remove patch and zoom only where 
     assert.deepStrictEqual(patch.received.filter((m) => /^aa-/.test(m.cmd)),
         [{ cmd: 'aa-density', value: 170 }, { cmd: 'aa-card', value: 'hidden' }, { cmd: 'aa-revert' }, { cmd: 'aa-apply' }]);
     c.close();
-    assert.deepStrictEqual([c.zoomText(), c.cardText(), c.cardHidden()], ['Zoom: —', "Hide phone's turn card", false], 'no value while closed');
+    assert.deepStrictEqual([c.zoomText(), c.cardText(), c.cardHidden()], ['Cluster map zoom: —', "Hide phone's turn card", false], 'no value while closed');
 });
 
 test('Remove patch while something of ours is on disk, pending too; greyed otherwise and while any change runs', async (render, patch) => {
@@ -1123,18 +1123,18 @@ test('zoom and turn card: the value on disk, "(after restart)" only for the sett
         await until(JSON.stringify(aa), () => JSON.stringify(c.aa()) === JSON.stringify(aa));
         return [c.zoomText(), c.cardText(), c.cardHidden()];
     };
-    assert.deepStrictEqual(await show({ state: 'original', density: 200, card: 'hidden', densities: D }), ['Zoom: —', "Hide phone's turn card", false]);
+    assert.deepStrictEqual(await show({ state: 'original', density: 200, card: 'hidden', densities: D }), ['Cluster map zoom: —', "Hide phone's turn card", false]);
     assert.deepStrictEqual([c.canZoom(-10), c.canToggleCard()], [false, false], 'greyed without the patch');
     assert.deepStrictEqual(await show({ state: 'unknown', pending: 'apply', aapd: 'deferred', dpi: 170, diskCard: 'shown', runDpi: 180,
-        runCard: 'shown', density: 170, card: 'shown', densities: D }), ['Zoom: 170 dpi (after restart)', "Hide phone's turn card", false]);
+        runCard: 'shown', density: 170, card: 'shown', densities: D }), ['Cluster map zoom: 170 dpi (after restart)', "Hide phone's turn card", false]);
     assert.deepStrictEqual(await show({ state: 'unknown', pending: 'apply', aapd: 'deferred', dpi: 180, diskCard: 'hidden', runDpi: 180,
-        runCard: 'shown', density: 180, card: 'hidden', densities: D }), ['Zoom: 180 dpi', "Hide phone's turn card (after restart)", true]);
+        runCard: 'shown', density: 180, card: 'hidden', densities: D }), ['Cluster map zoom: 180 dpi', "Hide phone's turn card (after restart)", true]);
     assert.deepStrictEqual(await show({ state: 'unknown', pending: 'apply', aapd: 'deferred', dpi: 180, diskCard: 'shown', runDpi: null,
-        runCard: null, density: 180, card: 'shown', densities: D }), ['Zoom: 180 dpi (after restart)', "Hide phone's turn card (after restart)", false]);
+        runCard: null, density: 180, card: 'shown', densities: D }), ['Cluster map zoom: 180 dpi (after restart)', "Hide phone's turn card (after restart)", false]);
     assert.deepStrictEqual([c.canZoom(-10), c.canZoom(10), c.canToggleCard()], [false, false, false], 'greyed while waiting');
     /* chosen 170, the apply failed: the disk's 180 and the failure */
     assert.deepStrictEqual(await show({ state: 'patched', dpi: 180, diskCard: 'shown', density: 170, card: 'shown', densities: D, error: 'x' }),
-        ['Zoom: 180 dpi', "Hide phone's turn card", false]);
+        ['Cluster map zoom: 180 dpi', "Hide phone's turn card", false]);
     assert.strictEqual(c.aaStatusText(), 'Status: Failed, x');
     c.close();
 });
@@ -1238,7 +1238,7 @@ test('patchd 0.8.0: an Android Auto refusal and failure, the bare busy of its re
     patch._broadcast(old({ aa: { state: 'error', reason: 'changed moments ago; try again in a few seconds', density: 170, densities: D } }));
     patch._broadcast(old({ aa: { state: 'busy', reason: 'another operation is running', density: 170, densities: D } }));
     await sleep(50);
-    assert.deepStrictEqual([c.aaStatusText(), c.zoomText(), c.canZoom(-10), c.canDisableAa()], ['Status: Patched', 'Zoom: 180 dpi', true, true],
+    assert.deepStrictEqual([c.aaStatusText(), c.zoomText(), c.canZoom(-10), c.canDisableAa()], ['Status: Patched', 'Cluster map zoom: 180 dpi', true, true],
         'Android Auto as it was, no text, nothing greyed');
     patch._broadcast(old({ state: 'unknown', carplay: 'deferred', pending: 'apply', reason: 'patch written; takes effect at the next head-unit start', aa: on }));
     await until('pending', () => c.statusText() === 'Status: Patched after restart' && c.canRestart());

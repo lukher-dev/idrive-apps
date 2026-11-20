@@ -72,14 +72,14 @@ The app is in the head unit's display language.
 - **Keep HUD map over BMW's pop-ups:** unticked (the default), the map steps
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
-- **Size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
+- **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
   HUD's edges cut the map's sides.
 - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
   the default) to 250 %. The map is never scaled up, so a wide HUD map
   takes less zoom: the row shows the zoom in use.
-- **Move left / Move right / Move up / Move down** and **Centre:** where the
-  map sits on the HUD. Above 100 %, left and right slide the map inside the
-  HUD.
+- **Map position:** where the map sits on the HUD, moved by **Move map left
+  / right / up / down** and back with **Centre map**. Above 100 %, left and
+  right slide the map inside the HUD.
 - **Hide map behind BMW's speed:** ticked, the map is hidden in an area of
   the HUD, so BMW's speed readout stays readable. Off by default: BMW's
   speed sits in a different place on different cars' HUDs. **Speed area**
@@ -95,8 +95,8 @@ The app is in the head unit's display language.
 - **Patch** and **Remove patch:** see
   [above](#do-i-need-to-press-patch-or-remove-patch).
 - **CarPlay Wi-Fi** (CarPlay only): the Wi-Fi band your iPhone uses.
-- **Zoom out / Zoom in** (Android Auto only): out shows more map, in shows
-  bigger text.
+- **Cluster map zoom** with **Zoom out / Zoom in** (Android Auto only): out
+  shows more map, in shows bigger text.
 - **Hide phone's turn card** (Android Auto only): hides Google Maps' own
   turn card at the top of the map.
 

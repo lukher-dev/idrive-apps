@@ -277,7 +277,7 @@
           "rows": [
             {
               "TextDescription": {
-                "value": "Size: —",
+                "value": "Map size: —",
                 "type": "Text"
               },
               "TextDescriptionVisible": {
@@ -361,7 +361,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Position: —",
+                "value": "Map position: —",
                 "type": "Text"
               }
             }
@@ -383,7 +383,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Move left",
+                "value": "Move map left",
                 "type": "Text"
               }
             }
@@ -405,7 +405,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Move right",
+                "value": "Move map right",
                 "type": "Text"
               }
             }
@@ -427,7 +427,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Move up",
+                "value": "Move map up",
                 "type": "Text"
               }
             }
@@ -449,7 +449,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Move down",
+                "value": "Move map down",
                 "type": "Text"
               }
             }
@@ -471,7 +471,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Centre",
+                "value": "Centre map",
                 "type": "Text"
               }
             }
@@ -937,7 +937,7 @@
           "rows": [
             {
               "Text": {
-                "value": "Zoom: —",
+                "value": "Cluster map zoom: —",
                 "type": "Text"
               }
             }
