@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.19
+
 The HUD map's edge fade is gone, and its corners are rounded again.
 
 ## 0.10.18
