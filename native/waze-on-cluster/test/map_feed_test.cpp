@@ -533,8 +533,9 @@ static void hud_zoom()
  * the zoom capped by the map's width, not the box's; the box shows the
  * middle of the (zoomed) picture, which hud_offset_x pans, held inside the
  * picture, while the box stays at x 0, on the same layer, the newest picture
- * scaled again without a new frame; without the head unit's scaler the map
- * is held to 100 %. */
+ * scaled again without a new frame, as is a change of the speed patch, which
+ * is fixed to the scene (it follows the box's place, clipped to the box);
+ * without the head unit's scaler the map is held to 100 %, with no patch. */
 static void hud_wide()
 {
     const std::vector<uint8_t> f = atlas(37);
@@ -574,12 +575,16 @@ static void hud_wide()
             }
         }
     };
-    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh as the HUD's worker does */
-    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh) {
+    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh as the HUD's worker does, with a speed
+     * patch at px, py of the picture */
+    const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, int32_t px = 0,
+                            int32_t py = 0, uint32_t pw = 0, uint32_t ph = 0) {
         AtlasScaler sc;
         std::vector<uint8_t> out;
-        if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h))
+        if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h)) {
+            sc.set_clear(px, py, pw, ph);
             sc.scale(f.data(), &out);
+        }
         return out;
     };
     const auto hud_shows = [&](const std::vector<uint8_t> &want) {
@@ -646,6 +651,36 @@ static void hud_wide()
     ok("back to 100 %: the offset moves the box again, held inside the HUD (0 at its left edge)",
        at(0, 63, 800, 352) && hud_shows(scaled(0, 0, 1088, 480, 800, 352)) && st.hud_offset_x == 0);
 
+    /* the speed patch, in the scene's pixels: past the settle time each, since a small move changes little more
+     * than its feather (dirty_threshold) */
+    const uint32_t id100 = hud_layer() ? hud_layer()->id() : 0;
+    feeds.set_hud_clear(true, 110, 320, 250, 90);
+    pump(2500, false);
+    st = feeds.status("decode");
+    ok("the speed patch (250x90 at the scene's 110,320; the map's 110,257, its box at 0,63): on the same layer, no new frame",
+       at(0, 63, 800, 352) && hud_shows(scaled(0, 0, 1088, 480, 800, 352, 110, 257, 250, 90)) && st.hud_clear &&
+           st.hud_clear_x == 110 && st.hud_clear_y == 320 && st.hud_clear_w == 250 && st.hud_clear_h == 90 && hud_layer() &&
+           hud_layer()->id() == id100);
+    feeds.set_hud_offset(0, -40);
+    pump(2500, false);
+    ok("the speed patch fixed to the scene: the box 40 up (0,23), the patch 40 lower in the map (110,297)",
+       at(0, 23, 800, 352) && hud_shows(scaled(0, 0, 1088, 480, 800, 352, 110, 297, 250, 90)) && hud_layer() &&
+           hud_layer()->id() == id100);
+    feeds.set_hud_width(40);
+    feeds.set_hud_offset(0, 100);
+    pump(2000, true);
+    ok("40 % (320x140 at 240,269): the patch the scene's rectangle less the box's place (-130,51 of the map), clipped to it",
+       at(240, 269, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, -130, 51, 250, 90)));
+    feeds.set_hud_offset(0, -100);
+    pump(2500, false);
+    ok("40 %, moved up past the patch (240,69): none on the map",
+       at(240, 69, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140)));
+    feeds.set_hud_offset(0, 100);
+    feeds.set_hud_clear(false, 110, 320, 250, 90);
+    pump(2500, false);
+    ok("hud_clear 0: no patch, the rectangle kept", at(240, 269, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140)) &&
+                                                     !feeds.status("decode").hud_clear && feeds.status("decode").hud_clear_w == 250);
+
     /* without the head unit's scaler: held to 100 % */
     Rig c(false, 6000, false, true, true);
     c.feed.reset();
@@ -654,6 +689,7 @@ static void hud_wide()
     nc.socket = c.path;
     nc.scale_down = false;
     nc.hud_width_pct = 135;
+    nc.hud_clear = true;
     MapFeeds plain(nc, true, true, 10);
     plain.set_stream(true, false, Picture::Shown);
     for (int64_t t = 0; t < 1500; t += 5) {
@@ -682,7 +718,7 @@ static void hud_wide()
     if (pg)
         for (const auto &kv : pg->shown.buffers)
             whole = whole || (kv.second.f == crs::TexFormat::R8 && kv.second.px == f);
-    ok("no scaler (hud_scale_down 0), 135 %: held to 100 % (800x353 at 0,63), the frame whole",
+    ok("no scaler (hud_scale_down 0), 135 %: held to 100 % (800x353 at 0,63), the frame whole, no patch",
        pl && pl->params.rect.x == 0 && pl->params.rect.y == 63 && pl->params.rect.w == 800 && pl->params.rect.h == 353 && whole &&
            plain.status("decode").hud_width_pct == 135);
 }

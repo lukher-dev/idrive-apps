@@ -112,6 +112,13 @@ struct FeedConfig {
     bool hud_round_corners = true;
     /* the HUD map's dark background made black (see-through on a HUD) */
     bool hud_black_background = true;
+    /* The speed patch: on the HUD the map black inside this rectangle of the
+     * HUD's scene (x, y from its top left, w x h), feathered at its edges,
+     * so BMW's speed readout there stays clear; fixed to the scene, not to
+     * the map. Off by default; the rectangle's defaults are a G30 LCI's
+     * speed and speed-limit sign. */
+    bool hud_clear = false;
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
     /* hosted_vpp_scale: hosted, the host's part is made by the decoder's VPP
      * (MapFeed::part) rather than scaled by the worker */
     bool vpp_scale = false;
@@ -145,6 +152,8 @@ struct FeedStatus {
     bool hud_keep_shown = false;   /* the HUD map kept shown over the stock HMI's pop-ups */
     unsigned hud_zoom_pct = 100;   /* the HUD map's zoom setting */
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
+    bool hud_clear = false;           /* the HUD map's speed patch, in the HUD scene's pixels */
+    unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs
@@ -184,10 +193,10 @@ public:
     void set_hud_width(unsigned pct);
     /* The HUD map moved (FeedConfig::hud_offset_x/y), at once: the layer
      * only changes place, no new texture (above 100 % the part of the
-     * picture it shows moves instead, scaled again from the newest
-     * picture). Held inside the HUD: the offset the map is at
-     * (hud_offset_x/y, the status's) then is as far as it goes, and the one
-     * asked for is kept for the next size. */
+     * picture it shows moves instead, and the speed patch with the map's
+     * place, both scaled again from the newest picture). Held inside the
+     * HUD: the offset the map is at (hud_offset_x/y, the status's) then is
+     * as far as it goes, and the one asked for is kept for the next size. */
     void set_hud_offset(int dx, int dy);
     int hud_offset_x() const { return placed_x_; }
     int hud_offset_y() const { return placed_y_; }
@@ -198,6 +207,9 @@ public:
      * for the new part of the picture. */
     void set_hud_zoom(unsigned pct);
     unsigned hud_zoom_used() const { return zoom_used_; }
+    /* The HUD map's speed patch (FeedConfig::hud_clear*), at once: the same
+     * layer, the newest picture scaled again. */
+    void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
     /* A layer to take frames: made, and not reported disabled by
      * cluster-render. */
     bool takes_frames() const { return layer_ && !disabled(); }
@@ -284,8 +296,8 @@ private:
      * for the box q, and q made the place of the scaled picture. Above
      * 100 % also notes the pan it shows (placed_x_). */
     void hud_shape(crk::QuadRect *q);
-    /* The HUD's layer's place and shape again after a move: the same
-     * layer, the newest picture scaled again when its shape changed. */
+    /* The HUD's layer's place and shape again after a move or a patch: the
+     * same layer, the newest picture scaled again when its shape changed. */
     void restyle();
     void count_second(int64_t now_ms);
     /* The layer is visible or about to be, on a connection. */

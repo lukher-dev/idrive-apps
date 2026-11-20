@@ -3,8 +3,8 @@
 /* Host test of AtlasScaler (atlas_scale.h): sizes, flat planes stay flat and
  * U, V and Y never mix, a 2:1 scale is the exact 2x2 average, non-integer
  * ratios keep a gradient's mean, rounding to level bits, refusals, a crop
- * (exact 1:1, scaled as the part cut out first), and the time a 1088x480
- * frame takes to scale to the HUD's sizes. */
+ * (exact 1:1, scaled as the part cut out first), the speed patch, and the
+ * time a 1088x480 frame takes to scale to the HUD's sizes. */
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -119,6 +119,61 @@ int main()
     }
 
     {
+        /* the speed patch: a rectangle black inside, a 12 px feather in from
+         * its edges, clipped to the picture; the rest untouched */
+        std::vector<uint8_t> white(1088 * 720, 235);
+        for (size_t i = 1088 * 480; i < white.size(); i++) white[i] = 200;
+        AtlasScaler ps;
+        ps.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
+        ps.set_clear(110, 320, 250, 90);
+        ps.scale(white.data(), &out);
+        const uint8_t *y = out.data(), *u = y + 800 * 476;
+        ok("patch: its middle black (Y 16), U and V 128",
+           y[365 * 800 + 235] == 16 && y[333 * 800 + 123] == 16 && u[182 * 800 + 117] == 128 &&
+               u[182 * 800 + 400 + 117] == 128);
+        ok("patch: outside it untouched", y[319 * 800 + 235] == 235 && y[365 * 800 + 109] == 235 &&
+                                           y[365 * 800 + 360] == 235 && y[410 * 800 + 235] == 235 &&
+                                           y[100 * 800 + 400] == 235 && u[50 * 800 + 200] == 200);
+        bool feather = true;
+        for (uint32_t x = 111; x < 122; x++) feather = feather && y[365 * 800 + x] <= y[365 * 800 + x - 1];
+        ok("patch: a feather 12 px in from its edge, darker going in",
+           feather && y[365 * 800 + 110] > 200 && y[365 * 800 + 116] > 16 && y[365 * 800 + 116] < 235 &&
+               y[365 * 800 + 122] == 16);
+        ps.set_clear(700, 400, 250, 90);   /* past the right and bottom edges */
+        ps.scale(white.data(), &out);
+        ok("patch: clipped to the picture (its part inside black, its feather where its edges are)",
+           out[460 * 800 + 790] == 16 && out[475 * 800 + 799] == 16 && out[460 * 800 + 700] > 200 && out[399 * 800 + 790] == 235);
+        ps.set_clear(-100, -50, 120, 70);   /* past the left and top edges */
+        ps.scale(white.data(), &out);
+        ok("patch: clipped at the top left", out[0] == 16 && out[19 * 800 + 19] > 16 && out[30 * 800 + 5] == 235);
+        ps.set_clear(0, 0, 0, 0);
+        ps.scale(white.data(), &out);
+        ok("patch: none (hud_clear 0), the picture as it is", out[365 * 800 + 235] == 235 && out[0] == 235 &&
+                                                               out[800 * 476 + 182 * 800 + 117] == 200);
+        ps.set_clear(110, 320, 20, 40);   /* small: the feather a quarter of its smaller side */
+        ps.scale(white.data(), &out);
+        ok("patch: a small one's feather at most a quarter of its smaller side (5 px), black in its middle",
+           out[340 * 800 + 120] == 16 && out[340 * 800 + 115] == 16 && out[340 * 800 + 111] > 16);
+        ps.set_clear(111, 321, 250, 90);   /* at odd coordinates: the chroma under it black too */
+        ps.scale(white.data(), &out);
+        ok("patch: at odd coordinates, its middle black (Y 16, U and V 128), the pixel before it untouched",
+           out[366 * 800 + 236] == 16 && out[800 * 476 + 183 * 800 + 118] == 128 && out[366 * 800 + 110] == 235 &&
+               out[320 * 800 + 236] == 235);
+        /* with the rounded corners: the patch over them, the rest as the corners alone */
+        ps.set_corner_radius(40);
+        ps.set_clear(0, 400, 200, 76);
+        ps.scale(white.data(), &out);
+        AtlasScaler co;
+        std::vector<uint8_t> corners_only;
+        co.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
+        co.set_corner_radius(40);
+        co.scale(white.data(), &corners_only);
+        ok("patch and corners together: black where either is, the rest as the corners alone",
+           out[450 * 800 + 100] == 16 && out[475 * 800] == 16 && out[0] == 16 && out[100 * 800 + 400] == 235 &&
+               out[12 * 800 + 12] == corners_only[12 * 800 + 12] && out[475 * 800 + 799] == corners_only[475 * 800 + 799]);
+    }
+
+    {
         /* black background: a night map (navy field Y 60, a road Y 120, a
          * label Y 220): the field goes black with neutral chroma, the road
          * and label stay; a day map (field Y 200) is left alone */
@@ -215,6 +270,23 @@ int main()
         const double each = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / 20;
         std::printf("     1088x480 -> %ux%u: %.2f ms a frame on this machine, %zu B (%.1fx less than 783,360)\n", z.w, z.h,
                     each, t.dst_bytes(), 783360.0 / t.dst_bytes());
+    }
+
+    {
+        /* 135 %: 804x480 of the picture to 800x476 with the corners, without and with the speed patch */
+        for (int patch = 0; patch < 2; patch++) {
+            AtlasScaler t;
+            t.configure(1088, 480, 800, 476, 2, 142, 0, 804, 480);
+            t.set_corner_radius(476 / 12);
+            if (patch)
+                t.set_clear(110, 320, 250, 90);
+            t.scale(ramp.data(), &out);
+            const auto t0 = std::chrono::steady_clock::now();
+            for (int i = 0; i < 20; i++) t.scale(ramp.data(), &out);
+            const double each = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / 20;
+            std::printf("     1088x480 (804x480 of it) -> 800x476, with the corners%s: %.2f ms a frame on this machine\n",
+                        patch ? " and the speed patch" : "", each);
+        }
     }
 
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);

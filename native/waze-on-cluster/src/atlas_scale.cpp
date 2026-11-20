@@ -8,6 +8,9 @@
 #include <unistd.h>
 #endif
 
+#include <algorithm>
+#include <cmath>
+
 #include "yuv_atlas.h"
 
 namespace woc {
@@ -73,6 +76,7 @@ bool AtlasScaler::configure(uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, un
     crop_w_ = crop_w;
     crop_h_ = crop_h;
     bits_ = level_bits;
+    mask_due_ = true;
     yx_.build(crop_w, dw);
     yy_.build(crop_h, dh);
     cx_.build(crop_w / 2, dw / 2);
@@ -140,6 +144,14 @@ void AtlasScaler::scale(const uint8_t *src, std::vector<uint8_t> *dst)
             corners(du, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
             corners(dv, dw_, dw_ / 2, dh_ / 2, cr, ccov_, 128);
         }
+    }
+    if (mask_due_)
+        make_mask();
+    if (!ymask_.empty()) {
+        const size_t c = (size_t)(my_ / 2) * dw_ + mx_ / 2;
+        apply_mask(d + (size_t)my_ * dw_ + mx_, dw_, mw_, mh_, ymask_, 16);
+        apply_mask(du + c, dw_, mw_ / 2, mh_ / 2, cmask_, 128);
+        apply_mask(dv + c, dw_, mw_ / 2, mh_ / 2, cmask_, 128);
     }
     if (bits_)
         crk::round_levels(d, d, dst->size(), bits_);
@@ -261,6 +273,92 @@ void AtlasScaler::corners(uint8_t *p, uint32_t dp, uint32_t pw, uint32_t ph, uin
         }
 }
 
+void AtlasScaler::set_clear(int32_t x, int32_t y, uint32_t w, uint32_t h)
+{
+    if (!w || !h)
+        x = y = 0, w = h = 0;
+    if (x == clear_x_ && y == clear_y_ && w == clear_w_ && h == clear_h_)
+        return;
+    clear_x_ = x;
+    clear_y_ = y;
+    clear_w_ = w;
+    clear_h_ = h;
+    mask_due_ = true;
+}
+
+namespace {
+
+/* Smoothstep of t, 0-1. */
+double smooth(double t)
+{
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    return t * t * (3 - 2 * t);
+}
+
+/* How much of pixel i the patch [a, a + len) covers: all of it from feather
+ * pixels in from its edges, rising to that from them, none outside. */
+double covered(int64_t i, int64_t a, uint32_t len, uint32_t feather)
+{
+    if (i < a || i >= a + (int64_t)len)
+        return 0;
+    const int64_t d = i - a < a + (int64_t)len - 1 - i ? i - a : a + (int64_t)len - 1 - i;
+    return !feather || d >= (int64_t)feather ? 1.0 : smooth((d + 0.5) / feather);
+}
+
+}  // namespace
+
+/* Separable: the patch's cover is its column's times its row's, and a pixel
+ * keeps 1 - cover. The mask spans only the patch's part of the output, held
+ * to even edges so that U and V (each the mean of its four Y) line up. */
+void AtlasScaler::make_mask()
+{
+    mask_due_ = false;
+    ymask_.clear();
+    cmask_.clear();
+    mx_ = my_ = mw_ = mh_ = 0;
+    if (!dw_ || !clear_w_)
+        return;
+    const int64_t x0 = clear_x_ < 0 ? 0 : clear_x_, y0 = clear_y_ < 0 ? 0 : clear_y_;
+    const int64_t x1 = std::min<int64_t>((int64_t)clear_x_ + clear_w_, dw_);
+    const int64_t y1 = std::min<int64_t>((int64_t)clear_y_ + clear_h_, dh_);
+    if (x0 >= x1 || y0 >= y1)
+        return;
+    mx_ = (uint32_t)x0 & ~1u;
+    my_ = (uint32_t)y0 & ~1u;
+    mw_ = (((uint32_t)x1 + 1) & ~1u) - mx_;
+    mh_ = (((uint32_t)y1 + 1) & ~1u) - my_;
+    uint32_t feather = clear_w_ < clear_h_ ? clear_w_ / 4 : clear_h_ / 4;
+    feather = feather > kClearFeather ? kClearFeather : feather;
+    std::vector<double> cx(mw_), cy(mh_);
+    for (uint32_t x = 0; x < mw_; x++)
+        cx[x] = covered(mx_ + x, clear_x_, clear_w_, feather);
+    for (uint32_t y = 0; y < mh_; y++)
+        cy[y] = covered(my_ + y, clear_y_, clear_h_, feather);
+    ymask_.resize((size_t)mw_ * mh_);
+    for (uint32_t y = 0; y < mh_; y++)
+        for (uint32_t x = 0; x < mw_; x++)
+            ymask_[(size_t)y * mw_ + x] = (uint16_t)std::lround(256 * (1 - cx[x] * cy[y]));
+    const uint32_t cw = mw_ / 2, ch = mh_ / 2;
+    cmask_.resize((size_t)cw * ch);
+    for (uint32_t y = 0; y < ch; y++)
+        for (uint32_t x = 0; x < cw; x++) {
+            const uint16_t *m = &ymask_[(size_t)y * 2 * mw_ + x * 2];
+            cmask_[(size_t)y * cw + x] = (uint16_t)((m[0] + m[1] + m[mw_] + m[mw_ + 1] + 2) / 4);
+        }
+}
+
+void AtlasScaler::apply_mask(uint8_t *p, uint32_t dp, uint32_t mw, uint32_t mh, const std::vector<uint16_t> &m,
+                             uint8_t black)
+{
+    for (uint32_t y = 0; y < mh; y++) {
+        uint8_t *row = p + (size_t)y * dp;
+        const uint16_t *k = &m[(size_t)y * mw];
+        for (uint32_t x = 0; x < mw; x++)
+            if (k[x] < 256)
+                row[x] = (uint8_t)(black + (((int)row[x] - black) * (int)k[x]) / 256);
+    }
+}
+
 ScaleWorker::~ScaleWorker()
 {
     if (!started_)
@@ -322,11 +420,15 @@ void ScaleWorker::run(std::shared_ptr<State> s)
                 return;
         }
         if (s->made != s->shape || !s->scaler.configured()) {
+            const ScaleShape was = s->made;
             s->made = ScaleShape();
             if (s->scaler.configure(s->shape.w, s->shape.h, s->shape.dw, s->shape.dh, s->shape.level_bits,
                                     s->shape.crop_x, s->shape.crop_y, s->shape.crop_w, s->shape.crop_h)) {
                 s->scaler.set_corner_radius(s->shape.radius);
-                s->scaler.set_black_background(s->shape.black);
+                /* the background followed on through a move (the window, the patch), anew for another size */
+                if (!was.dw || was.black != s->shape.black || was.dw != s->shape.dw || was.dh != s->shape.dh)
+                    s->scaler.set_black_background(s->shape.black);
+                s->scaler.set_clear(s->shape.clear_x, s->shape.clear_y, s->shape.clear_w, s->shape.clear_h);
                 s->made = s->shape;
             }
         }

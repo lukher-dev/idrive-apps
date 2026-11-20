@@ -81,6 +81,9 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_x\":" + std::to_string(s.hud_offset_x) + ",\"hud_y\":" + std::to_string(s.hud_offset_y) +
            ",\"hud_keep_shown\":" + (s.hud_keep_shown ? "1" : "0") +
            ",\"hud_zoom_pct\":" + std::to_string(s.hud_zoom_pct) + ",\"hud_zoom_used\":" + std::to_string(s.hud_zoom_used) +
+           ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
+           ",\"hud_clear_x\":" + std::to_string(s.hud_clear_x) + ",\"hud_clear_y\":" + std::to_string(s.hud_clear_y) +
+           ",\"hud_clear_w\":" + std::to_string(s.hud_clear_w) + ",\"hud_clear_h\":" + std::to_string(s.hud_clear_h) +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -100,13 +103,16 @@ public:
         auto pct = msg.find("hud_width_pct");
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown"), zoom = msg.find("hud_zoom_pct");
+        auto clear = msg.find("hud_clear");
+        auto cx = msg.find("hud_clear_x"), cy = msg.find("hud_clear_y"), cw = msg.find("hud_clear_w"), ch = msg.find("hud_clear_h");
         if (cmd == "guide" && hide != msg.end() && guide_->set(hide->second)) {
             log_info("guide: BMW's turn box %s while the map shows", guide_->hide() ? "hidden" : "shown");
             feeds_->set_guide_hold(guide_->hide());
         } else if (cmd == "cluster" && on != msg.end() && (on->second == "0" || on->second == "1")) {
             feeds_->set_cluster(on->second == "1");
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
-                                    keep != msg.end() || zoom != msg.end())) {
+                                    keep != msg.end() || zoom != msg.end() || clear != msg.end() || cx != msg.end() ||
+                                    cy != msg.end() || cw != msg.end() || ch != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -148,6 +154,34 @@ public:
                     feeds_->set_hud_zoom((unsigned)v);
                 else
                     log_warn("hud: hud_zoom_pct must be 100-250, not %s", zoom->second.c_str());
+            }
+            /* and its speed patch: on or off and where, in the HUD scene's pixels; those not sent stay, and
+             * one out of range changes none of them */
+            if (clear != msg.end() || cx != msg.end() || cy != msg.end() || cw != msg.end() || ch != msg.end()) {
+                const FeedConfig &now = feeds_->hud_settings();
+                long v[5] = {now.hud_clear ? 1 : 0, (long)now.hud_clear_x, (long)now.hud_clear_y, (long)now.hud_clear_w,
+                             (long)now.hud_clear_h};
+                const struct {
+                    decltype(clear) it;
+                    long lo, hi;
+                } parts[5] = {{clear, 0, 1}, {cx, 0, 799}, {cy, 0, 479}, {cw, 10, 800}, {ch, 10, 480}};
+                bool good = true;
+                for (int i = 0; i < 5; i++) {
+                    if (parts[i].it == msg.end())
+                        continue;
+                    const std::string &s = parts[i].it->second;
+                    char *end = nullptr;
+                    const long n = std::strtol(s.c_str(), &end, 10);
+                    if (!s.empty() && !*end && n >= parts[i].lo && n <= parts[i].hi) {
+                        v[i] = n;
+                    } else {
+                        log_warn("hud: %s must be %ld-%ld, not %s", parts[i].it->first.c_str(), parts[i].lo, parts[i].hi,
+                                 s.c_str());
+                        good = false;
+                    }
+                }
+                if (good)
+                    feeds_->set_hud_clear(v[0] != 0, (unsigned)v[1], (unsigned)v[2], (unsigned)v[3], (unsigned)v[4]);
             }
         } else {
             log_warn("control: unknown or malformed command %s", cmd.c_str());
@@ -216,7 +250,8 @@ int serve(Config cfg)
         {"hud_width_pct", 0, 135},  {"hud_offset_x", -800, 800},     {"hud_offset_y", -800, 800},
         {"hud_scale_down", 0, 1},   {"hud_round_corners", 0, 1},     {"hud_black_background", 0, 1},
         {"hud_keep_shown", 0, 1},   {"hud_zoom_pct", 100, 250},     {"hud_crop_cx_pm", 0, 1000},
-        {"hud_crop_cy_pm", 0, 1000},
+        {"hud_crop_cy_pm", 0, 1000}, {"hud_clear", 0, 1},           {"hud_clear_x", 0, 799},
+        {"hud_clear_y", 0, 479},    {"hud_clear_w", 10, 800},        {"hud_clear_h", 10, 480},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -273,6 +308,11 @@ int serve(Config cfg)
     fc.scale_down = cfg.num("hud_scale_down") != 0;
     fc.hud_round_corners = cfg.num("hud_round_corners") != 0;
     fc.hud_black_background = cfg.num("hud_black_background") != 0;
+    fc.hud_clear = cfg.num("hud_clear") != 0;
+    fc.hud_clear_x = (unsigned)cfg.num("hud_clear_x");
+    fc.hud_clear_y = (unsigned)cfg.num("hud_clear_y");
+    fc.hud_clear_w = (unsigned)cfg.num("hud_clear_w");
+    fc.hud_clear_h = (unsigned)cfg.num("hud_clear_h");
     fc.vpp_scale = cfg.num("hosted_vpp_scale") == 1;
     if (fc.vpp_scale)
         log_info("hosted_vpp_scale: a host's part of the map is cropped and scaled by VPP, on the GPU");
@@ -540,6 +580,11 @@ void define_keys(Config *cfg)
     cfg->define("hud_scale_down", "1");
     cfg->define("hud_round_corners", "1");
     cfg->define("hud_black_background", "1");
+    cfg->define("hud_clear", "0");
+    cfg->define("hud_clear_x", "110");
+    cfg->define("hud_clear_y", "320");
+    cfg->define("hud_clear_w", "250");
+    cfg->define("hud_clear_h", "90");
     cfg->define("render_socket", "/dev/shm/cluster-render/render.sock");
     cfg->define("log_file", "/var/opt/waze-on-cluster/log/waze-on-cluster.log");
     cfg->define("log_file_kb", "512");

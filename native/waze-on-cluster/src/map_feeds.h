@@ -65,6 +65,11 @@ public:
     /* The HUD map's zoom (FeedConfig::hud_zoom_pct), at once, kept for a
      * HUD feed made later. */
     void set_hud_zoom(unsigned pct);
+    /* The HUD map's speed patch (FeedConfig::hud_clear*), at once, kept for
+     * a HUD feed made later. */
+    void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
+    /* The HUD map's settings as asked last (the base of a HUD feed made later). */
+    const FeedConfig &hud_settings() const { return base_; }
     int hud_offset_x() const { return base_.hud_offset_x; }
     int hud_offset_y() const { return base_.hud_offset_y; }
     /* The cluster map layer's guide_hold. */

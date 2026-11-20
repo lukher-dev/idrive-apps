@@ -175,6 +175,9 @@ void MapFeed::make_layer()
             log_info("render: HUD map zoomed %u%%%s: the picture's %ux%u at %u,%u", zoom_used_,
                      virt_w_ > tw ? ", wider than the HUD" : "", shape_.crop_w, shape_.crop_h, shape_.crop_x,
                      shape_.crop_y);
+        if (shape_.clear_w)
+            log_info("render: HUD map black behind the speed readout: %ux%u at %d,%d of the map", shape_.clear_w,
+                     shape_.clear_h, shape_.clear_x, shape_.clear_y);
     }
     /* a VPP-made picture is of no use to a layer of another part, or none */
     if (held_part_.set() && held_part_ != part_) {
@@ -291,7 +294,8 @@ crk::QuadRect MapFeed::quad(uint32_t tw, uint32_t th) const
  * scales down): the map's width, not the box's, sets the cap. A map wider
  * than its box shows that part's window (hud_window), panned by the x
  * offset. The scaled picture is a multiple of 4 each way, centred in the
- * box. */
+ * box; the speed patch is the scene's rectangle less the picture's place,
+ * none where it misses the picture. */
 void MapFeed::hud_shape(crk::QuadRect *q)
 {
     const uint32_t sw = q->w & ~3u, sh = q->h & ~3u;
@@ -321,6 +325,14 @@ void MapFeed::hud_shape(crk::QuadRect *q)
     shape_.level_bits = cfg_.scaled_level_bits;
     shape_.radius = cfg_.hud_round_corners ? (dh / 12 > 6 ? dh / 12 : 6) : 0;
     shape_.black = cfg_.hud_black_background;
+    const int64_t cx = (int64_t)cfg_.hud_clear_x - q->x, cy = (int64_t)cfg_.hud_clear_y - q->y;
+    if (cfg_.hud_clear && cfg_.hud_clear_w && cfg_.hud_clear_h && cx < (int64_t)dw && cy < (int64_t)dh &&
+        cx + cfg_.hud_clear_w > 0 && cy + cfg_.hud_clear_h > 0) {
+        shape_.clear_x = (int32_t)cx;
+        shape_.clear_y = (int32_t)cy;
+        shape_.clear_w = cfg_.hud_clear_w;
+        shape_.clear_h = cfg_.hud_clear_h;
+    }
 }
 
 void MapFeed::restyle()
@@ -357,6 +369,23 @@ void MapFeed::set_hud_offset(int dx, int dy)
         return;
     cfg_.hud_offset_x = placed_x_ = dx;
     cfg_.hud_offset_y = placed_y_ = dy;
+    restyle();
+}
+
+void MapFeed::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h)
+{
+    if (on == cfg_.hud_clear && x == cfg_.hud_clear_x && y == cfg_.hud_clear_y && w == cfg_.hud_clear_w &&
+        h == cfg_.hud_clear_h)
+        return;
+    cfg_.hud_clear = on;
+    cfg_.hud_clear_x = x;
+    cfg_.hud_clear_y = y;
+    cfg_.hud_clear_w = w;
+    cfg_.hud_clear_h = h;
+    if (on)
+        log_info("render: HUD map black behind the speed readout, %ux%u at %u,%u of the HUD", w, h, x, y);
+    else
+        log_info("render: HUD map not cleared behind the speed readout");
     restyle();
 }
 
@@ -660,6 +689,11 @@ FeedStatus MapFeed::status(const std::string &decode, const std::string &stream)
     s.hud_keep_shown = cfg_.hud_keep_shown;
     s.hud_zoom_pct = cfg_.hud_zoom_pct;
     s.hud_zoom_used = zoom_used_;
+    s.hud_clear = cfg_.hud_clear;
+    s.hud_clear_x = cfg_.hud_clear_x;
+    s.hud_clear_y = cfg_.hud_clear_y;
+    s.hud_clear_w = cfg_.hud_clear_w;
+    s.hud_clear_h = cfg_.hud_clear_h;
     s.hud_offset_y = placed_y_;
     s.upload_cap_kb = cap_kb_;
     s.upload_reason = budget_reason_;
