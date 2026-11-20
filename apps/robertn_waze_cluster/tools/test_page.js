@@ -315,6 +315,7 @@ async function main() {
     assert.deepStrictEqual(components['62'].rows.map((r) => r.ItemText.value), ['Cluster', 'HUD (experimental)', 'Cluster and HUD (experimental)', 'Off']);
     assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => components['52'].rows[0][k].value), [0, HUD_SIZE_STEPS, HUD_SIZE_STEPS],
         'the slider: one step for each 5 %');
+    assert.strictEqual(HUD_SIZE_STEPS, 21, 'the size: 30 to 135 %');
     /* every info row reads "Name: Value" */
     assert(main.filter(([, type, name]) => type === 'label' && !/^wocHead|^(wocRestartStatus|wocWifi|wocWifiHint)$/.test(name))
         .every(([, , , text]) => /^[A-Z][A-Za-z ]+: [A-Z\u2014]/.test(text)), 'info rows as Name: Value');
@@ -465,6 +466,19 @@ async function main() {
         size.turn(-1);
         size.turn(-1);
         await until('smaller', () => size.text === 'Size: 50 %' && render.hudWidth === 50);
+        for (let step = 5; step <= HUD_SIZE_STEPS; step++) {
+            size.turn(1);
+            await until('a step larger', () => size.cells['0:Value'] === step);
+        }
+        await until('the widest, past the HUD\'s sides', () => size.text === 'Size: 135 %' && render.hudWidth === 135);
+        await until('saved', () => patch.received.some((m) => m.cmd === 'hud-size' && m.hud_width_pct === 135));
+        size.turn(1);
+        assert.strictEqual(size.cells['0:Value'], HUD_SIZE_STEPS, 'no further');
+        for (let step = HUD_SIZE_STEPS - 1; step >= 4; step--) {
+            size.turn(-1);
+            await until('a step smaller', () => size.cells['0:Value'] === step);
+        }
+        await until('back to 50 %', () => size.text === 'Size: 50 %' && render.hudWidth === 50);
         byName.wocHudLeft.emit('action');
         await until('moved', () => byName.wocHudPos.text === 'Position: 10 px left' && byName.wocHudCentre.enabled === true);
         /* the HUD map over BMW's pop-ups: gives way by default; a press keeps it shown, the render's answer ticks it, patchd saves it */

@@ -293,11 +293,11 @@
                 "type": "SInt"
               },
               "MaxValue": {
-                "value": 11,
+                "value": 21,
                 "type": "SInt"
               },
               "NumberOfSteps": {
-                "value": 11,
+                "value": 21,
                 "type": "SInt"
               }
             }

@@ -403,7 +403,7 @@ test('the HUD disabled by the cluster renderer: Disabled after errors, the size 
     c.close();
 });
 
-test('the HUD map size as a slider: 5 % steps from 30 to 85 %, Standard at the step below its ~57 %', async (render, patch) => {
+test('the HUD map size as a slider: 5 % steps from 30 to 135 %, Standard at the step below its ~57 %', async (render, patch) => {
     render.hud = 1;
     const c = control();
     c.open();
@@ -414,14 +414,15 @@ test('the HUD map size as a slider: 5 % steps from 30 to 85 %, Standard at the s
     c.setHudSizeStep(6);
     assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: 60 %', 6], 'shown at once');
     await until('60 %', () => render.hudWidth === 60 && c.renderStatus.hud_width_pct === 60);
+    assert.strictEqual(HUD_SIZE_STEPS, 21, 'past 100 %: the HUD\'s edges cut the map\'s sides');
     c.setHudSizeStep(HUD_SIZE_STEPS);
-    await until('85 %', () => c.renderStatus.hud_width_pct === 85 && c.hudSizeStep() === HUD_SIZE_STEPS);
+    await until('135 %', () => c.renderStatus.hud_width_pct === 135 && c.hudSizeStep() === HUD_SIZE_STEPS && c.hudSizeText() === 'Size: 135 %');
     c.setHudSizeStep(0);
     await until('30 %', () => c.renderStatus.hud_width_pct === 30 && c.hudSizeText() === 'Size: 30 %');
     const sent = render.received.length;
     [-1, HUD_SIZE_STEPS + 1, 2.5, '3', 0].forEach((step) => c.setHudSizeStep(step));
     assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
-    await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-size').map((m) => m.hud_width_pct).join() === '60,85,30');
+    await until('each one saved', () => patch.received.filter((m) => m.cmd === 'hud-size').map((m) => m.hud_width_pct).join() === '60,135,30');
     c.close();
     assert.deepStrictEqual([c.hudSizeText(), c.hudSizeStep()], ['Size: —', null], 'nothing known while closed');
 });

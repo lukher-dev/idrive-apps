@@ -106,9 +106,10 @@ const SIZE = '1088x480';
 /* The safe area CarPlay's Patch button writes: where the phone keeps its guidance UI,
  * inside the part of the map the gauges leave visible. */
 const SAFE = '504x368+286+72';
-/* The HUD map's size: HUD_STEP_PCT steps from HUD_MIN_PCT to HUD_MAX_PCT (85 %, the widest the HUD shows
- * whole), HUD_SIZE_STEPS of them. Standard (0) counts as HUD_STANDARD_PCT, about what the fitted box is. */
-const HUD_MIN_PCT = 30, HUD_MAX_PCT = 85, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
+/* The HUD map's size: HUD_STEP_PCT steps from HUD_MIN_PCT to HUD_MAX_PCT, HUD_SIZE_STEPS of them. Past
+ * 100 % the HUD's edges cut the map's sides, on purpose. Standard (0) counts as HUD_STANDARD_PCT, about what
+ * the fitted box is. */
+const HUD_MIN_PCT = 30, HUD_MAX_PCT = 135, HUD_STEP_PCT = 5, HUD_STANDARD_PCT = 57;
 const HUD_SIZE_STEPS = (HUD_MAX_PCT - HUD_MIN_PCT) / HUD_STEP_PCT;
 /* The HUD map's zoom: HUD_ZOOM_STEP_PCT steps from 100 to 250 %; the render uses at most what the box takes. */
 const HUD_ZOOM_MIN = 100, HUD_ZOOM_MAX = 250, HUD_ZOOM_STEP_PCT = 10;
