@@ -3,7 +3,8 @@
 /* The opt-in settings over the shipped configuration.
  *
  * features_file (features.conf) holds only the opt-in keys (kFeatureKeys),
- * each 0 or 1; a valid value replaces the configuration's; another key, a
+ * each 0 or 1 (the HUD zoom's centre, hud_crop_cx_pm and hud_crop_cy_pm,
+ * 0-1000); a valid value replaces the configuration's; another key, a
  * value out of range or a line that does not read is left out with a
  * warning, as is a file that cannot be read. Every release up to 0.10.7
  * refuses to start with these keys in its local conf, so they never go
@@ -18,7 +19,7 @@
 namespace woc {
 
 /* The keys features_file holds. */
-extern const char *const kFeatureKeys[2];
+extern const char *const kFeatureKeys[4];
 
 void load_features(cld::Config *cfg, const std::string &path);
 

@@ -102,6 +102,13 @@ void MapFeeds::set_hud_keep_shown(bool keep)
         hud_->set_hud_keep_shown(keep);
 }
 
+void MapFeeds::set_hud_zoom(unsigned pct)
+{
+    base_.hud_zoom_pct = pct;
+    if (hud_)
+        hud_->set_hud_zoom(pct);
+}
+
 void MapFeeds::set_guide_hold(bool hold)
 {
     base_.guide_hold = hold;
@@ -210,6 +217,8 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     }
     s.hud_width_pct = base_.hud_width_pct;
     s.hud_keep_shown = base_.hud_keep_shown;
+    s.hud_zoom_pct = base_.hud_zoom_pct;
+    s.hud_zoom_used = hud_ ? hud_->hud_zoom_used() : base_.hud_zoom_pct;
     s.hud_offset_x = hud_ ? hud_->hud_offset_x() : base_.hud_offset_x;
     s.hud_offset_y = hud_ ? hud_->hud_offset_y() : base_.hud_offset_y;
     return s;

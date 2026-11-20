@@ -62,6 +62,9 @@ public:
     /* The HUD map kept shown over the stock HMI's pop-ups or not, kept for a
      * HUD feed made later. */
     void set_hud_keep_shown(bool keep);
+    /* The HUD map's zoom (FeedConfig::hud_zoom_pct), at once, kept for a
+     * HUD feed made later. */
+    void set_hud_zoom(unsigned pct);
     int hud_offset_x() const { return base_.hud_offset_x; }
     int hud_offset_y() const { return base_.hud_offset_y; }
     /* The cluster map layer's guide_hold. */

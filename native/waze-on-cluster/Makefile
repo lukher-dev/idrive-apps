@@ -67,7 +67,7 @@ CPP_TESTS = $(BUILD)/host/nal_reader_test $(BUILD)/host/rtp_h264_test $(BUILD)/h
 		$(BUILD)/host/stream_health_test $(BUILD)/host/source_crop_test \
 		$(BUILD)/host/map_rect_test $(BUILD)/host/guide_setting_test $(BUILD)/host/decoder_test \
 		$(BUILD)/host/map_state_test $(BUILD)/host/opt_in_test $(BUILD)/host/atlas_scale_test $(BUILD)/host/sps_info_test \
-		$(BUILD)/host/picture_pace_test
+		$(BUILD)/host/picture_pace_test $(BUILD)/host/hud_crop_test
 # The control socket (accept4) and the producer (pipe2) are Linux's: built and run on Linux only
 # (make test-x86).
 LINUX_TESTS = $(if $(filter Linux,$(shell uname -s)),$(BUILD)/host/refused_test $(BUILD)/host/video_producer_test)
@@ -138,6 +138,10 @@ test-firmware:
 $(BUILD)/host/source_crop_test: test/source_crop_test.cpp src/source_crop.h
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -Isrc -o $@ test/source_crop_test.cpp
+
+$(BUILD)/host/hud_crop_test: test/hud_crop_test.cpp src/hud_crop.h src/map_rect.h
+	mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) -Isrc -o $@ test/hud_crop_test.cpp
 
 # The decoder against a fake MSDK and libva.
 DEC_SRC = test/decoder_test.cpp test/fake_msdk.cpp src/decoder_msdk.cpp src/nal_reader.cpp $(KIT)/yuv_atlas.cpp $(CR)/src/log.cpp

@@ -93,6 +93,10 @@ struct FeedConfig {
     /* On the HUD: kept shown over the stock HMI's pop-ups (the layer's
      * yield 0); else it gives way to them (cluster-render's hud_yield_slots). */
     bool hud_keep_shown = false;
+    /* On the HUD: the zoom, 100-250 % (hud_crop.h), centred on a point in
+     * per mille of the picture; used at most at the box's cap. */
+    unsigned hud_zoom_pct = 100;
+    unsigned hud_crop_cx_pm = 500, hud_crop_cy_pm = 500;
     /* A target shown smaller than the decoded frame (the HUD) gets the frame
      * scaled on the head unit to the size it is shown at (atlas_scale.h), on
      * a worker thread, at most video.fps a second, rounded to these level
@@ -134,6 +138,8 @@ struct FeedStatus {
     unsigned hud_width_pct = 0;   /* the HUD map's size setting (0: the default) */
     int hud_offset_x = 0, hud_offset_y = 0;   /* and where it is moved to from the centre */
     bool hud_keep_shown = false;   /* the HUD map kept shown over the stock HMI's pop-ups */
+    unsigned hud_zoom_pct = 100;   /* the HUD map's zoom setting */
+    unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs
@@ -181,6 +187,10 @@ public:
     /* The HUD map kept shown over the stock HMI's pop-ups or not
      * (FeedConfig::hud_keep_shown), at once. */
     void set_hud_keep_shown(bool keep);
+    /* The HUD map's zoom (FeedConfig::hud_zoom_pct), at once: a new layer
+     * for the new part of the picture. */
+    void set_hud_zoom(unsigned pct);
+    unsigned hud_zoom_used() const { return zoom_used_; }
     /* A layer to take frames: made, and not reported disabled by
      * cluster-render. */
     bool takes_frames() const { return layer_ && !disabled(); }
@@ -284,6 +294,7 @@ private:
     uint32_t layer_ = 0;
     cr::LayerOptions lo_;   /* the layer's options as last sent */
     bool show_due_ = false;   /* visible once the frame waiting has gone */
+    unsigned zoom_used_ = 100;   /* the HUD's zoom at its box's cap (make_layer) */
     /* The newest frame, while held_new_; on a layer that scales, once there
      * is one, unless another feed or the worker has it. */
     std::vector<uint8_t> held_;
