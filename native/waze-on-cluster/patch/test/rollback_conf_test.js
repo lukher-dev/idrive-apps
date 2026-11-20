@@ -101,7 +101,9 @@ ok('every release starts with the owner\'s own local conf', refusing(USER).lengt
 /* What this test guards against: every release up to 0.10.7 refuses an
  * opt-in key in the local conf. */
 var UP_TO_0107 = RELEASES.filter(function (v) { return cmp(v, '0.10.7') <= 0; });
-OPT_IN.forEach(function (k) {
+/* The HUD zoom's centre (hud_crop_cx_pm, hud_crop_cy_pm) is an opt-in key
+ * newer than every release. */
+OPT_IN.concat(['hud_crop_cx_pm', 'hud_crop_cy_pm']).forEach(function (k) {
     var refused = refusing(USER + k + ' = 1\n').map(function (r) { return r.split(' ')[0]; });
     var accepted = UP_TO_0107.filter(function (v) { return refused.indexOf(v) < 0; });
     ok('every release up to 0.10.7 refuses ' + k + ' in the local conf', accepted.length === 0, accepted.join(' '));
@@ -207,6 +209,10 @@ var ON = 'hosted_vpp_scale = 1\nalways_packed = 1\n';
     set(USER + 'always_packed += 1\nhosted_vpp_scale = 1 # on\n', null);
     out = hook('activate');
     check('a += line, a comment after the value', USER, ON, out);
+    /* The HUD zoom's centre, 0-1000 per mille: moved; past 1000: dropped. */
+    set(USER + 'hud_crop_cx_pm = 700\nhud_crop_cy_pm = 1200\n', null);
+    out = hook('activate');
+    check('the HUD zoom\'s centre: one in range moved, one past 1000 dropped', USER, 'hud_crop_cx_pm = 700\n', out);
 
     /* 4. An update cut short. After this version's files, before its hook:
      * the next head-unit start moves them. Its activate ran, then the update
