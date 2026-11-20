@@ -118,12 +118,25 @@ function state() {
     return s;
 }
 function profiles() { return JSON.parse(fs.readFileSync(PROFILES, 'utf8')); }
-function settings(cluster, hud, pct, x, y, keep) {
-    return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0 };
+function settings(cluster, hud, pct, x, y, keep, near, nearM) {
+    return { cluster: cluster, hud: hud, hud_width_pct: pct, hud_offset_x: x, hud_offset_y: y, hud_keep_shown: keep || 0,
+        hud_near_turn: near || 0, hud_near_m: nearM || 1000 };
+}
+/* A set as an earlier release saves it: without the near-turn keys, which
+ * patchd then reads as their defaults. */
+function earlier(s) {
+    var e = Object.assign({}, s);
+    delete e.hud_near_turn;
+    delete e.hud_near_m;
+    return e;
 }
 function same(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
-/* map.state.conf's settings, in whatever order its lines are */
-function sameKeys(a, b) { return Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(function (k) { return a[k] === b[k]; }); }
+/* map.state.conf's settings, in whatever order its lines are; a near-turn
+ * key it lacks (a file an earlier release wrote) is its default */
+function sameKeys(a, b) {
+    a = Object.assign({ hud_near_turn: 0, hud_near_m: 1000 }, a);
+    return Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(function (k) { return a[k] === b[k]; });
+}
 function stateText(s) { return Object.keys(s).map(function (k) { return k + ' = ' + s[k]; }).join('\n') + '\n'; }
 function files() { return fs.readFileSync(PROFILES, 'utf8') + '|' + fs.readFileSync(STATE, 'utf8'); }
 /* For a check that nothing is written: past the save's delay. */
@@ -149,14 +162,15 @@ function ok(name, cond, detail) {
 var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000000000002';
 var GUEST = 'de.bmw.infotainment.personalization.UserAccountManager.guest';
 /* A with its own settings (the HUD alone, 60 %), B with its own (both, 40 %),
- * the shared ones on the cluster alone; `active` in effect. */
+ * the shared ones on the cluster alone; `active` in effect; the files as an
+ * earlier release writes them. */
 var OWN_A = settings(0, 1, 60, 0, 0), OWN_B = settings(1, 1, 40, 10, 0), SHARED = settings(1, 0, 0, 0, 0);
 function threeSets(active) {
     var own = {};
-    own[A] = OWN_A;
-    own[B] = OWN_B;
-    fs.writeFileSync(PROFILES, JSON.stringify({ shared: SHARED, own: own, active: active }) + '\n');
-    fs.writeFileSync(STATE, stateText(active ? own[active] : SHARED));
+    own[A] = earlier(OWN_A);
+    own[B] = earlier(OWN_B);
+    fs.writeFileSync(PROFILES, JSON.stringify({ shared: earlier(SHARED), own: own, active: active }) + '\n');
+    fs.writeFileSync(STATE, stateText(active ? own[active] : earlier(SHARED)));
 }
 
 (async function () {
@@ -274,7 +288,7 @@ function threeSets(active) {
     /* No driver with own settings: the shared settings are the only ones, a
      * write without "profile" is saved; the first own settings ticked are said. */
     fs.unlinkSync(PROFILES);
-    fs.writeFileSync(STATE, stateText(SHARED));
+    fs.writeFileSync(STATE, stateText(earlier(SHARED)));
     await start();
     st = await statusNow();
     r = await ask({ cmd: 'hud-size', hud_width_pct: 30 });
