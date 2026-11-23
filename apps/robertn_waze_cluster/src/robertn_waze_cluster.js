@@ -12,22 +12,26 @@
  * profile is detected), Cluster map (the shared render's map), the Hide
  * BMW's turn box checkbox (the render's setting; a press asks the render to
  * flip it), Logs. HUD: HUD map (the map on the HUD), the Keep HUD map over
- * BMW's pop-ups and Show HUD map only near turns checkboxes, the Show from
- * ... before a turn slider (200 m to 2 km, the distance the turn watch
- * opens at), the Map size and Map zoom sliders, Map
- * position with Move map left, Move map right, Move map up, Move map down
- * and Centre map, then the Hide map behind BMW's speed checkbox (the map
- * blacked out behind BMW's speed) and the Speed area row with Move speed
- * area left, right, up and down and Speed area wider, narrower, taller and
- * shorter for its rectangle; the checkboxes, the sliders and the buttons
- * are greyed while the HUD is off or disabled after errors, the distance
- * slider also while the map shows always, the speed area's buttons also
- * while it is unticked. CarPlay and Android Auto have the same rows:
- * Status, Patch, Remove patch; CarPlay adds CarPlay Wi-Fi (the band, 5 GHz
- * or 2.4 GHz) and, on 2.4 GHz, the line under it; Android Auto adds Cluster
- * map zoom with Zoom out and Zoom in, and the Hide phone's turn card
- * checkbox. Info rows read "Name: Value"; every on/off setting is
- * a checkbox. One that cannot act now is greyed, and while patchd runs any
+ * BMW's pop-ups and Show HUD map only near turns checkboxes, then HUD map
+ * settings and Speed area, each opening a page of its own. CarPlay and
+ * Android Auto have the same rows: Status, Patch, Remove patch; CarPlay adds
+ * the Arrival time on the cluster and Turn cards on the cluster checkboxes,
+ * CarPlay Wi-Fi (the band, 5 GHz or 2.4 GHz) and, on 2.4 GHz, the line under
+ * it; Android Auto adds Android Auto map, opening its page. Info rows read
+ * "Name: Value"; every on/off setting is a checkbox.
+ *
+ * The settings pages, children of the main page: HUD map settings holds the
+ * Map size, Map zoom and Vignette sliders, Map position with Move map left,
+ * right, up and down and Centre map, and the Show from ... before a turn
+ * slider (200 m to 2 km, the distance the turn watch opens at). Speed area
+ * holds the Hide map behind BMW's speed checkbox (the map blacked out behind
+ * BMW's speed), the Speed area row and Move speed area left, right, up and
+ * down and Speed area wider, narrower, taller and shorter for its
+ * rectangle. The checkboxes, the sliders and the buttons of the HUD are
+ * greyed while the HUD is off or disabled after errors, the distance slider
+ * also while the map shows always, the speed area's buttons also while it
+ * is unticked. Android Auto map holds Cluster map zoom with Zoom out and
+ * Zoom in, and the Hide phone's turn card checkbox. One that cannot act now is greyed, and while patchd runs any
  * operation every operation is. Every row stays on the page but four, the
  * only rows shown and hidden: CarPlay Wi-Fi while CarPlay runs over Wi-Fi
  * and patchd knows the band, and its line on 2.4 GHz, CarPlay's last two
@@ -52,10 +56,10 @@
  * hide counts only after HIDE_SETTLE_MS. waze_cluster_control.js holds the
  * protocol.
  *
- * Every word on both pages is in the HMI's display language (src/i18n.js),
+ * Every word on every page is in the HMI's display language (src/i18n.js),
  * read from HMIContext at start and on each change, which writes every row
- * again; English until then, and without it. The tile's name and the Logs
- * page's title are string ids the HMI shows itself (the RHMI text files).
+ * again; English until then, and without it. The tile's name and the pages'
+ * titles are string ids the HMI shows itself (the RHMI text files).
  */
 'use strict';
 
@@ -92,6 +96,7 @@ const AA_ZOOM_OUT_NAME = 'wocAaZoomOut';
 const AA_ZOOM_IN_NAME = 'wocAaZoomIn';
 const AA_CARD_NAME = 'wocAaCard';
 const CP_ETA_NAME = 'wocCpEta';
+const CP_TURNS_NAME = 'wocCpTurns';
 const GUIDE_NAME = 'wocGuide';
 const HEAD_GENERAL_NAME = 'wocHeadGeneral';
 const HEAD_HUD_NAME = 'wocHeadHud';
@@ -100,6 +105,7 @@ const HUD_KEEP_NAME = 'wocHudKeep';
 const HUD_NEAR_NAME = 'wocHudNearTurn';
 const HUD_ZOOM_NAME = 'wocHudZoom';
 const HUD_NEAR_DIST_NAME = 'wocHudNearDist';
+const HUD_VIGNETTE_NAME = 'wocHudVignette';
 /* The render's status, written once a second (world-readable): where the
  * map shows while the page, the render's one owner, is closed. */
 const STATUS_FILE = '/run/waze-on-cluster/status.json';
@@ -122,6 +128,12 @@ const LOGS_SAVE = 'wocLogsSave';
 const LOGS_STATUS = 'wocLogsStatus';
 const LOGS_QR = 'wocLogsQr';
 const LOGS_URL = 'wocLogsUrl';
+/* The settings pages: the button on the main page that opens each, and its state. */
+const PAGES = {
+    hudMap: { button: 'wocHudMapPage', state: 'ST_OnlineApps_WazeClusterHudMap' },
+    speed: { button: 'wocSpeedPage', state: 'ST_OnlineApps_WazeClusterSpeed' },
+    aa: { button: 'wocAaPage', state: 'ST_OnlineApps_WazeClusterAa' }
+};
 const LOGS_ROW_NAMES = Array.from({ length: LOGS_ROWS }, (_, i) => `wocLogsRow${i + 1}`);
 const ROW_CHARS = 90;
 const PRESS_DEDUPE_MS = 400;
@@ -151,7 +163,7 @@ class WazeClusterApp extends OnlineApp {
         this._lastPress = {};
         this._written = {};
         this._visible = false;
-        this._pages = { main: false, logs: false };
+        this._pages = WazeClusterApp.noPages();
         this._shownPage = 'main';   /* the page last shown, which shows again when the app does */
         this._hideTimer = null;
         this._qr = { url: undefined, file: null, chain: Promise.resolve() };
@@ -188,6 +200,11 @@ class WazeClusterApp extends OnlineApp {
                 this._setVisible(false);
             }
         });
+    }
+
+    /* Every page hidden: the main page, Logs and the settings pages. */
+    static noPages() {
+        return Object.assign({ main: false, logs: false }, ...Object.keys(PAGES).map((p) => ({ [p]: false })));
     }
 
     _appInitialized() {
@@ -235,15 +252,17 @@ class WazeClusterApp extends OnlineApp {
         const rhmi = this.rhmiApplication;
         this._state = rhmi.getByName(STATE_NAME);
         this._logsState = rhmi.getByName(LOGS_STATE);
-        if (!this._state || !this._logsState) {
-            return Promise.reject(new Error(`uiDescription has no ${STATE_NAME} or ${LOGS_STATE}`));
+        this._pageStates = {};
+        Object.keys(PAGES).forEach((p) => { this._pageStates[p] = rhmi.getByName(PAGES[p].state); });
+        if (!this._state || !this._logsState || Object.values(this._pageStates).some((st) => !st)) {
+            return Promise.reject(new Error(`uiDescription has no ${STATE_NAME}, ${LOGS_STATE} or a settings page`));
         }
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
-            AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, CP_ETA_NAME, RESTART_NAME, GUIDE_NAME,
-            HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_NEAR_DIST_NAME, HUD_SIZE_NAME,
-            HUD_ZOOM_NAME, HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
+            AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, CP_ETA_NAME, CP_TURNS_NAME, RESTART_NAME,
+            GUIDE_NAME, HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_NEAR_DIST_NAME,
+            HUD_SIZE_NAME, HUD_ZOOM_NAME, HUD_VIGNETTE_NAME, HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
             .concat(Object.values(HUD_MOVE_NAMES), Object.values(HUD_CLEAR_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
-                LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES);
+                LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES, Object.values(PAGES).map((p) => p.button));
         names.forEach((name) => { this._components[name] = rhmi.getByName(name); });
         const missing = names.filter((name) => !this._components[name]);
         if (missing.length) {
@@ -264,6 +283,11 @@ class WazeClusterApp extends OnlineApp {
             /* as for the turn card: patchd's answer decides the tick */
             delete this._written[`selected:${CP_ETA_NAME}`];
             this._control.toggleCarplayEta();
+        });
+        this._bind(CP_TURNS_NAME, () => {
+            /* as for the arrival time: patchd's answer decides the tick */
+            delete this._written[`selected:${CP_TURNS_NAME}`];
+            this._control.toggleCarplayTurns();
         });
         this._bind(RESTART_NAME, () => this._control.requestRestart());
         this._bind(GUIDE_NAME, () => {
@@ -322,6 +346,14 @@ class WazeClusterApp extends OnlineApp {
                 setImmediate(() => this._render());
             }
         });
+        this._components[HUD_VIGNETTE_NAME].on('changed', (step) => {
+            if (step !== this._written[`cell:${HUD_VIGNETTE_NAME}:0:Value`]) {
+                logger.info(`SLIDER ${HUD_VIGNETTE_NAME} ${step}`);
+                delete this._written[`cell:${HUD_VIGNETTE_NAME}:0:Value`];
+                this._control.setHudVignetteStep(step);
+                setImmediate(() => this._render());
+            }
+        });
         this._components[HUD_NEAR_DIST_NAME].on('changed', (step) => {
             if (step !== this._written[`cell:${HUD_NEAR_DIST_NAME}:0:Value`]) {
                 logger.info(`SLIDER ${HUD_NEAR_DIST_NAME} ${step}`);
@@ -334,8 +366,10 @@ class WazeClusterApp extends OnlineApp {
         this._bind(HUD_CENTRE_NAME, () => this._control.centreHud());
         Object.keys(HUD_CLEAR_NAMES).forEach((dir) => this._bind(HUD_CLEAR_NAMES[dir], () => this._control.adjustHudClear(dir)));
         this._bind(CAPTURE_NAME, () => this._control.capture());
-        this._bind(LOGS_NAME, () => Promise.resolve(rhmi.openState(LOGS_STATE))
-            .catch((err) => logger.warn(`openState ${LOGS_STATE} failed: ${err && err.message}`)));
+        const open = (state) => Promise.resolve(rhmi.openState(state))
+            .catch((err) => logger.warn(`openState ${state} failed: ${err && err.message}`));
+        this._bind(LOGS_NAME, () => open(LOGS_STATE));
+        Object.values(PAGES).forEach((p) => this._bind(p.button, () => open(p.state)));
         this._bind(LOGS_SAVE, () => this._logs.save());
         // Presses also arrive as the application's raw 'userEvent'; both paths
         // land in _press, which keeps a press delivered twice to one.
@@ -368,8 +402,9 @@ class WazeClusterApp extends OnlineApp {
         });
         this._state.on('visible', (event) => this._pageVisible('main', isTrue(event && event.visible)));
         this._logsState.on('visible', (event) => this._pageVisible('logs', isTrue(event && event.visible)));
+        Object.keys(PAGES).forEach((p) => this._pageStates[p].on('visible', (event) => this._pageVisible(p, isTrue(event && event.visible))));
         this._removeStaleQr();
-        return Promise.all([this._state.updateResources(), this._logsState.updateResources()]).then(() => {
+        return Promise.all([this._state, this._logsState].concat(Object.values(this._pageStates)).map((st) => st.updateResources())).then(() => {
             logger.info(`page ready: ${names.length} components found`);
             this._render();
             this._renderLogs();
@@ -458,7 +493,7 @@ class WazeClusterApp extends OnlineApp {
         /* the tile opens the main page, whichever page the app was left on;
          * its stack change may have come first and opened the Logs page's socket */
         this._shownPage = 'main';
-        this._pages.logs = false;
+        Object.keys(this._pages).filter((p) => p !== 'main').forEach((p) => { this._pages[p] = false; });
         this._logs.close();
         this._setVisible(true);
         return Promise.resolve(this.rhmiApplication.openEntryState(uuid))
@@ -488,7 +523,7 @@ class WazeClusterApp extends OnlineApp {
         if (visible) {
             this._sawForeground = true;
             this._setVisible(true);
-        } else if (!this._pages.main && !this._pages.logs) {
+        } else if (!Object.values(this._pages).some(Boolean)) {
             this._hideTimer = setTimeout(() => {
                 this._hideTimer = null;
                 this._setVisible(false);
@@ -498,7 +533,7 @@ class WazeClusterApp extends OnlineApp {
 
     _setVisible(visible) {
         if (!visible) {
-            this._pages = { main: false, logs: false };
+            this._pages = WazeClusterApp.noPages();
             this._logs.close();
         }
         if (this._shutdownPromise || this._visible === visible) {
@@ -620,7 +655,8 @@ class WazeClusterApp extends OnlineApp {
             [HUD_CLEAR_NAMES.up, t('Move speed area up')], [HUD_CLEAR_NAMES.down, t('Move speed area down')],
             [HUD_CLEAR_NAMES.wider, t('Speed area wider')], [HUD_CLEAR_NAMES.narrower, t('Speed area narrower')],
             [HUD_CLEAR_NAMES.taller, t('Speed area taller')], [HUD_CLEAR_NAMES.shorter, t('Speed area shorter')],
-            [RESTART_NAME, t('Restart head unit')]].forEach(([name, text]) => this._write(name, text));
+            [RESTART_NAME, t('Restart head unit')], [PAGES.hudMap.button, t('HUD map settings')], [PAGES.speed.button, t('Speed area')],
+            [PAGES.aa.button, t('Android Auto map')]].forEach(([name, text]) => this._write(name, text));
         this._write(STATUS_NAME, c.statusText());
         this._write(MAP_NAME, c.mapText());
         this._write(AA_STATUS_NAME, c.aaStatusText());
@@ -629,12 +665,15 @@ class WazeClusterApp extends OnlineApp {
         this._setSelected(AA_CARD_NAME, c.cardHidden());
         this._write(CP_ETA_NAME, c.etaText());
         this._setSelected(CP_ETA_NAME, !!c.carplayEta());
+        this._write(CP_TURNS_NAME, c.turnsText());
+        this._setSelected(CP_TURNS_NAME, !!c.carplayTurns());
         this._write(CAPTURE_NAME, c.captureButtonText());
         this._write(CAPTURE_STATUS, c.captureText());
         [[ENABLE_NAME, c.canEnable()], [DISABLE_NAME, c.canDisable()],
             [AA_ENABLE_NAME, c.canEnableAa()], [AA_DISABLE_NAME, c.canDisableAa()],
             [AA_ZOOM_OUT_NAME, c.canZoom(-ZOOM_STEP)], [AA_ZOOM_IN_NAME, c.canZoom(ZOOM_STEP)],
-            [AA_CARD_NAME, c.canToggleCard()], [CP_ETA_NAME, c.canToggleCarplayEta()], [CAPTURE_NAME, c.canCapture()], [RESTART_NAME, c.canRestart()]]
+            [AA_CARD_NAME, c.canToggleCard()], [CP_ETA_NAME, c.canToggleCarplayEta()],
+            [CP_TURNS_NAME, c.canToggleCarplayTurns()], [CAPTURE_NAME, c.canCapture()], [RESTART_NAME, c.canRestart()]]
             .forEach(([name, enabled]) => this._setEnabled(name, enabled));
         const restartText = c.restartText();
         this._setVisibleComp(RESTART_NAME, c.restartNeeded() || c.restartRequested());
@@ -681,6 +720,11 @@ class WazeClusterApp extends OnlineApp {
             this._writeCell(HUD_ZOOM_NAME, 'Value', c.hudZoomStep(), 'SInt', 0);
         }
         this._setEnabled(HUD_ZOOM_NAME, c.canChangeHudZoom());
+        this._writeCell(HUD_VIGNETTE_NAME, 'TextDescription', c.hudVignetteText(), 'Text', 0);
+        if (c.hudVignette() !== null) {
+            this._writeCell(HUD_VIGNETTE_NAME, 'Value', c.hudVignette(), 'SInt', 0);
+        }
+        this._setEnabled(HUD_VIGNETTE_NAME, c.canChangeHudVignette());
         /* the size slider and the place buttons: greyed while the HUD is off
          * or disabled (the HMI greys no label) */
         const adjust = c.canChangeHudSize();

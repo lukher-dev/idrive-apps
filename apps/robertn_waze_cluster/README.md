@@ -76,22 +76,29 @@ The app is in the head unit's display language.
   HUD arrow does. Google Maps sends them; Apple Maps should too, though it
   is untried. With an app that sends none, such as Waze, the map never
   shows.
-- **Show from … before a turn:** how far before a turn the map appears with
-  the option above, 200 m to 2 km.
-- **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map)
-  to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
-  the row shows the zoom in use. By default it is as close as the HUD map's
-  size allows, which is the cluster's own scale.
-- **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
-  HUD's edges cut the map's sides.
-- **Move map left / right / up / down** and **Centre map:** where the
-  map sits on the HUD. Above 100 %, left and right slide the map inside the
-  HUD.
-- **Hide map behind BMW's speed:** ticked (the default), the map is hidden
-  in an area of the HUD, so BMW's speed readout stays readable. **Speed
-  area** shows that area's size and place in HUD pixels; **Move speed area
-  left / right / up / down** and **Speed area wider / narrower / taller /
-  shorter** move and size it 10 px a press.
+- **HUD map settings:** opens a page with the map's size, zoom, vignette
+  and place, and how far before a turn it shows:
+  - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map)
+    to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
+    the row shows the zoom in use. By default it is as close as the HUD map's
+    size allows, which is the cluster's own scale.
+  - **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
+    HUD's edges cut the map's sides.
+  - **Vignette:** fades the map out towards the HUD's edges, 0 (none) to 5
+    (the widest fade), 2 by default. The fade follows the HUD itself, not the
+    map, so moving or resizing the map does not move it.
+  - **Move map left / right / up / down** and **Centre map:** where the
+    map sits on the HUD. Above 100 %, left and right slide the map inside the
+    HUD.
+  - **Show from … before a turn:** how far before a turn the map appears with
+    **Show HUD map only near turns**, 200 m to 2 km.
+- **Speed area:** opens a page for the area of the HUD where BMW shows your
+  speed:
+  - **Hide map behind BMW's speed:** ticked (the default), the map is hidden
+    in that area, so BMW's speed readout stays readable.
+  - **Speed area** shows the area's size and place in HUD pixels; **Move
+    speed area left / right / up / down** and **Speed area wider / narrower /
+    taller / shorter** move and size it 10 px a press.
 
 **CarPlay** and **Android Auto**
 
@@ -101,11 +108,17 @@ The app is in the head unit's display language.
 - **Arrival time on the cluster** (CarPlay only): whether the cluster map
   shows the phone's arrival-time card. Off by default; a change takes effect
   after the head unit restarts.
+- **Turn cards on the cluster** (CarPlay only, experimental): whether the
+  phone draws its turn cards on the cluster map. On by default. Unticked,
+  CarPlay asks the phone for the map alone; the arrival time follows its own
+  checkbox. A change takes effect after the head unit restarts. The HUD shows
+  the cluster's picture, so this applies to the HUD map too.
 - **CarPlay Wi-Fi** (CarPlay only): the Wi-Fi band your iPhone uses.
-- **Zoom out / Zoom in** (Android Auto only): out shows more map, in shows
-  bigger text.
-- **Hide phone's turn card** (Android Auto only): hides Google Maps' own
-  turn card at the top of the map.
+- **Android Auto map** (Android Auto only): opens a page with **Cluster map
+  zoom** and:
+  - **Zoom out / Zoom in:** out shows more map, in shows bigger text.
+  - **Hide phone's turn card:** hides Google Maps' own turn card at the top
+    of the map.
 
 **Restart head unit** shows when a change needs a restart. Press it to
 apply the change.
@@ -186,7 +199,8 @@ names those languages) and its words, each keyed by the English (`{0}`,
 ```
 
 `node tools/build.js` writes them into the app (`src/locales.js`) and into
-the RHMI text files, which hold the tile's name and the Logs page's title.
+the RHMI text files, which hold the tile's name and the titles of the
+Logs page and the settings pages.
 `node tools/test_i18n.js` checks that every language has every word with
 the same `{n}`, and every HMI language its text file.
 

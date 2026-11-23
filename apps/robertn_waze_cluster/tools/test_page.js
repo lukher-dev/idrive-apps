@@ -306,21 +306,41 @@ async function main() {
         'wocTitle',
         'wocHeadGeneral General', 'wocShowOn Show on: Cluster', 'wocProfile Own settings for this driver', 'wocMap Cluster map: Off', "wocGuide Hide BMW's turn box", 'wocLogs Logs',
         'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudNearTurn Show HUD map only near turns',
-        'wocHudNearDist Show from \u2014 before a turn', 'wocHudSize Map size: \u2014', 'wocHudZoom Map zoom: \u2014', 'wocHudPos Map position: \u2014',
-        'wocHudLeft Move map left', 'wocHudRight Move map right', 'wocHudUp Move map up', 'wocHudDown Move map down', 'wocHudCentre Centre map',
-        "wocHudClear Hide map behind BMW's speed", 'wocHudClearRect Speed area: \u2014', 'wocHudClearLeft Move speed area left', 'wocHudClearRight Move speed area right',
-        'wocHudClearUp Move speed area up', 'wocHudClearDown Move speed area down', 'wocHudClearWider Speed area wider', 'wocHudClearNarrower Speed area narrower',
-        'wocHudClearTaller Speed area taller', 'wocHudClearShorter Speed area shorter',
+        'wocHudMapPage HUD map settings', 'wocSpeedPage Speed area',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch',
-        'wocCpEta Arrival time on the cluster', 'wocWifi ', 'wocWifiHint ',
-        'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch',
-        'wocAaZoom Cluster map zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in', "wocAaCard Hide phone's turn card",
+        'wocCpEta Arrival time on the cluster', 'wocCpTurns Turn cards on the cluster', 'wocWifi ', 'wocWifiHint ',
+        'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch', 'wocAaPage Android Auto map',
         'wocRestart Restart head unit', 'wocRestartStatus '],
         'the main page: four sections, in order');
+    /* the settings pages: children of the main page, each opened by a button on it */
+    const SETTINGS = { 3: ['ST_OnlineApps_WazeClusterHudMap', 'SID_WOC_HUD_MAP', ['wocHudSize Map size: \u2014', 'wocHudZoom Map zoom: \u2014',
+        'wocHudVignette Vignette: \u2014', 'wocHudPos Map position: \u2014', 'wocHudLeft Move map left', 'wocHudRight Move map right', 'wocHudUp Move map up',
+        'wocHudDown Move map down', 'wocHudCentre Centre map', 'wocHudNearDist Show from \u2014 before a turn']],
+    4: ['ST_OnlineApps_WazeClusterSpeed', 'SID_WOC_SPEED', ["wocHudClear Hide map behind BMW's speed", 'wocHudClearRect Speed area: \u2014',
+        'wocHudClearLeft Move speed area left', 'wocHudClearRight Move speed area right', 'wocHudClearUp Move speed area up',
+        'wocHudClearDown Move speed area down', 'wocHudClearWider Speed area wider', 'wocHudClearNarrower Speed area narrower',
+        'wocHudClearTaller Speed area taller', 'wocHudClearShorter Speed area shorter']],
+    5: ['ST_OnlineApps_WazeClusterAa', 'SID_WOC_AA', ['wocAaZoom Cluster map zoom: —', 'wocAaZoomOut Zoom out', 'wocAaZoomIn Zoom in',
+        "wocAaCard Hide phone's turn card"]] };
+    Object.keys(SETTINGS).forEach((cid) => {
+        const [state, sid, rows] = SETTINGS[cid];
+        const page = UI.containers[cid];
+        assert.strictEqual(page.name, state);
+        assert.deepStrictEqual(page.properties.ParentState, { value: 1, type: 'UInt' }, `${state}: a child of the main page`);
+        assert(new RegExp(`<container id="${cid}" type="state" widget="LT_State_Wide">\\s*<property id="9" value="1"/>`).test(XML), `${state}: its parent in application.xml`);
+        assert.deepStrictEqual(xmlIds(cid).map(([id, type]) => `${id} ${type}`).sort(),
+            Object.entries(page.components).map(([id, d]) => `${id} ${d.type}`).sort(), `application.xml and uiDescription agree on ${state}`);
+        const [titleId, ...list] = xmlIds(cid).map(([id]) => id);
+        assert.deepStrictEqual(page.components[titleId].rows[0].Text, { value: sid, type: 'StringId' }, `${state}: its title`);
+        assert.deepStrictEqual(list.map((id) => `${page.components[id].name} ${shipped(page.components[id])}`), rows, `${state}: its rows, in order`);
+        assert(list.every((id) => page.components[id].properties.Visible.value === 1), `${state}: every row shown`);
+    });
+    console.log('ok   the settings pages: HUD map settings, Speed area and Android Auto map, each a child of the main page with its title and rows');
     assert.deepStrictEqual(xmlIds('1').map(([id, type]) => `${id} ${type}`).sort(),
         Object.entries(components).map(([id, d]) => `${id} ${d.type}`).sort(), 'application.xml and uiDescription agree on the main page');
     const widgets = {};
-    xmlIds('1').forEach(([id, , widget]) => { widgets[components[id].name] = widget; });
+    ['1', '3', '4', '5'].forEach((cid) => xmlIds(cid).forEach(([id, , widget]) => { widgets[UI.containers[cid].components[id].name] = widget; }));
+    const allComponents = Object.assign({}, ...['1', '3', '4', '5'].map((cid) => UI.containers[cid].components));
     assert.deepStrictEqual(['wocHeadGeneral', 'wocHeadHud', 'wocHeadCarPlay', 'wocHeadAa'].map((n) => widgets[n]), Array(4).fill('LT_Label_Header_1Row'),
         'the section headers are header rows');
     /* application.xml's property 3: 0 a row the controller passes over, 3 one it stops on */
@@ -331,19 +351,24 @@ async function main() {
         .find((id) => components[id].name === n)].properties.Focusable.value]), Array(4).fill(['0', 0]), 'the section headers take no focus');
     assert.strictEqual(main.find(([, , name]) => focus[name] === '3')[2], 'wocShowOn', 'the first row the controller stops on: Show on');
     assert(!main.some(([, , name]) => /^wocRow|^wocSetup|^wocCapture/.test(name)), 'no log rows, setup line or capture on the main page');
-    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep', 'wocHudNearTurn', 'wocHudClear'].map((n) => widgets[n]),
-        Array(6).fill('LT_CheckBox_1Row'), 'the on/off settings are checkboxes');
-    assert.deepStrictEqual([widgets.wocHudNearDist, widgets.wocHudZoom], Array(2).fill('LT_Slider_LeftJustified_Fill_Steps'),
-        'the near-turn distance and the map zoom sliders like the size');
-    const nearDesc = Object.values(components).find((d) => d.name === 'wocHudNearDist');
+    assert.deepStrictEqual(['wocAaCard', 'wocGuide', 'wocProfile', 'wocHudKeep', 'wocHudNearTurn', 'wocHudClear', 'wocCpEta', 'wocCpTurns']
+        .map((n) => widgets[n]), Array(8).fill('LT_CheckBox_1Row'), 'the on/off settings are checkboxes');
+    assert.deepStrictEqual([widgets.wocHudNearDist, widgets.wocHudZoom, widgets.wocHudVignette], Array(3).fill('LT_Slider_LeftJustified_Fill_Steps'),
+        'the near-turn distance, the map zoom and the vignette sliders like the size');
+    assert.deepStrictEqual(['wocHudMapPage', 'wocSpeedPage', 'wocAaPage', 'wocLogs'].map((n) => widgets[n]), Array(4).fill('LT_Button_1Row'),
+        'each page opened by a button');
+    const vignetteDesc = Object.values(allComponents).find((d) => d.name === 'wocHudVignette');
+    assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => vignetteDesc.rows[0][k].value), [0, 5, 5],
+        'the vignette: 0 (none) to 5');
+    const nearDesc = Object.values(allComponents).find((d) => d.name === 'wocHudNearDist');
     assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => nearDesc.rows[0][k].value), [0, HUD_NEAR_STEPS, HUD_NEAR_STEPS],
         'the near-turn distance: one step for each 200 m, 200 m to 2 km');
     assert.strictEqual(HUD_NEAR_STEPS, 9);
-    assert(!Object.values(components).some((d) => d.name === 'wocHudFade'), 'no edge fade slider');
+    assert(!Object.values(allComponents).some((d) => d.name === 'wocHudFade'), 'no edge fade slider');
     assert.deepStrictEqual([widgets.wocShowOn, widgets.wocHudSize], ['LT_DropDownMenu_1Row_2Col3070', 'LT_Slider_LeftJustified_Fill_Steps'],
         'where the map shows: a drop-down of four; the HUD\'s size: a slider');
     assert.deepStrictEqual(components['62'].rows.map((r) => r.ItemText.value), ['Cluster', 'HUD (experimental)', 'Cluster and HUD (experimental)', 'Off']);
-    assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => components['52'].rows[0][k].value), [0, HUD_SIZE_STEPS, HUD_SIZE_STEPS],
+    assert.deepStrictEqual(['MinValue', 'MaxValue', 'NumberOfSteps'].map((k) => allComponents['52'].rows[0][k].value), [0, HUD_SIZE_STEPS, HUD_SIZE_STEPS],
         'the slider: one step for each 5 %');
     /* every info row reads "Name: Value" */
     assert(main.filter(([, type, name]) => type === 'label' && !/^wocHead|^(wocRestartStatus|wocWifi|wocWifiHint)$/.test(name))
@@ -390,11 +415,11 @@ async function main() {
         await until('page shows the map', () => byName.wocMap.text === `Cluster map: Showing ${RENDER_PAGE} — ${RENDER_FPS}` && status.text === 'Status: Patched');
         assert(!logs.some((l) => /^error/.test(l)), logs.filter((l) => /^error/.test(l)).join('\n'));
         const bound = logs.filter((l) => l.startsWith('info: BIND OK: ')).map((l) => l.split(' ')[3]).sort();
-        assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture', 'wocCpEta', 'wocDisable', 'wocEnable',
-            'wocGuide', 'wocHudCentre', 'wocHudClear', 'wocHudClearDown', 'wocHudClearLeft', 'wocHudClearNarrower', 'wocHudClearRight',
-            'wocHudClearShorter', 'wocHudClearTaller', 'wocHudClearUp', 'wocHudClearWider',
-            'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudNearTurn', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
-            'wocRestart'],
+        assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaPage', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture', 'wocCpEta',
+            'wocCpTurns', 'wocDisable', 'wocEnable', 'wocGuide', 'wocHudCentre', 'wocHudClear', 'wocHudClearDown', 'wocHudClearLeft', 'wocHudClearNarrower',
+            'wocHudClearRight', 'wocHudClearShorter', 'wocHudClearTaller', 'wocHudClearUp', 'wocHudClearWider',
+            'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudMapPage', 'wocHudNearTurn', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
+            'wocRestart', 'wocSpeedPage'],
             'bound buttons and checkbox');
         assert.strictEqual(byName.wocRestart.visible, false, 'restart button hidden while the map shows');
         console.log('ok   a page opened while the map is up shows it');
@@ -479,7 +504,7 @@ async function main() {
         const size = byName.wocHudSize;
         const clearMoves = ['wocHudClearLeft', 'wocHudClearRight', 'wocHudClearUp', 'wocHudClearDown', 'wocHudClearWider', 'wocHudClearNarrower',
             'wocHudClearTaller', 'wocHudClearShorter'];
-        const hudRows = () => ['wocHudKeep', 'wocHudNearTurn', 'wocHudSize', 'wocHudZoom', 'wocHudLeft', 'wocHudRight', 'wocHudUp',
+        const hudRows = () => ['wocHudKeep', 'wocHudNearTurn', 'wocHudSize', 'wocHudZoom', 'wocHudVignette', 'wocHudLeft', 'wocHudRight', 'wocHudUp',
             'wocHudDown', 'wocHudClear'].concat(clearMoves).map((n) => byName[n].enabled);
         await until('the cluster, the HUD off', () => showOn.shown() === 'Show on: Cluster' && showOn.enabled === true &&
             byName.wocHud.text === 'HUD map: Off' && size.text === 'Map size: Standard' && size.cells['0:Value'] === 5 &&
@@ -538,6 +563,11 @@ async function main() {
         zoom.turn(-1);
         await until('zoomed out a step', () => render.hudZoom === 240 && zoom.text === 'Map zoom: 240 %' && zoom.cells['0:Value'] === 14);
         await until('the zoom saved', () => patch.map.hud_zoom_pct === 240);
+        const vignette = byName.wocHudVignette;
+        assert(vignette.text === 'Vignette: 2' && vignette.cells['0:Value'] === 2, 'the vignette 2 by default');
+        vignette.turn(1);
+        await until('the vignette a step up: told to the render, saved', () => render.hudVignette === 3 && vignette.text === 'Vignette: 3' &&
+            vignette.cells['0:Value'] === 3 && patch.map.hud_vignette === 3);
         assert.strictEqual(guidanceQueries, 0, 'the turn list not read while always');
         guidanceFails = true;
         await sleep(450);
@@ -821,15 +851,71 @@ async function main() {
         Object.values(components).filter((d) => !/^(wocRestart|wocWifi)/.test(d.name) && d.type !== 'title')
             .forEach((d) => assert.strictEqual(byName[d.name].visible, true, `${d.name} stays on the page`));
         ['wocEnable', 'wocDisable', 'wocAaEnable', 'wocAaDisable', 'wocAaZoomOut', 'wocAaZoomIn', 'wocAaCard', 'wocGuide', 'wocShowOn', 'wocProfile', 'wocHudSize',
-            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudNearTurn', 'wocHudNearDist', 'wocHudZoom', 'wocHudClear', 'wocHudClearLeft',
+            'wocHudLeft', 'wocHudCentre', 'wocHudKeep', 'wocHudNearTurn', 'wocHudNearDist', 'wocHudZoom', 'wocHudVignette', 'wocHudClear', 'wocHudClearLeft',
             'wocHudClearShorter']
             .forEach((n) => assert.deepStrictEqual([...byName[n].enabledSeen].sort(), [false, true], `${n} greyed and enabled in place`));
         const valueRow = /^[A-Z][A-Za-z ]+: [A-Z0-9\u2014]/;
-        ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudZoom', 'wocHudPos', 'wocHudClearRect',
+        ['wocStatus', 'wocAaStatus', 'wocAaZoom', 'wocMap', 'wocHud', 'wocHudSize', 'wocHudZoom', 'wocHudVignette', 'wocHudPos', 'wocHudClearRect',
             'wocRestartStatus']
             .forEach((n) => assert(valueRow.test(byName[n].text), `${n}: "${byName[n].text}" as Name: Value`));
         console.log('ok   no row came or went but CarPlay Wi-Fi, its line and the restart\'s; the buttons were greyed and enabled in place; ' +
             'info rows as Name: Value');
+
+        /* ---- the settings pages ---- */
+        {
+            const home = byName.ST_OnlineApps_WazeCluster;
+            for (const [button, state] of [['wocHudMapPage', 'ST_OnlineApps_WazeClusterHudMap'], ['wocSpeedPage', 'ST_OnlineApps_WazeClusterSpeed'],
+                ['wocAaPage', 'ST_OnlineApps_WazeClusterAa']]) {
+                assert.strictEqual(byName[button].enabled === false, false, `${button} never greyed`);
+                byName[button].emit('action');
+                await until(`${state} opened`, () => rhmi.opened.indexOf(state) >= 0);
+                const inactiveBefore = inactiveReports;
+                /* the HMI may show the new page before it hides the main page */
+                byName[state].emit('visible', { visible: true });
+                home.emit('visible', { visible: false });
+                await sleep(900);
+                assert.strictEqual(inactiveReports, inactiveBefore, `moving to ${state} keeps the app shown`);
+                assert.strictEqual(patch._clients.size, 1, `and its sockets open on ${state}`);
+                byName[state].emit('visible', { visible: false });
+                await sleep(100);
+                home.emit('visible', { visible: true });
+                await sleep(900);
+                assert.strictEqual(inactiveReports, inactiveBefore, `back from ${state}: still shown`);
+            }
+            assert.deepStrictEqual(['wocHudMapPage', 'wocSpeedPage', 'wocAaPage'].map((n) => byName[n].text),
+                ['HUD map settings', 'Speed area', 'Android Auto map']);
+            /* leaving the app from a settings page hides it once the page goes */
+            byName.wocHudMapPage.emit('action');
+            home.emit('visible', { visible: false });
+            byName.ST_OnlineApps_WazeClusterHudMap.emit('visible', { visible: true });
+            await sleep(100);
+            const inactiveBefore = inactiveReports;
+            byName.ST_OnlineApps_WazeClusterHudMap.emit('visible', { visible: false });
+            await until('hidden after the settings page goes', () => inactiveReports === inactiveBefore + 1);
+            home.emit('visible', { visible: true });
+            await until('shown again', () => patch._clients.size === 1);
+            console.log('ok   HUD map settings, Speed area and Android Auto map open their pages; moving there and back keeps the app shown ' +
+                'and its sockets open; leaving from one hides it');
+            /* the turn cards: a press asks patchd; its answer decides the tick */
+            const turns = byName.wocCpTurns;
+            const was = { state: patch.state, panel: patch.panel, carplay: patch.carplay, pending: patch.pending, reason: patch.reason,
+                restart: patch.restart, _rebooting: patch._rebooting };
+            /* out of the restart the test before asked for */
+            const ctl = OnlineApp.instance._control, asked = ctl._restartRequested;
+            ctl._restartRequested = false;
+            Object.assign(patch, { pending: null, restart: null, _rebooting: false, turns: 'on' });
+            patch.announce('patched', 'high', null);
+            await until('the turn cards ticked, enabled', () => turns.selected === true && turns.enabled === true && turns.text === 'Turn cards on the cluster');
+            turns.press();
+            await until('asked off: patchd applies it', () => patch.turns === 'off' && !patch.busy && turns.selected === false &&
+                turns.text === 'Turn cards on the cluster (after restart)');
+            assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'carplay-turns'), [{ cmd: 'carplay-turns', on: 0 }], 'one command');
+            Object.assign(patch, was, { turns: undefined });
+            ctl._restartRequested = asked;
+            patch.announce(was.state, was.panel, was.reason);
+            await until('a patchd without it: greyed', () => turns.enabled === false);
+            console.log('ok   Turn cards on the cluster: ticked as patchd holds it, a press asks patchd to change it');
+        }
 
         /* ---- the Logs page ---- */
         const lserver = new FakeLogs(LSOCK);

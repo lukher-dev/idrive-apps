@@ -115,6 +115,11 @@
     "Speed area wider": "منطقة السرعة أعرض",
     "Speed area narrower": "منطقة السرعة أضيق",
     "Speed area taller": "منطقة السرعة أطول",
-    "Speed area shorter": "منطقة السرعة أقصر"
+    "Speed area shorter": "منطقة السرعة أقصر",
+    "Turn cards on the cluster": "بطاقات الانعطاف على لوحة العدادات",
+    "Speed area": "منطقة السرعة",
+    "HUD map settings": "إعدادات خريطة HUD",
+    "Android Auto map": "خريطة Android Auto",
+    "Vignette: {0}": "تعتيم الحواف: {0}"
   }
 }

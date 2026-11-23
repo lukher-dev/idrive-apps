@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Χάρτες στα όργανα",
-  "SID_WOC_LOGS": "Αρχεία καταγραφής"
+  "SID_WOC_LOGS": "Αρχεία καταγραφής",
+  "SID_WOC_HUD_MAP": "Ρυθμίσεις χάρτη HUD",
+  "SID_WOC_SPEED": "Πεδίο ταχύτητας",
+  "SID_WOC_AA": "Χάρτης Android Auto"
 }

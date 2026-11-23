@@ -115,6 +115,11 @@
     "Speed area wider": "速度エリアの幅を広げる",
     "Speed area narrower": "速度エリアの幅を狭める",
     "Speed area taller": "速度エリアを高くする",
-    "Speed area shorter": "速度エリアを低くする"
+    "Speed area shorter": "速度エリアを低くする",
+    "Turn cards on the cluster": "メーターに進路案内カード",
+    "Speed area": "速度エリア",
+    "HUD map settings": "HUDの地図の設定",
+    "Android Auto map": "Android Autoの地図",
+    "Vignette: {0}": "周辺減光：{0}"
   }
 }

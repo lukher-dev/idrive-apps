@@ -115,6 +115,11 @@
     "Speed area wider": "Поле швидкості ширше",
     "Speed area narrower": "Поле швидкості вужче",
     "Speed area taller": "Поле швидкості вище",
-    "Speed area shorter": "Поле швидкості нижче"
+    "Speed area shorter": "Поле швидкості нижче",
+    "Turn cards on the cluster": "Підказки поворотів на приладах",
+    "Speed area": "Поле швидкості",
+    "HUD map settings": "Налаштування карти на HUD",
+    "Android Auto map": "Карта Android Auto",
+    "Vignette: {0}": "Віньєтка: {0}"
   }
 }

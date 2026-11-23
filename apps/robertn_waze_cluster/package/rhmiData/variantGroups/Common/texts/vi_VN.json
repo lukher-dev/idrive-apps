@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Bản đồ trên bảng đồng hồ",
-  "SID_WOC_LOGS": "Nhật ký"
+  "SID_WOC_LOGS": "Nhật ký",
+  "SID_WOC_HUD_MAP": "Cài đặt bản đồ trên HUD",
+  "SID_WOC_SPEED": "Vùng tốc độ",
+  "SID_WOC_AA": "Bản đồ Android Auto"
 }

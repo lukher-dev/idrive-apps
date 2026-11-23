@@ -337,9 +337,9 @@ class ProfileSync extends EventEmitter {
         if (typeof s.hud_zoom_pct === 'number') {
             hud.hud_zoom_pct = String(s.hud_zoom_pct);
         }
-        /* the map cleared behind the speed and how far before a turn it shows,
-         * from a patchd that has them */
-        ['hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m'].forEach((k) => {
+        /* the map cleared behind the speed, how far before a turn it shows and
+         * its vignette, from a patchd that has them */
+        ['hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m', 'hud_vignette'].forEach((k) => {
             if (typeof s[k] === 'number') {
                 hud[k] = String(s[k]);
             }

@@ -119,7 +119,12 @@ module.exports = [
    "Speed area wider": "منطقة السرعة أعرض",
    "Speed area narrower": "منطقة السرعة أضيق",
    "Speed area taller": "منطقة السرعة أطول",
-   "Speed area shorter": "منطقة السرعة أقصر"
+   "Speed area shorter": "منطقة السرعة أقصر",
+   "Turn cards on the cluster": "بطاقات الانعطاف على لوحة العدادات",
+   "Speed area": "منطقة السرعة",
+   "HUD map settings": "إعدادات خريطة HUD",
+   "Android Auto map": "خريطة Android Auto",
+   "Vignette: {0}": "تعتيم الحواف: {0}"
   }
  },
  {
@@ -240,7 +245,12 @@ module.exports = [
    "Speed area wider": "Plocha rychlosti širší",
    "Speed area narrower": "Plocha rychlosti užší",
    "Speed area taller": "Plocha rychlosti vyšší",
-   "Speed area shorter": "Plocha rychlosti nižší"
+   "Speed area shorter": "Plocha rychlosti nižší",
+   "Turn cards on the cluster": "Karty odbočení na štítu",
+   "Speed area": "Plocha rychlosti",
+   "HUD map settings": "Nastavení mapy na HUD",
+   "Android Auto map": "Mapa Android Auto",
+   "Vignette: {0}": "Vinětace: {0}"
   }
  },
  {
@@ -361,7 +371,12 @@ module.exports = [
    "Speed area wider": "Hastighedsfelt bredere",
    "Speed area narrower": "Hastighedsfelt smallere",
    "Speed area taller": "Hastighedsfelt højere",
-   "Speed area shorter": "Hastighedsfelt lavere"
+   "Speed area shorter": "Hastighedsfelt lavere",
+   "Turn cards on the cluster": "Svinganvisninger i instrumentpanel",
+   "Speed area": "Hastighedsfelt",
+   "HUD map settings": "Indstillinger for kort i HUD",
+   "Android Auto map": "Android Auto-kort",
+   "Vignette: {0}": "Vignet: {0}"
   }
  },
  {
@@ -482,7 +497,12 @@ module.exports = [
    "Speed area wider": "Tempobereich breiter",
    "Speed area narrower": "Tempobereich schmaler",
    "Speed area taller": "Tempobereich höher",
-   "Speed area shorter": "Tempobereich niedriger"
+   "Speed area shorter": "Tempobereich niedriger",
+   "Turn cards on the cluster": "Abbiegekarten im Kombi",
+   "Speed area": "Tempobereich",
+   "HUD map settings": "HUD-Karteneinstellungen",
+   "Android Auto map": "Android-Auto-Karte",
+   "Vignette: {0}": "Vignette: {0}"
   }
  },
  {
@@ -603,7 +623,12 @@ module.exports = [
    "Speed area wider": "Πεδίο ταχύτητας φαρδύτερο",
    "Speed area narrower": "Πεδίο ταχύτητας στενότερο",
    "Speed area taller": "Πεδίο ταχύτητας ψηλότερο",
-   "Speed area shorter": "Πεδίο ταχύτητας χαμηλότερο"
+   "Speed area shorter": "Πεδίο ταχύτητας χαμηλότερο",
+   "Turn cards on the cluster": "Κάρτες στροφής στα όργανα",
+   "Speed area": "Πεδίο ταχύτητας",
+   "HUD map settings": "Ρυθμίσεις χάρτη HUD",
+   "Android Auto map": "Χάρτης Android Auto",
+   "Vignette: {0}": "Βινιέτα: {0}"
   }
  },
  {
@@ -724,7 +749,12 @@ module.exports = [
    "Speed area wider": "Zona de velocidad más ancha",
    "Speed area narrower": "Zona de velocidad más angosta",
    "Speed area taller": "Zona de velocidad más alta",
-   "Speed area shorter": "Zona de velocidad más baja"
+   "Speed area shorter": "Zona de velocidad más baja",
+   "Turn cards on the cluster": "Indicaciones de giro en el tablero",
+   "Speed area": "Zona de velocidad",
+   "HUD map settings": "Configuración del mapa en el HUD",
+   "Android Auto map": "Mapa de Android Auto",
+   "Vignette: {0}": "Viñeta: {0}"
   }
  },
  {
@@ -845,7 +875,12 @@ module.exports = [
    "Speed area wider": "Zona de velocidad más ancha",
    "Speed area narrower": "Zona de velocidad más estrecha",
    "Speed area taller": "Zona de velocidad más alta",
-   "Speed area shorter": "Zona de velocidad más baja"
+   "Speed area shorter": "Zona de velocidad más baja",
+   "Turn cards on the cluster": "Indicaciones de giro en el cuadro",
+   "Speed area": "Zona de velocidad",
+   "HUD map settings": "Ajustes del mapa en el HUD",
+   "Android Auto map": "Mapa de Android Auto",
+   "Vignette: {0}": "Viñeta: {0}"
   }
  },
  {
@@ -966,7 +1001,12 @@ module.exports = [
    "Speed area wider": "Nopeusalue leveämmäksi",
    "Speed area narrower": "Nopeusalue kapeammaksi",
    "Speed area taller": "Nopeusalue korkeammaksi",
-   "Speed area shorter": "Nopeusalue matalammaksi"
+   "Speed area shorter": "Nopeusalue matalammaksi",
+   "Turn cards on the cluster": "Kääntymiskortit mittaristossa",
+   "Speed area": "Nopeusalue",
+   "HUD map settings": "HUD-kartan asetukset",
+   "Android Auto map": "Android Auto -kartta",
+   "Vignette: {0}": "Vinjetti: {0}"
   }
  },
  {
@@ -1087,7 +1127,12 @@ module.exports = [
    "Speed area wider": "Zone de vitesse plus large",
    "Speed area narrower": "Zone de vitesse plus étroite",
    "Speed area taller": "Zone de vitesse plus haute",
-   "Speed area shorter": "Zone de vitesse plus basse"
+   "Speed area shorter": "Zone de vitesse plus basse",
+   "Turn cards on the cluster": "Cartes de virage au combiné",
+   "Speed area": "Zone de vitesse",
+   "HUD map settings": "Paramètres de la carte sur le HUD",
+   "Android Auto map": "Carte Android Auto",
+   "Vignette: {0}": "Vignettage : {0}"
   }
  },
  {
@@ -1208,7 +1253,12 @@ module.exports = [
    "Speed area wider": "Zone de vitesse plus large",
    "Speed area narrower": "Zone de vitesse plus étroite",
    "Speed area taller": "Zone de vitesse plus haute",
-   "Speed area shorter": "Zone de vitesse plus basse"
+   "Speed area shorter": "Zone de vitesse plus basse",
+   "Turn cards on the cluster": "Cartes de virage au combiné",
+   "Speed area": "Zone de vitesse",
+   "HUD map settings": "Paramètres de la carte sur le HUD",
+   "Android Auto map": "Carte Android Auto",
+   "Vignette: {0}": "Vignettage : {0}"
   }
  },
  {
@@ -1329,7 +1379,12 @@ module.exports = [
    "Speed area wider": "אזור המהירות רחב יותר",
    "Speed area narrower": "אזור המהירות צר יותר",
    "Speed area taller": "אזור המהירות גבוה יותר",
-   "Speed area shorter": "אזור המהירות נמוך יותר"
+   "Speed area shorter": "אזור המהירות נמוך יותר",
+   "Turn cards on the cluster": "כרטיסי פנייה בלוח המחוונים",
+   "Speed area": "אזור המהירות",
+   "HUD map settings": "הגדרות המפה ב-HUD",
+   "Android Auto map": "מפת Android Auto",
+   "Vignette: {0}": "הצללת שוליים: {0}"
   }
  },
  {
@@ -1450,7 +1505,12 @@ module.exports = [
    "Speed area wider": "Sebességmező szélesebb",
    "Speed area narrower": "Sebességmező keskenyebb",
    "Speed area taller": "Sebességmező magasabb",
-   "Speed area shorter": "Sebességmező alacsonyabb"
+   "Speed area shorter": "Sebességmező alacsonyabb",
+   "Turn cards on the cluster": "Kanyarodási kártyák a műszerfalon",
+   "Speed area": "Sebességmező",
+   "HUD map settings": "HUD-térkép beállításai",
+   "Android Auto map": "Android Auto-térkép",
+   "Vignette: {0}": "Vignettálás: {0}"
   }
  },
  {
@@ -1571,7 +1631,12 @@ module.exports = [
    "Speed area wider": "Area kecepatan lebih lebar",
    "Speed area narrower": "Area kecepatan lebih sempit",
    "Speed area taller": "Area kecepatan lebih tinggi",
-   "Speed area shorter": "Area kecepatan lebih pendek"
+   "Speed area shorter": "Area kecepatan lebih pendek",
+   "Turn cards on the cluster": "Kartu belok di panel",
+   "Speed area": "Area kecepatan",
+   "HUD map settings": "Pengaturan peta HUD",
+   "Android Auto map": "Peta Android Auto",
+   "Vignette: {0}": "Vinyet: {0}"
   }
  },
  {
@@ -1692,7 +1757,12 @@ module.exports = [
    "Speed area wider": "Area velocità più larga",
    "Speed area narrower": "Area velocità più stretta",
    "Speed area taller": "Area velocità più alta",
-   "Speed area shorter": "Area velocità più bassa"
+   "Speed area shorter": "Area velocità più bassa",
+   "Turn cards on the cluster": "Indicazioni di svolta sul quadro",
+   "Speed area": "Area velocità",
+   "HUD map settings": "Impostazioni mappa HUD",
+   "Android Auto map": "Mappa Android Auto",
+   "Vignette: {0}": "Vignettatura: {0}"
   }
  },
  {
@@ -1813,7 +1883,12 @@ module.exports = [
    "Speed area wider": "速度エリアの幅を広げる",
    "Speed area narrower": "速度エリアの幅を狭める",
    "Speed area taller": "速度エリアを高くする",
-   "Speed area shorter": "速度エリアを低くする"
+   "Speed area shorter": "速度エリアを低くする",
+   "Turn cards on the cluster": "メーターに進路案内カード",
+   "Speed area": "速度エリア",
+   "HUD map settings": "HUDの地図の設定",
+   "Android Auto map": "Android Autoの地図",
+   "Vignette: {0}": "周辺減光：{0}"
   }
  },
  {
@@ -1934,7 +2009,12 @@ module.exports = [
    "Speed area wider": "속도 영역 넓게",
    "Speed area narrower": "속도 영역 좁게",
    "Speed area taller": "속도 영역 높게",
-   "Speed area shorter": "속도 영역 낮게"
+   "Speed area shorter": "속도 영역 낮게",
+   "Turn cards on the cluster": "계기판에 방향 안내 카드",
+   "Speed area": "속도 영역",
+   "HUD map settings": "HUD 지도 설정",
+   "Android Auto map": "Android Auto 지도",
+   "Vignette: {0}": "비네팅: {0}"
   }
  },
  {
@@ -2055,7 +2135,12 @@ module.exports = [
    "Speed area wider": "Hastighetsfelt bredere",
    "Speed area narrower": "Hastighetsfelt smalere",
    "Speed area taller": "Hastighetsfelt høyere",
-   "Speed area shorter": "Hastighetsfelt lavere"
+   "Speed area shorter": "Hastighetsfelt lavere",
+   "Turn cards on the cluster": "Svinganvisninger i instrumentpanel",
+   "Speed area": "Hastighetsfelt",
+   "HUD map settings": "Innstillinger for kart i HUD",
+   "Android Auto map": "Android Auto-kart",
+   "Vignette: {0}": "Vignett: {0}"
   }
  },
  {
@@ -2178,7 +2263,12 @@ module.exports = [
    "Speed area wider": "Snelheidsvlak breder",
    "Speed area narrower": "Snelheidsvlak smaller",
    "Speed area taller": "Snelheidsvlak hoger",
-   "Speed area shorter": "Snelheidsvlak lager"
+   "Speed area shorter": "Snelheidsvlak lager",
+   "Turn cards on the cluster": "Afslagkaarten in paneel",
+   "Speed area": "Snelheidsvlak",
+   "HUD map settings": "Instellingen kaart in HUD",
+   "Android Auto map": "Android Auto-kaart",
+   "Vignette: {0}": "Vignet: {0}"
   }
  },
  {
@@ -2299,7 +2389,12 @@ module.exports = [
    "Speed area wider": "Obszar prędkości szerszy",
    "Speed area narrower": "Obszar prędkości węższy",
    "Speed area taller": "Obszar prędkości wyższy",
-   "Speed area shorter": "Obszar prędkości niższy"
+   "Speed area shorter": "Obszar prędkości niższy",
+   "Turn cards on the cluster": "Karty manewrów na zegarach",
+   "Speed area": "Obszar prędkości",
+   "HUD map settings": "Ustawienia mapy na HUD",
+   "Android Auto map": "Mapa Android Auto",
+   "Vignette: {0}": "Winietowanie: {0}"
   }
  },
  {
@@ -2420,7 +2515,12 @@ module.exports = [
    "Speed area wider": "Área da velocidade mais larga",
    "Speed area narrower": "Área da velocidade mais estreita",
    "Speed area taller": "Área da velocidade mais alta",
-   "Speed area shorter": "Área da velocidade mais baixa"
+   "Speed area shorter": "Área da velocidade mais baixa",
+   "Turn cards on the cluster": "Indicações de conversão no painel",
+   "Speed area": "Área da velocidade",
+   "HUD map settings": "Configurações do mapa no HUD",
+   "Android Auto map": "Mapa do Android Auto",
+   "Vignette: {0}": "Vinheta: {0}"
   }
  },
  {
@@ -2541,7 +2641,12 @@ module.exports = [
    "Speed area wider": "Área da velocidade mais larga",
    "Speed area narrower": "Área da velocidade mais estreita",
    "Speed area taller": "Área da velocidade mais alta",
-   "Speed area shorter": "Área da velocidade mais baixa"
+   "Speed area shorter": "Área da velocidade mais baixa",
+   "Turn cards on the cluster": "Indicações de viragem no quadrante",
+   "Speed area": "Área da velocidade",
+   "HUD map settings": "Definições do mapa no HUD",
+   "Android Auto map": "Mapa do Android Auto",
+   "Vignette: {0}": "Vinheta: {0}"
   }
  },
  {
@@ -2662,7 +2767,12 @@ module.exports = [
    "Speed area wider": "Zona vitezei mai lată",
    "Speed area narrower": "Zona vitezei mai îngustă",
    "Speed area taller": "Zona vitezei mai înaltă",
-   "Speed area shorter": "Zona vitezei mai joasă"
+   "Speed area shorter": "Zona vitezei mai joasă",
+   "Turn cards on the cluster": "Indicații de viraj pe bord",
+   "Speed area": "Zona vitezei",
+   "HUD map settings": "Setări hartă HUD",
+   "Android Auto map": "Hartă Android Auto",
+   "Vignette: {0}": "Vignetare: {0}"
   }
  },
  {
@@ -2783,7 +2893,12 @@ module.exports = [
    "Speed area wider": "Поле скорости шире",
    "Speed area narrower": "Поле скорости уже",
    "Speed area taller": "Поле скорости выше",
-   "Speed area shorter": "Поле скорости ниже"
+   "Speed area shorter": "Поле скорости ниже",
+   "Turn cards on the cluster": "Подсказки поворотов на приборах",
+   "Speed area": "Поле скорости",
+   "HUD map settings": "Настройки карты на HUD",
+   "Android Auto map": "Карта Android Auto",
+   "Vignette: {0}": "Виньетка: {0}"
   }
  },
  {
@@ -2904,7 +3019,12 @@ module.exports = [
    "Speed area wider": "Plocha rýchlosti širšia",
    "Speed area narrower": "Plocha rýchlosti užšia",
    "Speed area taller": "Plocha rýchlosti vyššia",
-   "Speed area shorter": "Plocha rýchlosti nižšia"
+   "Speed area shorter": "Plocha rýchlosti nižšia",
+   "Turn cards on the cluster": "Karty odbočenia na prístrojovej doske",
+   "Speed area": "Plocha rýchlosti",
+   "HUD map settings": "Nastavenia mapy na HUD",
+   "Android Auto map": "Mapa Android Auto",
+   "Vignette: {0}": "Vinetácia: {0}"
   }
  },
  {
@@ -3025,7 +3145,12 @@ module.exports = [
    "Speed area wider": "Polje hitrosti širše",
    "Speed area narrower": "Polje hitrosti ožje",
    "Speed area taller": "Polje hitrosti višje",
-   "Speed area shorter": "Polje hitrosti nižje"
+   "Speed area shorter": "Polje hitrosti nižje",
+   "Turn cards on the cluster": "Kartice zavijanja na armaturi",
+   "Speed area": "Polje hitrosti",
+   "HUD map settings": "Nastavitve zemljevida na HUD",
+   "Android Auto map": "Zemljevid Android Auto",
+   "Vignette: {0}": "Vinjetiranje: {0}"
   }
  },
  {
@@ -3146,7 +3271,12 @@ module.exports = [
    "Speed area wider": "Hastighetsfält bredare",
    "Speed area narrower": "Hastighetsfält smalare",
    "Speed area taller": "Hastighetsfält högre",
-   "Speed area shorter": "Hastighetsfält lägre"
+   "Speed area shorter": "Hastighetsfält lägre",
+   "Turn cards on the cluster": "Svänganvisningar i kombiinstrumentet",
+   "Speed area": "Hastighetsfält",
+   "HUD map settings": "Inställningar för karta i HUD",
+   "Android Auto map": "Android Auto-karta",
+   "Vignette: {0}": "Vinjett: {0}"
   }
  },
  {
@@ -3267,7 +3397,12 @@ module.exports = [
    "Speed area wider": "พื้นที่ความเร็วกว้างขึ้น",
    "Speed area narrower": "พื้นที่ความเร็วแคบลง",
    "Speed area taller": "พื้นที่ความเร็วสูงขึ้น",
-   "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง"
+   "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง",
+   "Turn cards on the cluster": "การ์ดบอกทางเลี้ยวบนหน้าปัด",
+   "Speed area": "พื้นที่ความเร็ว",
+   "HUD map settings": "การตั้งค่าแผนที่บน HUD",
+   "Android Auto map": "แผนที่ Android Auto",
+   "Vignette: {0}": "ขอบมืด: {0}"
   }
  },
  {
@@ -3388,7 +3523,12 @@ module.exports = [
    "Speed area wider": "Hız alanı daha geniş",
    "Speed area narrower": "Hız alanı daha dar",
    "Speed area taller": "Hız alanı daha yüksek",
-   "Speed area shorter": "Hız alanı daha alçak"
+   "Speed area shorter": "Hız alanı daha alçak",
+   "Turn cards on the cluster": "Göstergede dönüş kartları",
+   "Speed area": "Hız alanı",
+   "HUD map settings": "HUD harita ayarları",
+   "Android Auto map": "Android Auto haritası",
+   "Vignette: {0}": "Vinyet: {0}"
   }
  },
  {
@@ -3509,7 +3649,12 @@ module.exports = [
    "Speed area wider": "Поле швидкості ширше",
    "Speed area narrower": "Поле швидкості вужче",
    "Speed area taller": "Поле швидкості вище",
-   "Speed area shorter": "Поле швидкості нижче"
+   "Speed area shorter": "Поле швидкості нижче",
+   "Turn cards on the cluster": "Підказки поворотів на приладах",
+   "Speed area": "Поле швидкості",
+   "HUD map settings": "Налаштування карти на HUD",
+   "Android Auto map": "Карта Android Auto",
+   "Vignette: {0}": "Віньєтка: {0}"
   }
  },
  {
@@ -3630,7 +3775,12 @@ module.exports = [
    "Speed area wider": "Vùng tốc độ rộng hơn",
    "Speed area narrower": "Vùng tốc độ hẹp hơn",
    "Speed area taller": "Vùng tốc độ cao hơn",
-   "Speed area shorter": "Vùng tốc độ thấp hơn"
+   "Speed area shorter": "Vùng tốc độ thấp hơn",
+   "Turn cards on the cluster": "Thẻ chỉ hướng trên bảng đồng hồ",
+   "Speed area": "Vùng tốc độ",
+   "HUD map settings": "Cài đặt bản đồ trên HUD",
+   "Android Auto map": "Bản đồ Android Auto",
+   "Vignette: {0}": "Làm tối viền: {0}"
   }
  },
  {
@@ -3753,7 +3903,12 @@ module.exports = [
    "Speed area wider": "车速区域加宽",
    "Speed area narrower": "车速区域变窄",
    "Speed area taller": "车速区域加高",
-   "Speed area shorter": "车速区域变矮"
+   "Speed area shorter": "车速区域变矮",
+   "Turn cards on the cluster": "仪表盘显示转向卡片",
+   "Speed area": "车速区域",
+   "HUD map settings": "HUD 地图设置",
+   "Android Auto map": "Android Auto 地图",
+   "Vignette: {0}": "暗角：{0}"
   }
  },
  {
@@ -3876,7 +4031,12 @@ module.exports = [
    "Speed area wider": "車速區域加寬",
    "Speed area narrower": "車速區域變窄",
    "Speed area taller": "車速區域加高",
-   "Speed area shorter": "車速區域變矮"
+   "Speed area shorter": "車速區域變矮",
+   "Turn cards on the cluster": "儀表板顯示轉向卡片",
+   "Speed area": "車速區域",
+   "HUD map settings": "HUD 地圖設定",
+   "Android Auto map": "Android Auto 地圖",
+   "Vignette: {0}": "暗角：{0}"
   }
  }
 ];

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+The page is shorter: HUD map settings, Speed area and Android Auto map each
+open a page of their own with the controls that were on the main page. HUD
+map settings adds Vignette, which fades the HUD map out towards the HUD's
+edges (0 to 5, 2 by default) and stays put when the map moves or changes
+size. CarPlay adds Turn cards on the cluster (experimental, on by default):
+unticked, the phone is asked for the map without its turn cards, on the
+cluster and the HUD.
+
 ## 0.6.20
 
 The HUD map's edge fade is gone, and its corners are rounded again.

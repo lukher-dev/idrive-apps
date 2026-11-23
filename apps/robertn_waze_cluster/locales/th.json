@@ -115,6 +115,11 @@
     "Speed area wider": "พื้นที่ความเร็วกว้างขึ้น",
     "Speed area narrower": "พื้นที่ความเร็วแคบลง",
     "Speed area taller": "พื้นที่ความเร็วสูงขึ้น",
-    "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง"
+    "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง",
+    "Turn cards on the cluster": "การ์ดบอกทางเลี้ยวบนหน้าปัด",
+    "Speed area": "พื้นที่ความเร็ว",
+    "HUD map settings": "การตั้งค่าแผนที่บน HUD",
+    "Android Auto map": "แผนที่ Android Auto",
+    "Vignette: {0}": "ขอบมืด: {0}"
   }
 }

@@ -149,6 +149,7 @@ class FakeRender extends LineServer {
         this.turnNear = false;
         /* how far before a turn the HUD map shows, in metres (null: a tool without it) */
         this.hudNearM = 1000;
+        this.hudVignette = 2;    /* null: a render without the vignette */
         /* the HUD map's speed patch and its rectangle in HUD pixels (null: a tool without them) */
         this.hudClear = 1;
         this.hudClearRect = [110, 320, 250, 90];
@@ -184,6 +185,7 @@ class FakeRender extends LineServer {
                 if (this.hud && !gate && !this.hudState && this.state === 'showing') s.hud_state = 'turn_wait';
             }
             if (this.hudNearM !== null) s.hud_near_m = this.hudNearM;
+            if (this.hudVignette !== null) s.hud_vignette = this.hudVignette;
             if (this.hudClear !== null) {
                 const [x, y, w, h] = this.hudClearRect;
                 Object.assign(s, { hud_clear: this.hudClear, hud_clear_x: x, hud_clear_y: y, hud_clear_w: w, hud_clear_h: h });
@@ -254,6 +256,7 @@ class FakeRender extends LineServer {
             if (msg.hud_near_turn !== undefined && this.hudNearTurn !== null) this.hudNearTurn = Number(msg.hud_near_turn);
             if (msg.hud_zoom_pct !== undefined && this.hudNearTurn !== null) this.hudZoom = Number(msg.hud_zoom_pct);
             if (msg.hud_near_m !== undefined && this.hudNearM !== null) this.hudNearM = Number(msg.hud_near_m);
+            if (msg.hud_vignette !== undefined && this.hudVignette !== null) this.hudVignette = Number(msg.hud_vignette);
             if (msg.hud_clear !== undefined && this.hudClear !== null) this.hudClear = Number(msg.hud_clear);
             if (msg.hud_clear_x !== undefined && this.hudClear !== null) {
                 this.hudClearRect = [msg.hud_clear_x, msg.hud_clear_y, msg.hud_clear_w, msg.hud_clear_h].map(Number);
@@ -276,6 +279,7 @@ class FakePatch extends LineServer {
         this.safe = null;   /* and its safe area: "WxH+X+Y" */
         this.mapurl = undefined;   /* the map URL edit: 'eta' | 'no-eta' | 'off' | null; undefined: a daemon that does not send it */
         this.eta = undefined;      /* the arrival-time card chosen: 'on' | 'off'; undefined: a daemon without the choice */
+        this.turns = undefined;    /* the turn cards chosen: 'on' | 'off'; undefined: a daemon without the choice */
         this.carplay = null;  /* 'deferred' once a patch is written but not active */
         this.pending = null;  /* 'apply' | 'revert': the change waiting for a head-unit start */
         this.conflict = null; /* why the install left carplay as it was */
@@ -292,7 +296,7 @@ class FakePatch extends LineServer {
         this.holdAa = false;       /* an Android Auto change stays busy until releaseAa(failure) */
         this.releaseAa = null;
         this.map = { cluster: 1, hud: 0, hud_width_pct: 0, hud_offset_x: 0, hud_offset_y: 0, hud_keep_shown: 0, hud_near_turn: 0, hud_zoom_pct: 250,
-            hud_near_m: 1000, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
+            hud_near_m: 1000, hud_vignette: 2, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90 };
         this.shared = null;
         this.own = {};
         this.active = null;
@@ -312,7 +316,7 @@ class FakePatch extends LineServer {
 
     _status() {
         return { ev: 'status', state: this.busy ? 'busy' : this.state, panel: this.panel,
-            res: this.res, safe: this.safe, mapurl: this.mapurl, eta: this.eta, carplay: this.carplay, reason: this.reason,
+            res: this.res, safe: this.safe, mapurl: this.mapurl, eta: this.eta, turns: this.turns, carplay: this.carplay, reason: this.reason,
             pending: this.pending, conflict: this.conflict, recovered: this.recovered, aa: this.aa,
             removable: this.removable !== null ? this.removable : this.pending === 'apply' || (!this.pending && ['patched', 'unknown', 'error'].includes(this.state)),
             busy: this.busy ? 'carplay' : this.aa.state === 'busy' ? 'aa' : this._rebooting ? 'restart' : null,
@@ -372,11 +376,11 @@ class FakePatch extends LineServer {
         }
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
             'hud-keep-shown': ['hud_keep_shown'], 'hud-near-turn': ['hud_near_turn'], 'hud-zoom': ['hud_zoom_pct'],
-            'hud-near-dist': ['hud_near_m'], 'hud-clear': ['hud_clear'], 'hud-clear-rect': ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'] };
+            'hud-near-dist': ['hud_near_m'], 'hud-vignette': ['hud_vignette'], 'hud-clear': ['hud_clear'], 'hud-clear-rect': ['hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h'] };
         if (MAP[msg.cmd]) {
             const v = msg.cmd === 'hud-pos' ? [msg.hud_x, msg.hud_y] : msg.cmd === 'hud-clear-rect' ? [msg.x, msg.y, msg.w, msg.h]
                 : [msg.cmd === 'hud-size' ? msg.hud_width_pct : msg.cmd === 'hud-zoom' ? msg.pct
-                : msg.cmd === 'hud-near-dist' ? msg.m : msg.on];
+                : msg.cmd === 'hud-near-dist' ? msg.m : msg.cmd === 'hud-vignette' ? msg.level : msg.on];
             this.map = Object.assign({}, this.map);
             MAP[msg.cmd].forEach((k, i) => { this.map[k] = v[i]; });
             return;
@@ -438,9 +442,10 @@ class FakePatch extends LineServer {
                 this.log('apply done');
                 this._broadcast(this._status());
             }, STEP_MS);
-        } else if (msg.cmd === 'carplay-eta' && this.eta !== undefined) {
+        } else if ((msg.cmd === 'carplay-eta' && this.eta !== undefined) || (msg.cmd === 'carplay-turns' && this.turns !== undefined)) {
             /* the choice saved; a patch on disk applied again, CarPlay taking it at the next head-unit start */
-            this.eta = msg.on ? 'on' : 'off';
+            if (msg.cmd === 'carplay-eta') this.eta = msg.on ? 'on' : 'off';
+            else this.turns = msg.on ? 'on' : 'off';
             if (this.state !== 'patched') {
                 this._broadcast(this._status());
                 return;

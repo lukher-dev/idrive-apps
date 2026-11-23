@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "แผนที่บนหน้าปัด",
-  "SID_WOC_LOGS": "ล็อก"
+  "SID_WOC_LOGS": "ล็อก",
+  "SID_WOC_HUD_MAP": "การตั้งค่าแผนที่บน HUD",
+  "SID_WOC_SPEED": "พื้นที่ความเร็ว",
+  "SID_WOC_AA": "แผนที่ Android Auto"
 }

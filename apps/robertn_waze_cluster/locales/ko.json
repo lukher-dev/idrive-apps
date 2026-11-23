@@ -115,6 +115,11 @@
     "Speed area wider": "속도 영역 넓게",
     "Speed area narrower": "속도 영역 좁게",
     "Speed area taller": "속도 영역 높게",
-    "Speed area shorter": "속도 영역 낮게"
+    "Speed area shorter": "속도 영역 낮게",
+    "Turn cards on the cluster": "계기판에 방향 안내 카드",
+    "Speed area": "속도 영역",
+    "HUD map settings": "HUD 지도 설정",
+    "Android Auto map": "Android Auto 지도",
+    "Vignette: {0}": "비네팅: {0}"
   }
 }

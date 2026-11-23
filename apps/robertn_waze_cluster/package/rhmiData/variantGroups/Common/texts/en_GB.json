@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Maps on cluster",
-  "SID_WOC_LOGS": "Logs"
+  "SID_WOC_LOGS": "Logs",
+  "SID_WOC_HUD_MAP": "HUD map settings",
+  "SID_WOC_SPEED": "Speed area",
+  "SID_WOC_AA": "Android Auto map"
 }

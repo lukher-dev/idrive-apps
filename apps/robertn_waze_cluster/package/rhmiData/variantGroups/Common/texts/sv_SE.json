@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Kartor i kombiinstrumentet",
-  "SID_WOC_LOGS": "Loggar"
+  "SID_WOC_LOGS": "Loggar",
+  "SID_WOC_HUD_MAP": "Inställningar för karta i HUD",
+  "SID_WOC_SPEED": "Hastighetsfält",
+  "SID_WOC_AA": "Android Auto-karta"
 }

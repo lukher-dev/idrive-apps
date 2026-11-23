@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Hărți pe bord",
-  "SID_WOC_LOGS": "Jurnale"
+  "SID_WOC_LOGS": "Jurnale",
+  "SID_WOC_HUD_MAP": "Setări hartă HUD",
+  "SID_WOC_SPEED": "Zona vitezei",
+  "SID_WOC_AA": "Hartă Android Auto"
 }

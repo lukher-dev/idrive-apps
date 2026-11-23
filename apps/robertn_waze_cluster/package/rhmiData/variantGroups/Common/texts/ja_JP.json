@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "地図 メーター表示",
-  "SID_WOC_LOGS": "ログ"
+  "SID_WOC_LOGS": "ログ",
+  "SID_WOC_HUD_MAP": "HUDの地図の設定",
+  "SID_WOC_SPEED": "速度エリア",
+  "SID_WOC_AA": "Android Autoの地図"
 }

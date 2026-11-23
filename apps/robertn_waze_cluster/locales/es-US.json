@@ -115,6 +115,11 @@
     "Speed area wider": "Zona de velocidad más ancha",
     "Speed area narrower": "Zona de velocidad más angosta",
     "Speed area taller": "Zona de velocidad más alta",
-    "Speed area shorter": "Zona de velocidad más baja"
+    "Speed area shorter": "Zona de velocidad más baja",
+    "Turn cards on the cluster": "Indicaciones de giro en el tablero",
+    "Speed area": "Zona de velocidad",
+    "HUD map settings": "Configuración del mapa en el HUD",
+    "Android Auto map": "Mapa de Android Auto",
+    "Vignette: {0}": "Viñeta: {0}"
   }
 }

@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Kaarten in instrumentpaneel",
-  "SID_WOC_LOGS": "Logs"
+  "SID_WOC_LOGS": "Logs",
+  "SID_WOC_HUD_MAP": "Instellingen kaart in HUD",
+  "SID_WOC_SPEED": "Snelheidsvlak",
+  "SID_WOC_AA": "Android Auto-kaart"
 }

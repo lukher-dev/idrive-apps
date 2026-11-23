@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "지도 계기판 표시",
-  "SID_WOC_LOGS": "로그"
+  "SID_WOC_LOGS": "로그",
+  "SID_WOC_HUD_MAP": "HUD 지도 설정",
+  "SID_WOC_SPEED": "속도 영역",
+  "SID_WOC_AA": "Android Auto 지도"
 }

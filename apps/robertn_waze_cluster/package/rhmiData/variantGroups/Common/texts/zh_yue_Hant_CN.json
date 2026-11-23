@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "地圖儀表板顯示",
-  "SID_WOC_LOGS": "記錄檔"
+  "SID_WOC_LOGS": "記錄檔",
+  "SID_WOC_HUD_MAP": "HUD 地圖設定",
+  "SID_WOC_SPEED": "車速區域",
+  "SID_WOC_AA": "Android Auto 地圖"
 }
