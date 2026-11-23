@@ -192,10 +192,6 @@
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
-            <component id="116" type="slider" widget="LT_Slider_LeftJustified_Fill_Steps">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
             <component id="55" type="label" widget="LT_Label_1Row">
                 <property id="2" value="1"/>
                 <property id="3" value="0"/>

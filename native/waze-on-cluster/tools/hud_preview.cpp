@@ -4,8 +4,8 @@
  * HUD feed's own code: the HUD box (MapFeed's quad, the size setting and the
  * offset), the zoom's part (hud_crop.h, at the map's cap) and, above 100 %,
  * its window (hud_window, panned by the x offset), the scaler (atlas_scale.h,
- * rounded corners, the night map's background made black, the speed patch,
- * the vignette), drawn on the 800x480 HUD scene's black. For choosing
+ * rounded corners, the night map's background made black, the speed patch),
+ * drawn on the 800x480 HUD scene's black. For choosing
  * hud_crop_cx_pm / hud_crop_cy_pm and the HUD settings from a picture of the
  * phone's cluster map.
  *
@@ -15,13 +15,11 @@
  *   hud-preview in.bmp out.bmp [--zoom 100..250] [--cx-pm N] [--cy-pm N]
  *               [--width-pct 0|20..135] [--x N] [--y N]
  *               [--clear X,Y,W,H | --no-clear] [--no-round] [--no-black]
- *               [--vignette 0..5]
  *       in: a 24-bit 1088x480 BMP (macOS: sips -s format bmp in.png --out
  *       in.bmp); out: the 800x480 HUD scene. Prints the box, the zoom used,
- *       the part shown, the vignette and where the red marker landed (its
- *       centroid). The defaults are the shipped ones but the size (0) and
- *       the offset (0,0): the speed patch 220x90 at 110,320 of the scene,
- *       the vignette 2 (0: none). */
+ *       the part shown and where the red marker landed (its centroid).
+ *       The defaults are the shipped ones but the size (0) and the offset
+ *       (0,0): the speed patch 220x90 at 110,320 of the scene. */
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -202,10 +200,10 @@ int main(int argc, char **argv)
     if (argc < 3) {
         std::fprintf(stderr, "usage: hud-preview --grid out.bmp | in.bmp out.bmp [--zoom N] [--cx-pm N] [--cy-pm N] "
                              "[--width-pct N] [--x N] [--y N] [--clear X,Y,W,H | --no-clear] [--no-round] "
-                             "[--no-black] [--vignette 0..5]\n");
+                             "[--no-black]\n");
         return 2;
     }
-    unsigned zoom = 100, cx = 500, cy = 500, pct = 0, vignette = 2;
+    unsigned zoom = 100, cx = 500, cy = 500, pct = 0;
     unsigned clear[4] = {110, 320, 220, 90};
     int dx = 0, dy = 0;
     bool round = true, black = true, clear_on = true;
@@ -223,10 +221,6 @@ int main(int argc, char **argv)
                  std::sscanf(argv[++i], "%u,%u,%u,%u", &clear[0], &clear[1], &clear[2], &clear[3]) == 4) clear_on = true;
         else if (a == "--no-round") round = false;
         else if (a == "--no-black") black = false;
-        else if (a == "--vignette" && i + 1 < argc) {
-            vignette = num();
-            if (vignette > AtlasScaler::kVignetteMax) { std::fprintf(stderr, "hud-preview: --vignette must be 0-5\n"); return 2; }
-        }
         else { std::fprintf(stderr, "hud-preview: unknown option %s\n", a.c_str()); return 2; }
     }
     Rgb in;
@@ -256,8 +250,6 @@ int main(int argc, char **argv)
     scaler.set_black_background(black);
     if (clear_on)
         scaler.set_clear((int32_t)clear[0] - (int32_t)x0, (int32_t)clear[1] - (int32_t)y0, clear[2], clear[3]);
-    /* the vignette on the scene, whose top left is at minus the map's place */
-    scaler.set_vignette(vignette, -(int32_t)x0, -(int32_t)y0, kHudW, kHudH);
     std::vector<uint8_t> out;
     scaler.scale(to_atlas(in).data(), &out);
     Rgb hud;
@@ -282,10 +274,6 @@ int main(int argc, char **argv)
                 dw, dh, x0, y0, x0 + dw / 2, y0 + dh / 2);
     if (wide)
         std::printf("pan %+d (asked %+d)\n", pan, dx);
-    if (vignette)
-        std::printf("vignette %u: the scene's outer %u %% faded\n", vignette, vignette * 7);
-    else
-        std::printf("vignette none\n");
     if (n)
         std::printf("marker %.1f,%.1f\n", mx / n, my / n);
     else

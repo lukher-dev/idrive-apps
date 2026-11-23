@@ -13,16 +13,15 @@
  *   Render control socket (RENDER_PATH)
  *     app  -> tool  {"cmd":"guide","hide":0|1}  BMW's turn box hidden while the map shows, or not
  *                   {"cmd":"cluster"|"hud","on":"0"|"1"}, {"cmd":"hud","hud_width_pct"|"hud_x","hud_y"|"hud_keep_shown"|
- *                    "hud_near_turn"|"hud_near_m"|"hud_zoom_pct"|"hud_vignette"|"hud_clear"|
+ *                    "hud_near_turn"|"hud_near_m"|"hud_zoom_pct"|"hud_clear"|
  *                    "hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
  *                    the map's settings (patchd saves them)
  *     tool -> app   {"ev":"status","state":"idle"|"starting"|"showing"|"frozen"|"error"|"unsupported",
  *                    "target","page","reason","hide_bmw_guidance","guide_disabled","cluster","hud",
- *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_near_m","hud_vignette",
+ *                    "hud_state","hud_width_pct","hud_x","hud_y","hud_keep_shown","hud_near_m",
  *                    "hud_clear","hud_clear_x","hud_clear_y","hud_clear_w","hud_clear_h"}
  *                   (hud_keep_shown 0|1, absent from a tool before it; hud_near_m 200..2000, how far
- *                    before a turn the HUD map shows only near turns; hud_vignette 0..5, how far in
- *                    from the HUD's edges the map fades out (0 none);
+ *                    before a turn the HUD map shows only near turns;
  *                    hud_clear 0|1, the speed patch, the map blacked out in the rectangle
  *                    hud_clear_x,_y,_w,_h in the HUD's 800x480 px; each absent from a tool before it)
  *                   (unsupported: the head unit refuses the tool, which stays idle)
@@ -124,8 +123,6 @@ const HUD_ZOOM_STEPS = (HUD_ZOOM_MAX - HUD_ZOOM_MIN) / HUD_ZOOM_STEP_PCT;
 /* How far before a turn the HUD map shows only near turns: HUD_NEAR_STEP_M steps from HUD_NEAR_MIN_M to HUD_NEAR_MAX_M. */
 const HUD_NEAR_MIN_M = 200, HUD_NEAR_MAX_M = 2000, HUD_NEAR_STEP_M = 200;
 const HUD_NEAR_STEPS = (HUD_NEAR_MAX_M - HUD_NEAR_MIN_M) / HUD_NEAR_STEP_M;
-/* The vignette: 0 (none) to HUD_VIGNETTE_MAX, how far in from the HUD's edges the map fades out. */
-const HUD_VIGNETTE_MAX = 5;
 /* The speed patch: the map blacked out in a rectangle of the HUD's scene (HUD_W x HUD_H px) so BMW's speed
  * stays readable, moved or sized HUD_CLEAR_PX a press, at least HUD_CLEAR_MIN_PX each way and held inside. */
 const HUD_W = 800, HUD_H = 480, HUD_CLEAR_PX = 10, HUD_CLEAR_MIN_PX = 10;
@@ -588,8 +585,6 @@ class WazeClusterControl extends EventEmitter {
         this._askedZoom = null;
         clearTimeout(this._askedNearTimer);
         this._askedNear = null;
-        clearTimeout(this._askedVignetteTimer);
-        this._askedVignette = null;
     }
 
     /* ---- where the HUD map is: moved from its centre, in HUD pixels ---- */
@@ -753,38 +748,6 @@ class WazeClusterControl extends EventEmitter {
         }, HUD_ASKED_MS);
         this.render.send({ cmd: 'hud', hud_zoom_pct: String(pct) });
         this.patch.send({ cmd: 'hud-zoom', pct });
-        this.emit('change');
-    }
-
-    /* ---- the HUD map's vignette: the map faded out towards the HUD's edges ---- */
-    /* The level asked, as just asked until the render shows it; null while it has not said. */
-    hudVignette() {
-        if (this._askedVignette != null) {
-            return this._askedVignette;
-        }
-        const v = this.renderStatus && this.renderStatus.hud_vignette;
-        return Number.isInteger(v) && v >= 0 && v <= HUD_VIGNETTE_MAX ? v : null;
-    }
-    hudVignetteText() {
-        const v = this.hudVignette();
-        return t('Vignette: {0}', v == null ? '\u2014' : String(v));
-    }
-    canChangeHudVignette() {
-        return this.canChangeHudSize() && this.hudVignette() !== null;
-    }
-    /* The level at a slider position: the render at once, patchd saves it. */
-    setHudVignetteStep(step) {
-        if (!Number.isInteger(step) || step < 0 || step > HUD_VIGNETTE_MAX || !this.canChangeHudVignette() || step === this.hudVignette()) {
-            return;
-        }
-        this._askedVignette = step;
-        clearTimeout(this._askedVignetteTimer);
-        this._askedVignetteTimer = setTimeout(() => {
-            this._askedVignette = null;
-            this.emit('change');
-        }, HUD_ASKED_MS);
-        this.render.send({ cmd: 'hud', hud_vignette: String(step) });
-        this.patch.send({ cmd: 'hud-vignette', level: step });
         this.emit('change');
     }
 
@@ -1411,10 +1374,6 @@ class WazeClusterControl extends EventEmitter {
                 clearTimeout(this._askedNearTimer);
                 this._askedNear = null;
             }
-            if (this._askedVignette != null && msg.hud_vignette === this._askedVignette) {
-                clearTimeout(this._askedVignetteTimer);
-                this._askedVignette = null;
-            }
             const ac = this._askedClear;
             if (ac && msg.hud_clear_x === ac[0] && msg.hud_clear_y === ac[1] && msg.hud_clear_w === ac[2] && msg.hud_clear_h === ac[3]) {
                 clearTimeout(this._askedClearTimer);
@@ -1438,7 +1397,7 @@ class WazeClusterControl extends EventEmitter {
             this._noteEtaAsked(msg);
             this._wake();
             this.emit('change');
-        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-near-dist|hud-zoom|hud-vignette|hud-clear|hud-clear-rect)-reply$/.test(msg.ev)) {
+        } else if (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-near-dist|hud-zoom|hud-clear|hud-clear-rect)-reply$/.test(msg.ev)) {
             if (!msg.ok) {
                 this._log.info(`patchd did not save the setting: ${msg.reason || 'refused'}`);
             }
@@ -1471,5 +1430,5 @@ class WazeClusterControl extends EventEmitter {
 module.exports = {
     WazeClusterControl, LineSocket,
     RENDER_PATH, PATCH_PATH, PENDING_PATH, AA_PENDING_PATH, BOOT_ID_PATH,
-    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS, HUD_NEAR_STEPS, HUD_VIGNETTE_MAX
+    SIZE, SAFE, ZOOM_STEP, RESTART_FAILED, SHOWN_ON, HUD_SIZE_STEPS, HUD_ZOOM_STEPS, HUD_NEAR_STEPS
 };

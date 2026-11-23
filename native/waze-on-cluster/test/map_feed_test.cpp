@@ -536,7 +536,6 @@ static void hud_zoom()
     fc.hud_round_corners = false;
     fc.hud_black_background = false;
     fc.hud_clear = false;
-    fc.hud_vignette = 0;
     MapFeeds feeds(fc, true, true, 10);
     feeds.set_stream(true, false, Picture::Shown);
     std::vector<uint8_t> spare;
@@ -615,8 +614,8 @@ static void hud_zoom()
  * scene's width, its height the picture's shape at the map's width, centred;
  * the zoom capped by the map's width, not the box's; the box shows the
  * middle of the (zoomed) picture, which hud_offset_x pans, held inside the
- * picture, while the box stays at x 0; the speed patch and the vignette
- * (fixed to the scene: they follow the box's place) on the same layer, the
+ * picture, while the box stays at x 0; the speed patch (fixed to the
+ * scene: it follows the box's place) on the same layer, the
  * newest picture scaled again without a new frame; without the head unit's
  * scaler the map is held to 100 %. */
 static void hud_wide()
@@ -631,7 +630,6 @@ static void hud_wide()
     fc.hud_round_corners = false;
     fc.hud_black_background = false;
     fc.hud_clear = false;
-    fc.hud_vignette = 0;
     fc.hud_zoom_pct = 100;
     fc.hud_width_pct = 100;
     fc.video.dirty_threshold = 0;   /* every change reaches the renderer: a patch 2 px lower changes only its feather */
@@ -662,15 +660,13 @@ static void hud_wide()
             }
         }
     };
-    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh, with a patch and a
-     * vignette of level vl on the 800x480 scene at vx, vy of the map */
+    /* the picture the HUD shows: the part of f at x, y scaled to dw x dh, with a patch */
     const auto scaled = [&](uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t dw, uint32_t dh, int32_t px = 0,
-                            int32_t py = 0, uint32_t pw = 0, uint32_t ph = 0, unsigned vl = 0, int32_t vx = 0, int32_t vy = 0) {
+                            int32_t py = 0, uint32_t pw = 0, uint32_t ph = 0) {
         AtlasScaler sc;
         std::vector<uint8_t> out;
         if (sc.configure(1088, 480, dw, dh, fc.scaled_level_bits, x, y, w, h)) {
             sc.set_clear(px, py, pw, ph);
-            sc.set_vignette(vl, vx, vy, 800, 480);
             sc.scale(f.data(), &out);
         }
         return out;
@@ -751,32 +747,6 @@ static void hud_wide()
     feeds.set_hud_clear(false, 110, 320, 220, 90);
     pump(1000, false);
     ok("hud_clear 0: no patch", hud_shows(scaled(0, 0, 1088, 480, 320, 140)) && !feeds.status("decode").hud_clear);
-
-    /* the vignette: fixed to the scene (its top left at minus the box's place in the map), on
-     * the same layer, the newest picture scaled again without a new frame */
-    ok("vignette 0 (set here): none, in the status", feeds.status("decode").hud_vignette == 0);
-    const crs::Layer *l40 = hud_layer();
-    const uint32_t id40 = l40 ? l40->id() : 0;
-    feeds.set_hud_vignette(4);
-    pump(1000, false);
-    st = feeds.status("decode");
-    ok("vignette 4, 40 % in the scene's middle (320x140 at 240,169): inside the vignette's whole part, the map untouched",
-       at(240, 169, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, 0, 0, 0, 0, 4, -240, -169)) &&
-           hud_shows(scaled(0, 0, 1088, 480, 320, 140)) && st.hud_vignette == 4 && feeds.hud_settings().hud_vignette == 4);
-    feeds.set_hud_offset(-230, -160);
-    pump(1000, false);
-    ok("vignette fixed to the scene: the map moved to the scene's top left (10,9) fades there, the scene at -10,-9 of "
-       "the map, the same layer, no new frame",
-       at(10, 9, 320, 140) && hud_shows(scaled(0, 0, 1088, 480, 320, 140, 0, 0, 0, 0, 4, -10, -9)) &&
-           !hud_shows(scaled(0, 0, 1088, 480, 320, 140)) && hud_layer() && hud_layer()->id() == id40);
-    feeds.set_hud_width(135);
-    feeds.set_hud_offset(60, 0);
-    pump(2000, true);
-    ok("vignette at 135 %, panned 60: the box at 0,2, the scene at 0,-2 of the map, whatever the pan",
-       at(0, 2, 800, 476) && hud_shows(scaled(82, 0, 804, 480, 800, 476, 0, 0, 0, 0, 4, 0, -2)));
-    feeds.set_hud_vignette(0);
-    pump(1000, false);
-    ok("vignette 0: none again", hud_shows(scaled(82, 0, 804, 480, 800, 476)) && feeds.status("decode").hud_vignette == 0);
 
     /* without the head unit's scaler: held to 100 %, no corners, no patch */
     Rig c(false, 6000, false, true, true);
@@ -1643,7 +1613,7 @@ int main()
     bfc.socket = b.path;
     bfc.video.level_bits = 0;
     bfc.hud_zoom_pct = 100;   /* the whole frame on the HUD: this checks the scaling, hud_zoom() the zoom */
-    bfc.hud_clear = false;   /* and hud_wide() the speed patch; the vignette is the default's, 2 */
+    bfc.hud_clear = false;   /* and hud_wide() the speed patch */
     MapFeeds feeds(bfc, true, false, 10);
     feeds.set_stream(true, false, Picture::Shown);
     std::vector<uint8_t> bspare, boffered;
@@ -1705,15 +1675,13 @@ int main()
     feeds.set_hud(true);
     bpump(1500, &f1);
     /* the HUD shows the map smaller: its frame is scaled on the head unit */
-    const crs::Layer *bh = layer_on(2);
     AtlasScaler ref;
     std::vector<uint8_t> f1_hud;
     ref.configure(1088, 480, 452, 200, 2);   /* FeedConfig::scaled_level_bits */
     ref.set_corner_radius(200 / 12);         /* FeedConfig::hud_round_corners */
     ref.set_black_background(true);          /* FeedConfig::hud_black_background */
-    if (bh)                                  /* FeedConfig::hud_vignette, on the scene at the box's place */
-        ref.set_vignette(2, -bh->params.rect.x, -bh->params.rect.y, 800, 480);
     ref.scale(f1.data(), &f1_hud);
+    const crs::Layer *bh = layer_on(2);
     ok("HUD on: a layer on each target, the frame on the cluster whole and on the HUD scaled to 452x200, showing",
        layer_on(0) && bh && shown_r8("map", f1) && shown_r8("hud", f1_hud) && feeds.status("decode").state == "showing" &&
            feeds.status("decode").hud_state == "showing" && feeds.status("decode").target == "map");

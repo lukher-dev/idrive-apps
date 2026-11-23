@@ -21,7 +21,7 @@
  * "Name: Value"; every on/off setting is a checkbox.
  *
  * The settings pages, children of the main page: HUD map settings holds the
- * Map size, Map zoom and Vignette sliders, Map position with Move map left,
+ * Map size and Map zoom sliders, Map position with Move map left,
  * right, up and down and Centre map, and the Show from ... before a turn
  * slider (200 m to 2 km, the distance the turn watch opens at). Speed area
  * holds the Hide map behind BMW's speed checkbox (the map blacked out behind
@@ -105,7 +105,6 @@ const HUD_KEEP_NAME = 'wocHudKeep';
 const HUD_NEAR_NAME = 'wocHudNearTurn';
 const HUD_ZOOM_NAME = 'wocHudZoom';
 const HUD_NEAR_DIST_NAME = 'wocHudNearDist';
-const HUD_VIGNETTE_NAME = 'wocHudVignette';
 /* The render's status, written once a second (world-readable): where the
  * map shows while the page, the render's one owner, is closed. */
 const STATUS_FILE = '/run/waze-on-cluster/status.json';
@@ -260,7 +259,7 @@ class WazeClusterApp extends OnlineApp {
         const names = [STATUS_NAME, MAP_NAME, RESTART_STATUS_NAME, ENABLE_NAME, DISABLE_NAME, WIFI_NAME, WIFI_HINT_NAME, AA_STATUS_NAME,
             AA_ENABLE_NAME, AA_DISABLE_NAME, AA_ZOOM_NAME, AA_ZOOM_OUT_NAME, AA_ZOOM_IN_NAME, AA_CARD_NAME, CP_ETA_NAME, CP_TURNS_NAME, RESTART_NAME,
             GUIDE_NAME, HEAD_GENERAL_NAME, HEAD_HUD_NAME, SHOW_ON_NAME, PROFILE_NAME, HUD_NAME, HUD_KEEP_NAME, HUD_NEAR_NAME, HUD_NEAR_DIST_NAME,
-            HUD_SIZE_NAME, HUD_ZOOM_NAME, HUD_VIGNETTE_NAME, HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
+            HUD_SIZE_NAME, HUD_ZOOM_NAME, HUD_POS_NAME, HUD_CLEAR_NAME, HUD_CLEAR_RECT_NAME]
             .concat(Object.values(HUD_MOVE_NAMES), Object.values(HUD_CLEAR_NAMES), [HUD_CENTRE_NAME, CAPTURE_NAME, CAPTURE_STATUS,
                 LOGS_NAME, LOGS_SAVE, LOGS_STATUS, LOGS_QR, LOGS_URL], LOGS_ROW_NAMES, Object.values(PAGES).map((p) => p.button));
         names.forEach((name) => { this._components[name] = rhmi.getByName(name); });
@@ -343,14 +342,6 @@ class WazeClusterApp extends OnlineApp {
                 logger.info(`SLIDER ${HUD_ZOOM_NAME} ${step}`);
                 delete this._written[`cell:${HUD_ZOOM_NAME}:0:Value`];
                 this._control.setHudZoomStep(step);
-                setImmediate(() => this._render());
-            }
-        });
-        this._components[HUD_VIGNETTE_NAME].on('changed', (step) => {
-            if (step !== this._written[`cell:${HUD_VIGNETTE_NAME}:0:Value`]) {
-                logger.info(`SLIDER ${HUD_VIGNETTE_NAME} ${step}`);
-                delete this._written[`cell:${HUD_VIGNETTE_NAME}:0:Value`];
-                this._control.setHudVignetteStep(step);
                 setImmediate(() => this._render());
             }
         });
@@ -720,11 +711,6 @@ class WazeClusterApp extends OnlineApp {
             this._writeCell(HUD_ZOOM_NAME, 'Value', c.hudZoomStep(), 'SInt', 0);
         }
         this._setEnabled(HUD_ZOOM_NAME, c.canChangeHudZoom());
-        this._writeCell(HUD_VIGNETTE_NAME, 'TextDescription', c.hudVignetteText(), 'Text', 0);
-        if (c.hudVignette() !== null) {
-            this._writeCell(HUD_VIGNETTE_NAME, 'Value', c.hudVignette(), 'SInt', 0);
-        }
-        this._setEnabled(HUD_VIGNETTE_NAME, c.canChangeHudVignette());
         /* the size slider and the place buttons: greyed while the HUD is off
          * or disabled (the HMI greys no label) */
         const adjust = c.canChangeHudSize();

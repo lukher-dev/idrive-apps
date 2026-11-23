@@ -156,13 +156,6 @@ void MapFeeds::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsign
         hud_->set_hud_clear(on, x, y, w, h);
 }
 
-void MapFeeds::set_hud_vignette(unsigned level)
-{
-    base_.hud_vignette = level;
-    if (hud_)
-        hud_->set_hud_vignette(level);
-}
-
 void MapFeeds::poll(int64_t now_ms)
 {
     if (near_ && now_ms - near_at_ms_ >= base_.hud_near_expire_ms) {
@@ -272,7 +265,6 @@ FeedStatus MapFeeds::status(const std::string &decode, const std::string &stream
     s.hud_clear_y = base_.hud_clear_y;
     s.hud_clear_w = base_.hud_clear_w;
     s.hud_clear_h = base_.hud_clear_h;
-    s.hud_vignette = base_.hud_vignette;
     s.hud_offset_x = hud_ ? hud_->hud_offset_x() : base_.hud_offset_x;
     s.hud_offset_y = hud_ ? hud_->hud_offset_y() : base_.hud_offset_y;
     return s;

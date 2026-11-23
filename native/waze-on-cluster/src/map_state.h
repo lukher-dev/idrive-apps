@@ -2,14 +2,14 @@
 // Copyright (C) 2026 Robert Nisipeanu
 /* Where the map shows and the HUD map's size, place, whether it stays
  * shown over BMW's pop-ups, whether it shows only near turns, its zoom, its
- * speed patch, how far before a turn it shows and its vignette, as the app
- * chose them: cluster, hud, hud_width_pct, hud_offset_x, hud_offset_y,
- * hud_keep_shown, hud_near_turn, hud_zoom_pct, hud_clear, hud_clear_x,
- * hud_clear_y, hud_clear_w, hud_clear_h, hud_near_m and hud_vignette,
- * which patchd saves in map_state_file (key = value lines). Each valid
- * value replaces the configuration's; one out of range, another key (such
- * as hud_edge_fade_px, which an earlier version saved) or a line that does
- * not read is left out with a warning, as is a file that cannot be read. */
+ * speed patch and how far before a turn it shows, as the app chose them:
+ * cluster, hud, hud_width_pct, hud_offset_x, hud_offset_y, hud_keep_shown,
+ * hud_near_turn, hud_zoom_pct, hud_clear, hud_clear_x, hud_clear_y,
+ * hud_clear_w, hud_clear_h and hud_near_m, which patchd saves in
+ * map_state_file (key = value lines). Each valid value replaces the
+ * configuration's; one out of range, another key (such as hud_edge_fade_px,
+ * which an earlier version saved) or a line that does not read is left out
+ * with a warning, as is a file that cannot be read. */
 #ifndef WOC_MAP_STATE_H
 #define WOC_MAP_STATE_H
 
@@ -20,7 +20,7 @@
 namespace woc {
 
 /* The keys map_state_file holds. */
-extern const char *const kMapStateKeys[15];
+extern const char *const kMapStateKeys[14];
 
 void load_map_state(cld::Config *cfg, const std::string &path);
 

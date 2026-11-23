@@ -123,8 +123,7 @@ module.exports = [
    "Turn cards on the cluster": "بطاقات الانعطاف على لوحة العدادات",
    "Speed area": "منطقة السرعة",
    "HUD map settings": "إعدادات خريطة HUD",
-   "Android Auto map": "خريطة Android Auto",
-   "Vignette: {0}": "تعتيم الحواف: {0}"
+   "Android Auto map": "خريطة Android Auto"
   }
  },
  {
@@ -249,8 +248,7 @@ module.exports = [
    "Turn cards on the cluster": "Karty odbočení na štítu",
    "Speed area": "Plocha rychlosti",
    "HUD map settings": "Nastavení mapy na HUD",
-   "Android Auto map": "Mapa Android Auto",
-   "Vignette: {0}": "Vinětace: {0}"
+   "Android Auto map": "Mapa Android Auto"
   }
  },
  {
@@ -375,8 +373,7 @@ module.exports = [
    "Turn cards on the cluster": "Svinganvisninger i instrumentpanel",
    "Speed area": "Hastighedsfelt",
    "HUD map settings": "Indstillinger for kort i HUD",
-   "Android Auto map": "Android Auto-kort",
-   "Vignette: {0}": "Vignet: {0}"
+   "Android Auto map": "Android Auto-kort"
   }
  },
  {
@@ -501,8 +498,7 @@ module.exports = [
    "Turn cards on the cluster": "Abbiegekarten im Kombi",
    "Speed area": "Tempobereich",
    "HUD map settings": "HUD-Karteneinstellungen",
-   "Android Auto map": "Android-Auto-Karte",
-   "Vignette: {0}": "Vignette: {0}"
+   "Android Auto map": "Android-Auto-Karte"
   }
  },
  {
@@ -627,8 +623,7 @@ module.exports = [
    "Turn cards on the cluster": "Κάρτες στροφής στα όργανα",
    "Speed area": "Πεδίο ταχύτητας",
    "HUD map settings": "Ρυθμίσεις χάρτη HUD",
-   "Android Auto map": "Χάρτης Android Auto",
-   "Vignette: {0}": "Βινιέτα: {0}"
+   "Android Auto map": "Χάρτης Android Auto"
   }
  },
  {
@@ -753,8 +748,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicaciones de giro en el tablero",
    "Speed area": "Zona de velocidad",
    "HUD map settings": "Configuración del mapa en el HUD",
-   "Android Auto map": "Mapa de Android Auto",
-   "Vignette: {0}": "Viñeta: {0}"
+   "Android Auto map": "Mapa de Android Auto"
   }
  },
  {
@@ -879,8 +873,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicaciones de giro en el cuadro",
    "Speed area": "Zona de velocidad",
    "HUD map settings": "Ajustes del mapa en el HUD",
-   "Android Auto map": "Mapa de Android Auto",
-   "Vignette: {0}": "Viñeta: {0}"
+   "Android Auto map": "Mapa de Android Auto"
   }
  },
  {
@@ -1005,8 +998,7 @@ module.exports = [
    "Turn cards on the cluster": "Kääntymiskortit mittaristossa",
    "Speed area": "Nopeusalue",
    "HUD map settings": "HUD-kartan asetukset",
-   "Android Auto map": "Android Auto -kartta",
-   "Vignette: {0}": "Vinjetti: {0}"
+   "Android Auto map": "Android Auto -kartta"
   }
  },
  {
@@ -1131,8 +1123,7 @@ module.exports = [
    "Turn cards on the cluster": "Cartes de virage au combiné",
    "Speed area": "Zone de vitesse",
    "HUD map settings": "Paramètres de la carte sur le HUD",
-   "Android Auto map": "Carte Android Auto",
-   "Vignette: {0}": "Vignettage : {0}"
+   "Android Auto map": "Carte Android Auto"
   }
  },
  {
@@ -1257,8 +1248,7 @@ module.exports = [
    "Turn cards on the cluster": "Cartes de virage au combiné",
    "Speed area": "Zone de vitesse",
    "HUD map settings": "Paramètres de la carte sur le HUD",
-   "Android Auto map": "Carte Android Auto",
-   "Vignette: {0}": "Vignettage : {0}"
+   "Android Auto map": "Carte Android Auto"
   }
  },
  {
@@ -1383,8 +1373,7 @@ module.exports = [
    "Turn cards on the cluster": "כרטיסי פנייה בלוח המחוונים",
    "Speed area": "אזור המהירות",
    "HUD map settings": "הגדרות המפה ב-HUD",
-   "Android Auto map": "מפת Android Auto",
-   "Vignette: {0}": "הצללת שוליים: {0}"
+   "Android Auto map": "מפת Android Auto"
   }
  },
  {
@@ -1509,8 +1498,7 @@ module.exports = [
    "Turn cards on the cluster": "Kanyarodási kártyák a műszerfalon",
    "Speed area": "Sebességmező",
    "HUD map settings": "HUD-térkép beállításai",
-   "Android Auto map": "Android Auto-térkép",
-   "Vignette: {0}": "Vignettálás: {0}"
+   "Android Auto map": "Android Auto-térkép"
   }
  },
  {
@@ -1635,8 +1623,7 @@ module.exports = [
    "Turn cards on the cluster": "Kartu belok di panel",
    "Speed area": "Area kecepatan",
    "HUD map settings": "Pengaturan peta HUD",
-   "Android Auto map": "Peta Android Auto",
-   "Vignette: {0}": "Vinyet: {0}"
+   "Android Auto map": "Peta Android Auto"
   }
  },
  {
@@ -1761,8 +1748,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicazioni di svolta sul quadro",
    "Speed area": "Area velocità",
    "HUD map settings": "Impostazioni mappa HUD",
-   "Android Auto map": "Mappa Android Auto",
-   "Vignette: {0}": "Vignettatura: {0}"
+   "Android Auto map": "Mappa Android Auto"
   }
  },
  {
@@ -1887,8 +1873,7 @@ module.exports = [
    "Turn cards on the cluster": "メーターに進路案内カード",
    "Speed area": "速度エリア",
    "HUD map settings": "HUDの地図の設定",
-   "Android Auto map": "Android Autoの地図",
-   "Vignette: {0}": "周辺減光：{0}"
+   "Android Auto map": "Android Autoの地図"
   }
  },
  {
@@ -2013,8 +1998,7 @@ module.exports = [
    "Turn cards on the cluster": "계기판에 방향 안내 카드",
    "Speed area": "속도 영역",
    "HUD map settings": "HUD 지도 설정",
-   "Android Auto map": "Android Auto 지도",
-   "Vignette: {0}": "비네팅: {0}"
+   "Android Auto map": "Android Auto 지도"
   }
  },
  {
@@ -2139,8 +2123,7 @@ module.exports = [
    "Turn cards on the cluster": "Svinganvisninger i instrumentpanel",
    "Speed area": "Hastighetsfelt",
    "HUD map settings": "Innstillinger for kart i HUD",
-   "Android Auto map": "Android Auto-kart",
-   "Vignette: {0}": "Vignett: {0}"
+   "Android Auto map": "Android Auto-kart"
   }
  },
  {
@@ -2267,8 +2250,7 @@ module.exports = [
    "Turn cards on the cluster": "Afslagkaarten in paneel",
    "Speed area": "Snelheidsvlak",
    "HUD map settings": "Instellingen kaart in HUD",
-   "Android Auto map": "Android Auto-kaart",
-   "Vignette: {0}": "Vignet: {0}"
+   "Android Auto map": "Android Auto-kaart"
   }
  },
  {
@@ -2393,8 +2375,7 @@ module.exports = [
    "Turn cards on the cluster": "Karty manewrów na zegarach",
    "Speed area": "Obszar prędkości",
    "HUD map settings": "Ustawienia mapy na HUD",
-   "Android Auto map": "Mapa Android Auto",
-   "Vignette: {0}": "Winietowanie: {0}"
+   "Android Auto map": "Mapa Android Auto"
   }
  },
  {
@@ -2519,8 +2500,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicações de conversão no painel",
    "Speed area": "Área da velocidade",
    "HUD map settings": "Configurações do mapa no HUD",
-   "Android Auto map": "Mapa do Android Auto",
-   "Vignette: {0}": "Vinheta: {0}"
+   "Android Auto map": "Mapa do Android Auto"
   }
  },
  {
@@ -2645,8 +2625,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicações de viragem no quadrante",
    "Speed area": "Área da velocidade",
    "HUD map settings": "Definições do mapa no HUD",
-   "Android Auto map": "Mapa do Android Auto",
-   "Vignette: {0}": "Vinheta: {0}"
+   "Android Auto map": "Mapa do Android Auto"
   }
  },
  {
@@ -2771,8 +2750,7 @@ module.exports = [
    "Turn cards on the cluster": "Indicații de viraj pe bord",
    "Speed area": "Zona vitezei",
    "HUD map settings": "Setări hartă HUD",
-   "Android Auto map": "Hartă Android Auto",
-   "Vignette: {0}": "Vignetare: {0}"
+   "Android Auto map": "Hartă Android Auto"
   }
  },
  {
@@ -2897,8 +2875,7 @@ module.exports = [
    "Turn cards on the cluster": "Подсказки поворотов на приборах",
    "Speed area": "Поле скорости",
    "HUD map settings": "Настройки карты на HUD",
-   "Android Auto map": "Карта Android Auto",
-   "Vignette: {0}": "Виньетка: {0}"
+   "Android Auto map": "Карта Android Auto"
   }
  },
  {
@@ -3023,8 +3000,7 @@ module.exports = [
    "Turn cards on the cluster": "Karty odbočenia na prístrojovej doske",
    "Speed area": "Plocha rýchlosti",
    "HUD map settings": "Nastavenia mapy na HUD",
-   "Android Auto map": "Mapa Android Auto",
-   "Vignette: {0}": "Vinetácia: {0}"
+   "Android Auto map": "Mapa Android Auto"
   }
  },
  {
@@ -3149,8 +3125,7 @@ module.exports = [
    "Turn cards on the cluster": "Kartice zavijanja na armaturi",
    "Speed area": "Polje hitrosti",
    "HUD map settings": "Nastavitve zemljevida na HUD",
-   "Android Auto map": "Zemljevid Android Auto",
-   "Vignette: {0}": "Vinjetiranje: {0}"
+   "Android Auto map": "Zemljevid Android Auto"
   }
  },
  {
@@ -3275,8 +3250,7 @@ module.exports = [
    "Turn cards on the cluster": "Svänganvisningar i kombiinstrumentet",
    "Speed area": "Hastighetsfält",
    "HUD map settings": "Inställningar för karta i HUD",
-   "Android Auto map": "Android Auto-karta",
-   "Vignette: {0}": "Vinjett: {0}"
+   "Android Auto map": "Android Auto-karta"
   }
  },
  {
@@ -3401,8 +3375,7 @@ module.exports = [
    "Turn cards on the cluster": "การ์ดบอกทางเลี้ยวบนหน้าปัด",
    "Speed area": "พื้นที่ความเร็ว",
    "HUD map settings": "การตั้งค่าแผนที่บน HUD",
-   "Android Auto map": "แผนที่ Android Auto",
-   "Vignette: {0}": "ขอบมืด: {0}"
+   "Android Auto map": "แผนที่ Android Auto"
   }
  },
  {
@@ -3527,8 +3500,7 @@ module.exports = [
    "Turn cards on the cluster": "Göstergede dönüş kartları",
    "Speed area": "Hız alanı",
    "HUD map settings": "HUD harita ayarları",
-   "Android Auto map": "Android Auto haritası",
-   "Vignette: {0}": "Vinyet: {0}"
+   "Android Auto map": "Android Auto haritası"
   }
  },
  {
@@ -3653,8 +3625,7 @@ module.exports = [
    "Turn cards on the cluster": "Підказки поворотів на приладах",
    "Speed area": "Поле швидкості",
    "HUD map settings": "Налаштування карти на HUD",
-   "Android Auto map": "Карта Android Auto",
-   "Vignette: {0}": "Віньєтка: {0}"
+   "Android Auto map": "Карта Android Auto"
   }
  },
  {
@@ -3779,8 +3750,7 @@ module.exports = [
    "Turn cards on the cluster": "Thẻ chỉ hướng trên bảng đồng hồ",
    "Speed area": "Vùng tốc độ",
    "HUD map settings": "Cài đặt bản đồ trên HUD",
-   "Android Auto map": "Bản đồ Android Auto",
-   "Vignette: {0}": "Làm tối viền: {0}"
+   "Android Auto map": "Bản đồ Android Auto"
   }
  },
  {
@@ -3907,8 +3877,7 @@ module.exports = [
    "Turn cards on the cluster": "仪表盘显示转向卡片",
    "Speed area": "车速区域",
    "HUD map settings": "HUD 地图设置",
-   "Android Auto map": "Android Auto 地图",
-   "Vignette: {0}": "暗角：{0}"
+   "Android Auto map": "Android Auto 地图"
   }
  },
  {
@@ -4035,8 +4004,7 @@ module.exports = [
    "Turn cards on the cluster": "儀表板顯示轉向卡片",
    "Speed area": "車速區域",
    "HUD map settings": "HUD 地圖設定",
-   "Android Auto map": "Android Auto 地圖",
-   "Vignette: {0}": "暗角：{0}"
+   "Android Auto map": "Android Auto 地圖"
   }
  }
 ];

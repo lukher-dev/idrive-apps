@@ -165,15 +165,13 @@ hud-preview: $(BUILD)/host/hud-preview
 
 # the grid's middle marker lands in the middle of the shown part at 200 %, and
 # at 150 % centred at 700 per mille, the 724 px part held at the right edge
-# (x 364), 182 x 452/724 = 114 px left of it, and at 200 % with the strongest
-# vignette (the scene's middle is never faded)
+# (x 364), 182 x 452/724 = 114 px left of it
 hud-preview-check: hud-preview
 	@set -e; T=$$(mktemp -d); P=$(BUILD)/host/hud-preview; $$P --grid $$T/g.bmp; \
 	check() { out=$$($$P $$T/g.bmp $$T/o.bmp --no-black --no-round "$$@"); echo "$$out"; \
 	  echo "$$out" | awk -v dx=$$DX '/its middle/ { split($$NF, m, ","); mx = m[1]; my = m[2] } \
 	    /^marker/ { split($$2, k, ","); d = k[1] - (mx + dx); e = k[2] - my; exit (d < -3 || d > 3 || e < -3 || e > 3) }'; }; \
-	DX=0 check --zoom 200; DX=-114 check --zoom 150 --cx-pm 700; DX=0 check --zoom 200 --vignette 5; \
-	rm -rf $$T; echo "hud-preview-check: ok"
+	DX=0 check --zoom 200; DX=-114 check --zoom 150 --cx-pm 700; rm -rf $$T; echo "hud-preview-check: ok"
 
 $(BUILD)/host/hud_crop_test: test/hud_crop_test.cpp src/hud_crop.h src/map_rect.h
 	mkdir -p $(@D)

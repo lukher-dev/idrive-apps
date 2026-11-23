@@ -58,7 +58,6 @@
  *                  {"cmd":"hud-clear","on":0|1}
  *                  {"cmd":"hud-clear-rect","x":0..799,"y":0..479,"w":10..800,"h":10..480}
  *                  {"cmd":"hud-near-dist","m":200..2000}
- *                  {"cmd":"hud-vignette","level":0..5}
  *                                   the map on the cluster on or off, on the HUD on
  *                                   or off, the HUD's size
  *                                   (0: the default box), where it is moved from
@@ -67,22 +66,20 @@
  *                                   near turns, its zoom, whether it is blacked out behind the speed and where (a
  *                                   rectangle in HUD scene pixels), how many metres
  *                                   before a turn it shows (with near turns on; the
- *                                   app gates it), its vignette (the HUD scene's
- *                                   edges faded to black, 0: none), saved for the
+ *                                   app gates it), saved for the
  *                                   render's next start as "cluster", "hud",
  *                                   "hud_width_pct", "hud_offset_x", "hud_offset_y",
  *                                   "hud_keep_shown", "hud_near_turn",
  *                                   "hud_zoom_pct", "hud_clear", "hud_clear_x",
- *                                   "hud_clear_y", "hud_clear_w", "hud_clear_h",
- *                                   "hud_near_m" and "hud_vignette" in MAP_STATE
+ *                                   "hud_clear_y", "hud_clear_w", "hud_clear_h"
+ *                                   and "hud_near_m" in MAP_STATE
  *                                   (the app changes the running render itself).
  *                                   Changes are written together MAP_SAVE_MS
  *                                   after the last one; the reply (cluster-reply,
  *                                   hud-reply, hud-size-reply, hud-pos-reply,
  *                                   hud-keep-shown-reply, hud-near-turn-reply,
  *                                   hud-zoom-reply, hud-clear-reply,
- *                                   hud-clear-rect-reply, hud-near-dist-reply,
- *                                   hud-vignette-reply)
+ *                                   hud-clear-rect-reply, hud-near-dist-reply)
  *                                   follows the write and carries ok, the values
  *                                   saved and reason.
  *                  {"cmd":"profile","id":"<id>"|null}
@@ -286,10 +283,10 @@ var LOCAL_CONF = process.env.WOC_LOCAL_CONF || '/var/opt/waze-on-cluster/waze-on
  * start with any of MAP_KEYS in. */
 var MAP_STATE = path.join(STATE_DIR, 'map.state.conf');
 var MAP_KEYS = ['cluster', 'hud', 'hud_width_pct', 'hud_offset_x', 'hud_offset_y', 'hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct',
-    'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m', 'hud_vignette'];
+    'hud_clear', 'hud_clear_x', 'hud_clear_y', 'hud_clear_w', 'hud_clear_h', 'hud_near_m'];
 /* Keys added after the first sets were saved: one missing from a saved set is its default. */
 var LATER_MAP_KEYS = ['hud_keep_shown', 'hud_near_turn', 'hud_zoom_pct', 'hud_clear', 'hud_clear_x', 'hud_clear_y',
-    'hud_clear_w', 'hud_clear_h', 'hud_near_m', 'hud_vignette'];
+    'hud_clear_w', 'hud_clear_h', 'hud_near_m'];
 /* Keys an earlier version saved that this one no longer has (the HUD map's
  * edge fade): a saved set that still holds one is read without it, and
  * MAP_STATE loses it at the start and with each write (dropRetiredMapKeys). */
@@ -298,7 +295,7 @@ var RETIRED_MAP_KEYS = ['hud_edge_fade_px'];
  * within its range, any other key not here 0 or 1. */
 var MAP_RANGES = { hud_width_pct: [20, HUD_MAX_PCT], hud_offset_x: [-800, 800], hud_offset_y: [-800, 800], hud_zoom_pct: [100, 250],
     hud_clear_x: [0, 799], hud_clear_y: [0, 479], hud_clear_w: [10, 800], hud_clear_h: [10, 480],
-    hud_near_m: [200, 2000], hud_vignette: [0, 5] };
+    hud_near_m: [200, 2000] };
 /* The opt-in settings: the render reads this file (its features_file) over
  * its configuration. Not in LOCAL_CONF, which every release up to 0.10.7
  * refuses to start with any of FEATURE_KEYS in; no release before 0.10.9
@@ -491,7 +488,7 @@ var PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._:@+={}-]{0,127}$/;
 var MAX_OWN = 16;
 var MAP_DEFAULTS = { cluster: 1, hud: 0, hud_width_pct: 100, hud_offset_x: 0, hud_offset_y: 40, hud_keep_shown: 0, hud_near_turn: 0,
     hud_zoom_pct: 100, hud_clear: 1, hud_clear_x: 110, hud_clear_y: 320, hud_clear_w: 250, hud_clear_h: 90,
-    hud_near_m: 1000, hud_vignette: 2 };
+    hud_near_m: 1000 };
 var profiles = null;          /* PROFILES_FILE as read at the start, and changed since */
 var currentProfile;           /* the profile the app last told (null: none; undefined: not told since the start) */
 var restored = false;         /* MAP_STATE written from PROFILES_FILE at the start, not yet told to the app */
@@ -1971,14 +1968,6 @@ function handle(line, sock) {
             return;
         }
         saveMapSettings(sock, 'hud-near-dist-reply', { hud_near_m: msg.m }, 'the HUD map\'s distance before a turn');
-        return;
-    }
-    if (msg.cmd === 'hud-vignette') {
-        if (!mapNumberOk('hud_vignette', msg.level)) {
-            reply(sock, { ev: 'hud-vignette-reply', ok: false, reason: 'the HUD map\'s vignette must be a whole number from 0 to 5' });
-            return;
-        }
-        saveMapSettings(sock, 'hud-vignette-reply', { hud_vignette: msg.level }, 'the HUD map\'s vignette');
         return;
     }
     /* The driver profile and its own settings: not operations on carplay either. */
