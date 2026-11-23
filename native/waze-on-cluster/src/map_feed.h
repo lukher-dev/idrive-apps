@@ -126,6 +126,11 @@ struct FeedConfig {
      * the map. */
     bool hud_clear = true;
     unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
+    /* The vignette: on the HUD the map fading to black towards the edges of
+     * the HUD's scene, 1 (the outer 7 % of each side) to 5 (35 %), 0: none
+     * (AtlasScaler::set_vignette); fixed to the scene, centred on its middle
+     * and as large as it, whatever the map's size, zoom and place. */
+    unsigned hud_vignette = 2;
     /* hosted_vpp_scale: hosted, the host's part is made by the decoder's VPP
      * (MapFeed::part) rather than scaled by the worker */
     bool vpp_scale = false;
@@ -164,6 +169,7 @@ struct FeedStatus {
     unsigned hud_zoom_used = 100;  /* and the zoom its box takes (hud_zoom_cap) */
     bool hud_clear = true;            /* the HUD map's speed patch, in the HUD scene's pixels */
     unsigned hud_clear_x = 110, hud_clear_y = 320, hud_clear_w = 250, hud_clear_h = 90;
+    unsigned hud_vignette = 2;        /* the HUD map's vignette, 0-5 */
 };
 
 /* Whether a status is worth a log line: its state, reason or target differs
@@ -203,9 +209,10 @@ public:
     void set_hud_width(unsigned pct);
     /* The HUD map moved (FeedConfig::hud_offset_x/y), at once: the layer
      * only changes place, no new texture (above 100 % the part of the
-     * picture it shows moves instead, and the speed patch with the map's
-     * place, both scaled again from the newest picture). Held inside the
-     * HUD: the offset the map is at (hud_offset_x/y, the status's) then is
+     * picture it shows moves instead). The speed patch and the vignette
+     * stay where they are on the HUD: with either on the map, the newest
+     * picture is scaled again for its new place, on the same layer. Held
+     * inside the HUD: the offset the map is at (hud_offset_x/y, the status's) then is
      * as far as it goes, and the one asked for is kept for the next size. */
     void set_hud_offset(int dx, int dy);
     int hud_offset_x() const { return placed_x_; }
@@ -220,6 +227,9 @@ public:
     /* The HUD map's speed patch (FeedConfig::hud_clear*), at once: the
      * same layer, the newest picture scaled again. */
     void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
+    /* The HUD map's vignette (FeedConfig::hud_vignette), at once: the same
+     * layer, the newest picture scaled again. */
+    void set_hud_vignette(unsigned level);
     /* A layer to take frames: made, and not reported disabled by
      * cluster-render. */
     bool takes_frames() const { return layer_ && !disabled(); }
@@ -298,9 +308,9 @@ private:
      * width (virt_w_). */
     crk::QuadRect quad(uint32_t tw, uint32_t th) const;
     /* On the HUD with the scaler: the frame's shape (shape_, zoom_used_)
-     * for the box q, and q made the place of the scaled picture. Above
-     * 100 % also notes the pan it shows (placed_x_). */
-    void hud_shape(crk::QuadRect *q);
+     * for the box q on the HUD's tw x th scene, and q made the place of the
+     * scaled picture. Above 100 % also notes the pan it shows (placed_x_). */
+    void hud_shape(crk::QuadRect *q, uint32_t tw, uint32_t th);
     /* The HUD's layer's place and shape again after a move or a patch: the
      * same layer, the newest picture scaled again when its shape changed. */
     void restyle();

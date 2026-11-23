@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+The HUD map can fade to black towards the edges of the HUD (the vignette,
+levels 1 to 5, 2 by default, 0 for none). The fade belongs to the HUD, so
+moving, resizing or zooming the map does not move it. It is saved per
+driver profile.
+
 ## 0.10.19
 
 The HUD map's edge fade is gone, and its corners are rounded again.

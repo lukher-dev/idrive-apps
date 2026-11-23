@@ -45,6 +45,7 @@ static cld::Config conf()
     c.define("hud_clear_w", "220");
     c.define("hud_clear_h", "90");
     c.define("hud_near_m", "1000");
+    c.define("hud_vignette", "2");
     return c;
 }
 
@@ -62,12 +63,12 @@ int main()
     unlink(path.c_str());
     cld::Config c = conf();
     load_map_state(&c, path);
-    ok("no state file: the configuration's", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000");
+    ok("no state file: the configuration's", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud = 1\ncluster = 0\nhud_width_pct = 85\nhud_offset_x = -40\nhud_offset_y = 800\n"
                            "hud_keep_shown = 1\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the state file's, over the configuration's", settings(c) == "0 1 85 -40 800 1 0 100 1 110 320 220 90 1000");
+    ok("the state file's, over the configuration's", settings(c) == "0 1 85 -40 800 1 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "cluster = 2\nhud = 1\nhud_width_pct = 10\n\nhud_offset_x = 900\nhud_offset_y = -20\n"
                            "hud_fps = 30\ntarget = panel\ngarbage\nhud = yes\nhud_keep_shown = 2\n";
     c = conf();
@@ -75,68 +76,80 @@ int main()
     c.define("target", "map");
     load_map_state(&c, path);
     ok("out of range, another key or a line that does not read: left out, the rest taken",
-       settings(c) == "1 1 60 0 -20 0 0 100 1 110 320 220 90 1000" && c.str("hud_fps") == "10" && c.str("target") == "map");
+       settings(c) == "1 1 60 0 -20 0 0 100 1 110 320 220 90 1000 2" && c.str("hud_fps") == "10" && c.str("target") == "map");
     std::ofstream(path) << "hud_width_pct = 0\nhud_offset_x = 1x\nhud_offset_y = \ncluster =1\n";
     c = conf();
     load_map_state(&c, path);
-    ok("Standard (0) taken; a number with more after it, or none, left out", settings(c) == "1 0 0 0 0 0 0 100 1 110 320 220 90 1000");
+    ok("Standard (0) taken; a number with more after it, or none, left out", settings(c) == "1 0 0 0 0 0 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud_near_turn = 1\nhud_zoom_pct = 150\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the HUD map near turns and its zoom from the state file", settings(c) == "1 0 60 0 0 0 1 150 1 110 320 220 90 1000");
+    ok("the HUD map near turns and its zoom from the state file", settings(c) == "1 0 60 0 0 0 1 150 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud_zoom_pct = 250\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the widest zoom taken", settings(c) == "1 0 60 0 0 0 0 250 1 110 320 220 90 1000");
+    ok("the widest zoom taken", settings(c) == "1 0 60 0 0 0 0 250 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud_near_turn = 2\nhud_zoom_pct = 260\nhud_zoom_pct = 99\nhud_zoom_pct = 1\n";
     c = conf();
     load_map_state(&c, path);
-    ok("near turns other than 0 or 1, a zoom outside 100-250: left out", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000");
+    ok("near turns other than 0 or 1, a zoom outside 100-250: left out", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud_width_pct = 135\nhud_clear = 0\nhud_clear_x = 0\nhud_clear_y = 479\n"
                            "hud_clear_w = 800\nhud_clear_h = 10\n";
     c = conf();
     load_map_state(&c, path);
     ok("the widest HUD map and the speed patch off, at its far ends, from the state file",
-       settings(c) == "1 0 135 0 0 0 0 100 0 0 479 800 10 1000");
+       settings(c) == "1 0 135 0 0 0 0 100 0 0 479 800 10 1000 2");
     std::ofstream(path) << "hud_width_pct = 60\nhud_clear = 1\nhud_clear_x = 799\nhud_clear_y = 0\n"
                            "hud_clear_w = 10\nhud_clear_h = 480\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the speed patch at its other ends", settings(c) == "1 0 60 0 0 0 0 100 1 799 0 10 480 1000");
+    ok("the speed patch at its other ends", settings(c) == "1 0 60 0 0 0 0 100 1 799 0 10 480 1000 2");
     std::ofstream(path) << "hud_width_pct = 136\nhud_clear = 2\nhud_clear_x = 800\n"
                            "hud_clear_y = 480\nhud_clear_y = -1\nhud_clear_w = 9\nhud_clear_w = 801\nhud_clear_h = 9\n"
                            "hud_clear_h = 481\n";
     c = conf();
     load_map_state(&c, path);
     ok("a HUD map wider than 135 %, a speed patch out of the scene: left out",
-       settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000");
+       settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud_near_turn = 1\nhud_near_m = 200\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the nearest distance before a turn, 200 m, from the state file", settings(c) == "1 0 60 0 0 0 1 100 1 110 320 220 90 200");
+    ok("the nearest distance before a turn, 200 m, from the state file", settings(c) == "1 0 60 0 0 0 1 100 1 110 320 220 90 200 2");
     std::ofstream(path) << "hud_near_m = 2000\n";
     c = conf();
     load_map_state(&c, path);
-    ok("the farthest, 2000 m, taken", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 2000");
+    ok("the farthest, 2000 m, taken", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 2000 2");
     std::ofstream(path) << "hud_near_m = 1100\n";
     c = conf();
     load_map_state(&c, path);
-    ok("a whole number between the app's steps, 1100 m, taken", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1100");
+    ok("a whole number between the app's steps, 1100 m, taken", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1100 2");
     std::ofstream(path) << "hud_near_m = 199\nhud_near_m = 2001\nhud_near_m = 0\nhud_near_m = -400\n";
     c = conf();
     load_map_state(&c, path);
-    ok("a distance outside 200-2000 m: left out", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000");
+    ok("a distance outside 200-2000 m: left out", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
+    std::ofstream(path) << "hud_vignette = 0\n";
+    c = conf();
+    load_map_state(&c, path);
+    ok("no vignette (0) from the state file", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 0");
+    std::ofstream(path) << "hud_vignette = 5\n";
+    c = conf();
+    load_map_state(&c, path);
+    ok("the strongest vignette, 5, taken", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 5");
+    std::ofstream(path) << "hud_vignette = 6\nhud_vignette = -1\nhud_vignette = 2.5\nhud_vignette = x\n";
+    c = conf();
+    load_map_state(&c, path);
+    ok("a vignette outside 0-5 or not a whole number: left out", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
     std::ofstream(path) << "hud = 1\nhud_zoom_pct = 120\nhud_edge_fade_px = 12\nhud_clear = 0\n";
     c = conf();
     load_map_state(&c, path);
     ok("an earlier version's hud_edge_fade_px: left out, the lines around it taken",
-       settings(c) == "1 1 60 0 0 0 0 120 0 110 320 220 90 1000" && !c.has("hud_edge_fade_px"));
+       settings(c) == "1 1 60 0 0 0 0 120 0 110 320 220 90 1000 2" && !c.has("hud_edge_fade_px"));
     std::ofstream(path) << "hud = 1\n";
     chmod(path.c_str(), 0);
     if (access(path.c_str(), R_OK) != 0) {   /* root reads it anyway */
         c = conf();
         load_map_state(&c, path);
-        ok("a state file that cannot be read: the configuration's", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000");
+        ok("a state file that cannot be read: the configuration's", settings(c) == "1 0 60 0 0 0 0 100 1 110 320 220 90 1000 2");
     }
     unlink(path.c_str());
     std::ifstream shipped("waze-on-cluster.conf");
