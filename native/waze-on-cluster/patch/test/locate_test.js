@@ -81,6 +81,21 @@ function writeShowUi(b, at, which, cut) {
     if (which !== 'call') Buffer.from(m.strBytes, 'hex').copy(b, at.showStr);
     if (which !== 'str') call.slice(0, cut === undefined ? call.length : cut).copy(b, at.showCall);
 }
+/* A copy of `b` (the ShowUI URL edit stock in it) with the edit in form
+ * `name` as this version writes it: that form's bytes over the start of the
+ * log text, the stock text after them, the call site loading the URL;
+ * 'stock' leaves it stock. */
+function showForm(b, at, name) {
+    var out = Buffer.from(b);
+    if (name === 'stock') return out;
+    var f = locator.SHOWUI_FORMS.filter(function (x) { return x.name === name; })[0];
+    f.bytes.copy(out, at.showStr);
+    Buffer.from(locator.locate(b).showui.callBytes, 'hex').copy(out, at.showCall);
+    return out;
+}
+var SHOW_NAMES = ['stock', 'eta', 'map-eta', 'map'];
+var SHOW_URLS = { stock: 'maps:/car/instrumentcluster', eta: 'maps:/car/instrumentcluster?showETA=yes',
+    'map-eta': 'maps:/car/instrumentcluster/map?showETA=yes', map: 'maps:/car/instrumentcluster/map' };
 function reasons(loc) { return ['variant', 'sink', 'selfstart', 'res'].filter(function (e) { return !loc[e].ok; }).map(function (e) { return loc[e].reason; }); }
 
 var SHIFTED = { pad: 0x123, codeVa: 0x7a000, dataVa: 0x1234000, dataAt: 0x2800, highViaJne: true, midFirst: true };
@@ -177,6 +192,52 @@ ok('the shifted build moves every site', ['slot', 'sink', 'call', 'mm'].every(fu
     ok('slot 7 set to slot 10\'s value: found', locator.locate(b).variant.ok);
 })();
 
+/* The ShowUI URL forms (PATCH.md, Edit 6): the arrival-time card, and the
+ * map without turn cards with and without it. Each is found at the same
+ * sites, its URL after `ShowUI(` and the stock text after its URL, the call
+ * site's bytes the same in every form. A write from any form, or the stock
+ * text, to any other, cut short at any byte of the 68-byte window, reads as
+ * the form the window then holds, else as mixed. */
+(function () {
+    var s = synthetic.build(SHIFTED), at = s.at, base = locator.locate(s.buf).showui;
+    ok('ShowUI URL forms: eta, map-eta and map with their URLs, in a 68-byte window of the log text',
+        json(locator.SHOWUI_FORMS.map(function (f) { return [f.name, f.url, f.len]; })) ===
+            json([['eta', SHOW_URLS.eta, 64], ['map-eta', SHOW_URLS['map-eta'], 68], ['map', SHOW_URLS.map, 56]]) &&
+        base.len === 68 && json(base.forms.map(function (f) { return [f.name, f.url]; })) === json(SHOW_NAMES.slice(1).map(function (n) { return [n, SHOW_URLS[n]]; })) &&
+        base.form === null && locator.SHOWUI_URL === SHOW_URLS.eta, json(base));
+    locator.SHOWUI_FORMS.forEach(function (f) {
+        var b = showForm(s.buf, at, f.name), loc = locator.locate(b), m = loc.showui;
+        var toUrl = (at.showStr + 24 - 0x2800 + 0x1234000) - (at.showCall + 10 + 0x7a000);
+        ok('ShowUI URL form ' + f.name + ': found at the same sites, that form, its URL after `ShowUI(` with the stock text after it, the lea at the URL',
+            loc.ok && json(showSites(loc)) === json(showExpected(at)) && showIs(m) === 'patched/patched' && m.form === f.name && m.url === at.showStr + 24 &&
+            b.toString('latin1', at.showStr, at.showStr + f.len) === 'mCinemoCarPlay->ShowUI(\0' + SHOW_URLS[f.name] + '\0' &&
+            b.slice(at.showStr + f.len, at.showStr + 68).equals(s.buf.slice(at.showStr + f.len, at.showStr + 68)) &&
+            b.toString('hex', at.showCall, at.showCall + 11) === base.callBytes && b.readInt32LE(at.showCall + 6) === toUrl, json(m));
+    });
+    var wins = {};
+    SHOW_NAMES.forEach(function (n) { wins[n] = showForm(s.buf, at, n).slice(at.showStr, at.showStr + 68); });
+    function holds(win) { return SHOW_NAMES.filter(function (n) { return win.equals(wins[n]); })[0] || 'mixed'; }
+    SHOW_NAMES.forEach(function (from) {
+        SHOW_NAMES.forEach(function (to) {
+            if (from === to) return;
+            var bad = [];
+            for (var k = 1; k < 68; k++) {
+                var b = showForm(s.buf, at, from);
+                wins[to].copy(b, at.showStr, 0, k);
+                var m = locator.locate(b).showui, want = holds(b.slice(at.showStr, at.showStr + 68));
+                var got = !m.ok ? m.reason : m.strIs === 'patched' ? m.form : m.strIs;
+                if (got !== want) bad.push(k + ': ' + got + ', want ' + want);
+            }
+            ok('ShowUI log text written from ' + from + ' to ' + to + ', cut short at each byte: the form it then holds, else mixed', !bad.length, bad.join('; '));
+        });
+    });
+    /* the window as an earlier release restores it (64 bytes) over the longest form */
+    var b = showForm(s.buf, at, 'map-eta');
+    s.buf.copy(b, at.showStr, at.showStr, at.showStr + 64);
+    var m = locator.locate(b).showui;
+    ok('the longest form with only its first 64 bytes restored: mixed', m.ok && showIs(m) === 'mixed/patched' && m.form === null, json(m));
+})();
+
 /* A signature found twice is ambiguous. */
 [['two sink URL slots', { twoSinks: true }, 'sink: URL slot found 2 times'],
  ['a second converter switch outside codingToInternal', { twoConverters: true }, 'variant: converter switch also outside codingToInternal']].forEach(function (t) {
@@ -212,6 +273,8 @@ ok('the shifted build moves every site', ['slot', 'sink', 'call', 'mm'].every(fu
     ['the build adds carplay.conf\'s options itself', { setShowUi: true }, 'ShowUI URL: not applicable (the build adds carplay.conf\'s SHOW_UI_OPTIONS to it)'],
     ['the log text loaded twice', { showReadTwice: true }, 'ShowUI URL: log text loaded 2 times (want once, in requestStream)'],
     ['a data pointer into the log text', { pointShow: true }, 'ShowUI URL: a data pointer into the log text'],
+    ['a string merged into the log text at byte 66, inside the longest form', { showLoadAt: 66 }, 'ShowUI URL: another string inside the log text'],
+    ['a data pointer into the log text at byte 66, inside the longest form', { pointShow: 66 }, 'ShowUI URL: a data pointer into the log text'],
     ['a dynamic relocation over the call site', { relocShow: true }, 'ShowUI URL: a dynamic relocation over the edit'],
     ['two getters of the URL global', { twoAltGetters: true }, 'ShowUI URL: URL getter found 2 times'],
     ['the getter calls a function', { altGetterCalls: true }, 'ShowUI URL: URL getter not found'],
@@ -225,6 +288,10 @@ ok('the shifted build moves every site', ['slot', 'sink', 'call', 'mm'].every(fu
     var loc = locator.locate(synthetic.build(t[1]).buf);
     ok('ShowUI URL (' + t[0] + '): ' + t[2], loc.ok && loc.mapurl.ok && !loc.showui.ok && loc.showui.reason === t[2] && !!loc.showui.na === /not applicable/.test(t[2]),
         json([reasons(loc), loc.showui]));
+});
+[['a string loaded', { showLoadAt: 68 }], ['a data pointer', { pointShow: 68 }]].forEach(function (t) {
+    var loc = locator.locate(synthetic.build(t[1]).buf);
+    ok('ShowUI URL (' + t[0] + ' at byte 68 of the log text, past the longest form): found', loc.ok && loc.showui.ok && showIs(loc.showui) === 'stock/stock', json(loc.showui));
 });
 (function () {
     var s = synthetic.build({}), b = Buffer.from(s.buf);
@@ -315,7 +382,7 @@ try {
         /^showui:\s+PATCHED \(ShowUI asks the phone for maps:\/car\/instrumentcluster\?showETA=yes, with the arrival-time card\)$/m.test(r.out), r.out);
     ok('apply high: the backup is the original', fs.readFileSync(tgt + '.woc-orig').equals(orig));
     r = run(['verify', '--target', tgt]);
-    ok('verify: enabled', r.code === 0 && /OK: variant IC_HIGH, sink udp:\/\/127\.0\.0\.1:20557\?mime_type=video\/H264, self-start on, res 1088x480, map URL on, ShowUI URL with ETA$/m.test(r.out), r.out);
+    ok('verify: enabled', r.code === 0 && /OK: variant IC_HIGH, sink udp:\/\/127\.0\.0\.1:20557\?mime_type=video\/H264, self-start on, res 1088x480, map URL on, ShowUI URL maps:\/car\/instrumentcluster\?showETA=yes$/m.test(r.out), r.out);
     r = run(['apply', '--target', tgt, '--panel', 'mid', '--yes']);
     b = fs.readFileSync(tgt);
     ok('apply mid: the stock geometry back from the backup, the stock sink', r.code === 0 && /resolution -> stock 1600x800/.test(r.out) &&
@@ -403,6 +470,66 @@ try {
         ok('the ' + f[0] + ' spare string with the ' + f[1] + ' lea: revert writes the whole backup', r.code === 0 && fs.readFileSync(tgt).equals(orig), r.out);
     });
 
+    /* The turn cards and the arrival-time card (--turns, --eta): apply
+     * writes the ShowUI URL form the two choose over the edit in any form,
+     * or leaves it stock (turn cards on, arrival time off), changing only
+     * the ShowUI URL's sites; status and verify name the URL; revert
+     * restores the original from each form. */
+    r = run(['apply', '--target', tgt, '--panel', 'high', '--turns', 'yes', '--eta', 'no', '--unproven', '--yes']);
+    var noShowUi = fs.readFileSync(tgt);
+    ok('--turns yes --eta no: every edit but the ShowUI URL\'s', r.code === 0 && !/ShowUI URL ->/.test(r.out) && /map URL ->/.test(r.out) &&
+        noShowUi.slice(at.showStr, at.showStr + 68).equals(orig.slice(at.showStr, at.showStr + 68)) &&
+        noShowUi.slice(at.showCall, at.showCall + 11).equals(orig.slice(at.showCall, at.showCall + 11)), r.out);
+    var CHOICES = [['yes', 'yes', 'eta'], ['yes', 'no', 'stock'], ['no', 'yes', 'map-eta'], ['no', 'no', 'map']];
+    var STATUS = {
+        stock: 'ORIGINAL (ShowUI asks the phone for maps:/car/instrumentcluster)',
+        eta: 'PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster?showETA=yes, with the arrival-time card)',
+        'map-eta': 'PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster/map?showETA=yes, without turn cards, with the arrival-time card)',
+        map: 'PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster/map, without turn cards)',
+    };
+    function inShowSites(x) { return (x >= at.showStr && x < at.showStr + 68) || (x >= at.showCall && x < at.showCall + 11); }
+    function diffs(a, c) { var d = []; for (var i = 0; i < a.length; i++) if (a[i] !== c[i]) d.push(i); return d; }
+    CHOICES.forEach(function (x) {
+        CHOICES.forEach(function (y) {
+            var from = showForm(noShowUi, at, x[2]), want = showForm(noShowUi, at, y[2]);
+            fs.writeFileSync(tgt, from);
+            r = run(['apply', '--target', tgt, '--panel', 'high', '--turns', y[0], '--eta', y[1], '--yes']);
+            b = fs.readFileSync(tgt);
+            var said = x[2] === y[2] ? /nothing to do/.test(r.out) : r.out.indexOf('ShowUI URL -> ' + (y[2] === 'stock' ? 'stock' : SHOW_URLS[y[2]]) + '\n') >= 0 &&
+                !/variant ->|self-start ->|resolution ->|sink ->|map URL ->/.test(r.out);
+            ok('ShowUI URL ' + x[2] + ', apply --turns ' + y[0] + ' --eta ' + y[1] + ': ' + y[2] + ', only the ShowUI URL\'s sites changed', r.code === 0 && said &&
+                b.equals(want) && diffs(from, b).every(inShowSites), r.out);
+        });
+    });
+    SHOW_NAMES.forEach(function (n) {
+        fs.writeFileSync(tgt, showForm(noShowUi, at, n));
+        r = run(['status', '--target', tgt]);
+        ok('ShowUI URL ' + n + ': status names its URL', r.out.indexOf('\nshowui:    ' + STATUS[n] + '\n') >= 0 && /known:\s+yes, modified build/.test(r.out), r.out);
+        r = run(['verify', '--target', tgt]);
+        ok('ShowUI URL ' + n + ': verify names its URL', r.code === 0 && r.out.indexOf(', map URL on, ShowUI URL ' + (n === 'stock' ? 'stock' : SHOW_URLS[n]) + '\n') >= 0, r.out);
+        r = run(['revert', '--target', tgt, '--yes']);
+        ok('ShowUI URL ' + n + ': revert restores the original byte-exact, region-wise', r.code === 0 && fs.readFileSync(tgt).equals(orig) &&
+            /restored OK/.test(r.out) && /the edited regions of/.test(r.out), r.out);
+    });
+    /* The longest form with only the first 64 bytes of its log text stock
+     * again (an earlier release's window): partly patched; apply refuses,
+     * revert writes the whole backup. */
+    b = showForm(noShowUi, at, 'map-eta');
+    orig.copy(b, at.showStr, at.showStr, at.showStr + 64);
+    fs.writeFileSync(tgt, b);
+    r = run(['status', '--target', tgt]);
+    ok('ShowUI URL map-eta, its first 64 bytes stock: not known, restorable', /^showui:\s+UNKNOWN \(ShowUI URL: partly patched\)$/m.test(r.out) &&
+        /^restorable:\s+yes$/m.test(r.out), r.out);
+    r = run(['apply', '--target', tgt, '--panel', 'high', '--turns', 'no', '--yes']);
+    ok('ShowUI URL map-eta, its first 64 bytes stock: apply refuses, no write', r.code !== 0 && /refusing: ShowUI URL: partly patched/.test(r.out) &&
+        fs.readFileSync(tgt).equals(b), r.out);
+    r = run(['revert', '--target', tgt, '--yes']);
+    ok('ShowUI URL map-eta, its first 64 bytes stock: revert writes the whole backup', r.code === 0 && fs.readFileSync(tgt).equals(orig) &&
+        !/the edited regions of/.test(r.out), r.out);
+    /* --turns takes yes or no. */
+    r = run(['apply', '--target', tgt, '--panel', 'high', '--turns', 'maybe', '--yes']);
+    ok('--turns maybe: refused, no write', r.code !== 0 && /--turns needs yes or no/.test(r.out) && fs.readFileSync(tgt).equals(orig), r.out);
+
     /* The map URL edit written, then the target changed so the locator no
      * longer finds it there (its gate byte): revert still restores its
      * sites from the backup, and keeps that change. */
@@ -427,6 +554,19 @@ try {
     r = run(['revert', '--target', tgt, '--yes']);
     gated = Buffer.from(orig); gated[movEdi + 1] = 0xc6;
     ok('ShowUI URL no longer found in the target: revert restores its sites, the other change kept', r.code === 0 && fs.readFileSync(tgt).equals(gated), r.out);
+    ['map-eta', 'map'].forEach(function (n) {
+        fs.writeFileSync(tgt, orig);
+        run(['apply', '--target', tgt, '--panel', 'high', '--turns', 'no', '--eta', n === 'map' ? 'no' : 'yes', '--unproven', '--yes']);
+        b = fs.readFileSync(tgt);
+        var held = b.slice(at.showStr, at.showStr + 68).equals(showForm(orig, at, n).slice(at.showStr, at.showStr + 68));
+        b[movEdi + 1] = 0xc6;
+        fs.writeFileSync(tgt, b);
+        r = run(['status', '--target', tgt]);
+        var notFound = /^showui:\s+NOT APPLIED/m.test(r.out);
+        r = run(['revert', '--target', tgt, '--yes']);
+        ok('ShowUI URL ' + n + ' no longer found in the target: revert restores its sites, the other change kept', held && notFound && r.code === 0 &&
+            fs.readFileSync(tgt).equals(gated), r.out);
+    });
     fs.writeFileSync(tgt, orig);
     [tgt + '.woc-orig', tgt + '.woc-orig.json'].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
 
@@ -514,9 +654,9 @@ try {
     for (var k = 0; k < 600; k++) far[0x300 + k] ^= 0xff;
     fs.writeFileSync(tgt, far);
     r = run(['status', '--target', tgt]);
-    ok('no build-id: a binary hundreds of bytes away is another build', /^restorable: no \(another build: no build-id, and more than 474 bytes differ\)$/m.test(r.out), r.out);
+    ok('no build-id: a binary hundreds of bytes away is another build', /^restorable: no \(another build: no build-id, and more than 482 bytes differ\)$/m.test(r.out), r.out);
     r = run(['revert', '--target', tgt, '--yes']);
-    ok('no build-id: revert refuses it without --force, saying why', r.code !== 0 && /another build than the backup \(no build-id, and more than 474 bytes differ\)/.test(r.out) &&
+    ok('no build-id: revert refuses it without --force, saying why', r.code !== 0 && /another build than the backup \(no build-id, and more than 482 bytes differ\)/.test(r.out) &&
         fs.readFileSync(tgt).equals(far), r.out);
 
     /* A backup an older release left without its record, cut short: never
@@ -569,11 +709,46 @@ try {
     cp.execFileSync('rm', ['-rf', dir]);
 }
 
+/* The patch record across the ShowUI URL forms, as for a proven build on a
+ * car coded 7 (patch_test.js runs the same through apply and revert on
+ * carplay 22.28.3): a healthy run proves the form it ran with, so writing
+ * another form over it, or over the stock URL that ran, is on trial, as an
+ * apply that adds the arrival-time card is; leaving the URL stock is not.
+ * A revert of a patch that ran healthy records the URL of its form, which
+ * the next apply of that form takes as proven. */
+(function () {
+    var cpp = require('../carplay_patch.js'), s = synthetic.build({}), cd = { variant: 7 }, RAN = { patched: true, proven: true };
+    var PROVEN = json({ patched: true, proven: true }), TRIAL = json({ patched: true, proven: false, trial: true });
+    function cls(n) { return cpp.classify(showForm(s.buf, s.at, n)); }
+    function writes(n) { return { mapurl: false, showui: n === 'stock' ? false : SHOW_URLS[n], res: null }; }
+    var bad = [];
+    SHOW_NAMES.forEach(function (held) {
+        SHOW_NAMES.forEach(function (w) {
+            var got = json(cpp.applyRecord(RAN, true, cd, cls(held), writes(w))), want = w === 'stock' || w === held ? PROVEN : TRIAL;
+            if (got !== want) bad.push(held + ' -> ' + w + ': ' + got);
+        });
+    });
+    ok('record: over a patch that ran healthy, the form it ran with or the stock URL proven, another form on trial', !bad.length, bad.join('; '));
+    bad = [];
+    SHOW_NAMES.forEach(function (held) {
+        var rev = cpp.revertRecord(RAN, cls(held));
+        if (json(rev) !== json({ patched: false, healthy: true, mapurl: false, showui: held === 'stock' ? false : SHOW_URLS[held], res: false })) bad.push(held + ': ' + json(rev));
+        SHOW_NAMES.forEach(function (w) {
+            var got = json(cpp.applyRecord(rev, true, cd, cls('stock'), writes(w))), want = w === 'stock' || w === held ? PROVEN : TRIAL;
+            if (got !== want) bad.push(held + ' reverted -> ' + w + ': ' + got);
+        });
+    });
+    ok('record: a revert of a healthy patch records its form\'s URL, the next apply of that form proven, another on trial', !bad.length, bad.join('; '));
+    var older = json(cpp.applyRecord({ patched: false, healthy: true, mapurl: false, showui: SHOW_URLS.eta, res: false }, true, cd, cls('stock'), writes('eta')));
+    ok('record: an earlier release\'s revert record of the URL with the arrival-time card proves that form', older === PROVEN, older);
+})();
+
 /* carplay 22.28.3's stock bytes of the map URL sites, for a revert without
  * the backup: the log string at 0x257838 and the lea rsi at 0x7b533 loading
  * "" (0x294793; file offset is the address there); and of the ShowUI URL
- * sites: the log text at 0x2908a0 and, at 0x18188a, the call to the URL
- * getter at 0x1fe5e0, mov rdi,r12, mov rsi,[rax]. */
+ * sites: the first 68 bytes of the log text at 0x2908a0 (the longest
+ * form's window; the synthetic build holds the same text) and, at 0x18188a,
+ * the call to the URL getter at 0x1fe5e0, mov rdi,r12, mov rsi,[rax]. */
 (function () {
     var p = require('../carplay_patch.js').PROVEN['5de62156575d737391ea42254e778a97dbbb51f8'];
     var lea = Buffer.from('488d3500000000', 'hex'); lea.writeInt32LE(0x294793 - (0x7b533 + 7), 3);
@@ -582,7 +757,8 @@ try {
         return x[0] === 0x257838 && x[1] === Buffer.from('Head-Unit does not support Alternate Displays feature.\0', 'latin1').toString('hex'); }) &&
         p.stock.some(function (x) { return x[0] === 0x7b533 && x[1] === lea.toString('hex'); }), json(p.stock));
     ok('carplay 22.28.3: the ShowUI URL sites\' stock bytes on its stock list', p.stock.some(function (x) {
-        return x[0] === 0x2908a0 && x[1] === Buffer.from('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::a', 'latin1').toString('hex'); }) &&
+        return x[0] === 0x2908a0 && x[1] === Buffer.from('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::alter', 'latin1').toString('hex') &&
+            x[1] === plain.buf.toString('hex', plain.at.showStr, plain.at.showStr + 68); }) &&
         p.stock.some(function (x) { return x[0] === 0x18188a && x[1] === call.toString('hex'); }), json(p.stock));
 })();
 
@@ -613,7 +789,7 @@ if (fs.existsSync(SRC)) {
         json(loc.mapurl.forms.map(function (f) { return [f.name, f.leaBytes]; })) === json([['current', '488d3515c31d00'], ['eta', '488d3509c31d00']]) &&
         mapIs(loc.mapurl) === 'stock/stock', json(loc.mapurl));
     /* the URL at 0x2908b8: lea rsi at 0x18188d, next 0x181894 */
-    ok('reference build: the documented ShowUI URL sites', loc.showui.ok && loc.showui.str === 0x2908a0 && loc.showui.len === 64 && loc.showui.call === 0x18188a &&
+    ok('reference build: the documented ShowUI URL sites', loc.showui.ok && loc.showui.str === 0x2908a0 && loc.showui.len === 68 && loc.showui.call === 0x18188a &&
         loc.showui.callLen === 11 && loc.showui.url === 0x2908b8 && loc.showui.getter === 0x1fe5e0 && loc.showui.requestStream === 0x181810 &&
         loc.showui.callStock === 'e851cd07004c89e7488b30' && loc.showui.callBytes === '4c89e7488d3524f0100090' &&
         showIs(loc.showui) === 'stock/stock', json(loc.showui));

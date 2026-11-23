@@ -404,7 +404,7 @@ the backup's map URL sites wherever the target holds either form's bytes
 there, even when another change keeps the locator from finding the edit in
 the target. Every
 mode and both panels apply it. An apply over a patch without it (an earlier
-release's) adds these sites, and Edit 6's where they are stock; `verify`
+release's) adds these sites, and Edit 6's as its choices ask; `verify`
 calls such a patch complete, since the map still comes with a route.
 
 On carplay 21.27.4 `probe` says whether Edit 5 is found; neither of its
@@ -414,16 +414,39 @@ sites is on that build's `stock` list.
 
 When CarPlay starts the cluster stream, `requestStream` (Edit 3) sends the
 phone `ShowUI(url, uuid)` with the cluster display's URL,
-`maps:/car/instrumentcluster`. Edit 6 sends
-`maps:/car/instrumentcluster?showETA=yes`: the root path, so the phone keeps
-its full cluster page, and `showETA=yes`, which asks for the arrival-time
-card during a route: Google Maps draws an ETA line on the cluster map and
-Apple Maps an arrival pill; Waze ignores it. No other option is set:
-`showSpeedLimit` would draw a second speed-limit sign beside BMW's. Newer
-BMW CarPlay builds send the same option themselves: carplay 23.12.3's
-`AlternateDisplays::setShowUiUrl()` appends `?` and carplay.conf's
+`maps:/car/instrumentcluster`. Edit 6 sends another URL, picked by two
+choices: the arrival-time card (`apply --eta`, patchd's `carplay-eta`) and
+the turn cards (`apply --turns`, patchd's `carplay-turns`):
+
+| `--turns` | `--eta` | ShowUI URL | log text window (68 B) |
+|---|---|---|---|
+| yes | yes | `maps:/car/instrumentcluster?showETA=yes` | `mCinemoCarPlay->ShowUI(\0maps:/car/instrumentcluster?showETA=yes\0lter` |
+| yes | no | stock, `maps:/car/instrumentcluster` | stock |
+| no | yes | `maps:/car/instrumentcluster/map?showETA=yes` | `mCinemoCarPlay->ShowUI(\0maps:/car/instrumentcluster/map?showETA=yes\0` |
+| no | no | `maps:/car/instrumentcluster/map` | `mCinemoCarPlay->ShowUI(\0maps:/car/instrumentcluster/map\0itory::alter` |
+
+By default `apply` takes `--turns yes --eta yes`, which writes the same
+bytes as every earlier release with Edit 6. patchd passes the owner's
+choices: the turn cards on and the arrival-time card off until changed.
+
+The root path keeps the phone's full cluster page, turn card included. `showETA=yes` asks for
+the arrival-time card during a route: Google Maps draws an ETA line on the
+cluster map and Apple Maps an arrival pill; Waze ignores it. No other
+option is set: `showSpeedLimit` would draw a second speed-limit sign beside
+BMW's. Newer BMW CarPlay builds send the same option themselves: carplay
+23.12.3's `AlternateDisplays::setShowUiUrl()` appends `?` and carplay.conf's
 `SHOW_UI_OPTIONS` (`showCompass=user&showETA=yes&showSpeedLimit=no`) to the
 URL ShowUI sends.
+
+**Without turn cards.** `/map` is the map-content-only cluster page, the
+URL Edit 5 gives the cluster display at connect. On iOS 26.1,
+CarPlaySupport's `CPSInstrumentClusterCardViewController` has
+`initForMapContent` (`_isMapContentOnly`), which leaves out the maneuver
+(turn) card and the paused card but still updates the trip estimates, and
+its `setShowETA:` shows the arrival time on a map-only page whatever the
+card layout. `--turns no` should therefore show the map without the
+phone's turn card, with the arrival-time card under `--eta yes`. This is
+read from iOS and not yet seen on the car.
 
 The URL is a global `std::string` (`0x556ce0`) that a static initializer
 builds from `maps:/car/instrumentcluster` (`0x2a2be4`), read through its
@@ -431,8 +454,8 @@ getter `CarPlayConstantsRepository::alternateDisplayUrl()` (`0x1fe5e0`).
 The getter has two callers: `requestStream`, which hands its `c_str()` to
 ShowUI, and the display configuration CarPlay builds at start (`0x2073d0`,
 in ConfigCollector), which keeps the URL as built. Only the ShowUI call is
-changed. Its URL needs 40 bytes in the file. ShowUI's result is checked
-with the call's own log text, `mCinemoCarPlay->ShowUI(
+changed. Its URL needs up to 44 bytes in the file. ShowUI's result is
+checked with the call's own log text, `mCinemoCarPlay->ShowUI(
 ::carplay::CarPlayConstantsRepository::alternateDisplayUrl().c_str(),
 …alternateDisplayUuid().c_str())` (`0x2908a0`, 165 bytes), read only by
 that check. The edit cuts that text to `mCinemoCarPlay->ShowUI(`, which
@@ -441,29 +464,37 @@ loads the URL in place of calling the getter:
 
 | | offset | stock | patched |
 |---|---|---|---|
-| log text | `0x2908a0` (first 64 B) | `mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::a` | `mCinemoCarPlay->ShowUI(\0maps:/car/instrumentcluster?showETA=yes\0` (URL at `0x2908b8`) |
+| log text | `0x2908a0` (first 68 B) | `mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::alter` | `mCinemoCarPlay->ShowUI(\0<URL>\0`, the stock text after it (URL at `0x2908b8`) |
 | ShowUI's URL | `0x18188a` (11 B) | `e8 51 cd 07 00 4c 89 e7 48 8b 30` → `call 0x1fe5e0 ; mov rdi,r12 ; mov rsi,[rax]` | `4c 89 e7 48 8d 35 24 f0 10 00 90` → `mov rdi,r12 ; lea rsi,[0x2908b8] ; nop` |
 
-The rest of the log text (`lternateDisplayUrl().c_str(), …`) stays in place,
-read by nothing. The getter only returns the global's address, so leaving
-its call out changes nothing else; `rax` is not read before ShowUI's call
-overwrites it. Cinemo's ShowUI (`libNmeCarPlay.so`) turns the URL into a
-string and posts it to the phone as a command without waiting for the
-phone's reply, so its result, and the check that throws on an error (Edit 3,
-"Exception risk"), does not depend on the URL.
+The window is 68 bytes, 24 for `mCinemoCarPlay->ShowUI(` and its NUL plus
+44 for the longest URL and its NUL; earlier releases wrote the first 64.
+The rest of the log text stays in place, read by nothing. Every URL starts
+at the same byte, so the call site's bytes are the same in every form, and
+an apply moves from one form to another by rewriting the window: the
+form's bytes, then the backup's text after them. The getter only returns
+the global's address, so leaving its call out changes nothing else; `rax`
+is not read before ShowUI's call overwrites it. Cinemo's ShowUI
+(`libNmeCarPlay.so`) turns the URL into a string and posts it to the phone
+as a command without waiting for the phone's reply, so its result, and the
+check that throws on an error (Edit 3, "Exception risk"), does not depend
+on the URL.
 
 **Found by** requestStream (Edit 3's "Found by"). Not applicable to a build
 whose name strings include `AlternateDisplays::setShowUiUrl()`: it adds
 carplay.conf's options to the ShowUI URL itself, and `status` shows
 `showui: NOT APPLIED (ShowUI URL: not applicable (…))`; there,
 `SHOW_UI_OPTIONS` in `/etc/carplay.conf` is what to change, and its default
-already asks for the card.
+already asks for the card. Neither choice changes such a build: patchd
+saves and reports the turn cards choice like the other, and `apply` leaves
+the build's ShowUI URL as it is.
 
 - The log text: the one string starting `mCinemoCarPlay->ShowUI(`, reading
   as `mCinemoCarPlay->ShowUI( ::…CarPlayConstantsRepository::alternateDisplayUrl().c_str(), `
-  and more (stock) or as the patched 64 bytes. One `lea`, in requestStream,
-  loads it; nothing else loads any byte of its first 64 but, patched, the
-  call site's `lea` at the URL; no RELA addend points into them.
+  and more (stock) or as one of the forms above (its bytes, with no NUL
+  after them where a longer form ends). One `lea`, in requestStream, loads
+  it; nothing else loads any byte of its first 68 but, patched, the call
+  site's `lea` at the URL; no RELA addend points into them.
 - The URL getter: `maps:/car/instrumentcluster` found once as its own
   string, loaded once, by `lea rsi,[S] ; [mov rdx,r64 ;] lea rdi,[G] ;
   call` building the global G, which no other `lea rdi` builds. The same
@@ -486,21 +517,39 @@ build where it is not found gets the other edits without it, `status` and
 `probe` show `showui: NOT APPLIED (ShowUI URL: <reason>)`, and `patchd`
 reports `mapurl: "map"` for a patch holding Edit 5 alone.
 
-One site patched and the other not, or a site holding the patched bytes up
-to some byte and the stock bytes after it, or the reverse (a write cut
-short; in the log text, a NUL at either of the patched form's NULs, where
-the stock text has none), reads as unrecognised (`ShowUI URL: partly
-patched`): `apply` refuses it and `revert` writes the whole backup. A
-region-wise `revert` also restores the backup's ShowUI URL sites wherever
-the target holds the patched bytes there. Every mode and both panels apply
-it. An apply over a patch without it adds its sites, and Edit 5's where
-they are stock or hold the URL with ETA. `status` shows `showui: ORIGINAL
-(…)` or `PATCHED (…)`, and `verify` `ShowUI URL stock` or `with ETA`.
-`patchd` reports `mapurl: "eta"` when it is in place; `"no-eta"`, for which
-the app shows `Status: Update needed`, when Edit 5 holds the URL with ETA,
-or one of Edits 5 and 6 is in place and the other stock; `"off"` when both
-are stock, as in a patch of a release without Edit 5, which an update's `activate`
-brings up to date.
+One site patched and the other not, or a site holding one form's bytes up
+to some byte and another form's or the stock bytes after it (a write cut
+short; in the log text, a NUL at byte 23, 55, 63 or 67, where a form ends
+and the stock text has none, unless the window holds a form whole with the
+NUL inside it), reads as unrecognised (`ShowUI URL: partly patched`): `apply`
+refuses it and `revert` writes the whole backup. A region-wise `revert`
+also restores the backup's ShowUI URL sites, the whole window, wherever
+the target holds a form's bytes there. Every mode and both panels apply
+it. An apply over a patch without it adds its sites as the choices ask, and
+Edit 5's where they are stock or hold the URL with ETA. `status` names the
+URL:
+
+    showui:    ORIGINAL (ShowUI asks the phone for maps:/car/instrumentcluster)
+    showui:    PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster?showETA=yes, with the arrival-time card)
+    showui:    PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster/map?showETA=yes, without turn cards, with the arrival-time card)
+    showui:    PATCHED (ShowUI asks the phone for maps:/car/instrumentcluster/map, without turn cards)
+
+and `verify` ends `ShowUI URL stock` or `ShowUI URL <URL>`.
+
+`patchd` keeps the choices in `/var/opt/waze-on-cluster/carplay-eta` and
+`carplay-turns` (`on` or `off`), reports them in its status as `eta` and
+`turns`, and applies a patch on disk again as soon as one changes. Its
+`mapurl` says whether the URL edits on disk are what an apply writes for
+those choices: `"eta"` or `"map"` when they are (with or without the
+arrival-time card); `"no-eta"`, for which the app shows `Status: Update
+needed`, when Edit 6 holds another URL than the choices ask for or is
+stock where they ask for one, when Edit 5 holds the URL with ETA, or when
+Edit 5 is stock and Edit 6 is not; `"off"` when both are stock, as in a
+patch of a release without Edit 5, which an update's `activate` brings up
+to date. With the turn cards on these are the values earlier releases
+reported. On a build without Edit 5, the URL with the arrival-time card
+reads `"eta"` while the turn cards are on, whatever the arrival-time
+choice, as before.
 
 carplay 23.12.3 has `setShowUiUrl`, so the edit does not apply there (nor
 do Edits 2–4, whose sites it lacks). On carplay 21.27.4 `probe` says
@@ -697,7 +746,7 @@ same build as the target (size, build-id and every site). The stock geometry
 `revert` needs no locator to trust the backup: its SHA-256 and GNU build-id
 must be the recorded ones (each when recorded). The target is the backup's
 build when both have the same build-id and size, or, when either has no
-build-id, the same size and at most 474 bytes apart (twice the edits'
+build-id, the same size and at most 482 bytes apart (twice the edits'
 bytes). When the locator recognises the target and the backup as the same
 build, `revert` restores only the edits' regions, so another tool's change
 elsewhere stays, and confirms every edit reads original. Otherwise, over
@@ -780,6 +829,13 @@ on restores what is left. What is left is the URL edits alone: the shorter
 log texts, the initial URL of a cluster display that CarPlay, with Edit 1
 reverted, does not offer the phone, and the ShowUI URL of the cluster
 stream that display would carry.
+
+With the turn cards off, this version's Edit 6 holds a URL no earlier
+release writes. 0.10.4 and later read it as partly patched: their boot
+recovery, Remove patch and removal write the whole backup, and their
+activate refuses the file until Remove patch has restored it. Earlier
+releases treat it as they treat this version's Edit 6 with the turn cards
+on (`rollback_test.js`, part 7).
 
 ## Android Auto
 
@@ -1208,8 +1264,8 @@ and a failing patch is not tried again:
   record of the first patch of such a build has `proven: false` and
   `trial: true`, and a revert of a patch that ran healthy records
   `healthy: true` and, in `mapurl` and `showui`, the URLs of that patch's
-  Edits 5 and 6 as this version writes them (`false` for none or another
-  URL; earlier releases wrote `mapurl: true` for Edit 5's URL, the URL
+  Edits 5 and 6 as this version writes them (Edit 6's in whichever form it
+  held; `false` for none or another URL; earlier releases wrote `mapurl: true` for Edit 5's URL, the URL
   with ETA as a string, and no `showui`), and in `res` the geometry Edit 4
   advertised (pixel size, size in mm and safe area, as
   `1088x480/138x61/504x368+286+72`; `false` for the stock one; releases
@@ -1349,7 +1405,10 @@ record write that fails leaves the record as it was. A record saying `proven: tr
 written before trials existed (0.9.4 and earlier), which only proven
 builds got: a car running such a patch is restored at the threshold it
 had, and an update does not lower it. Edits 4–6 are the exception: an
-apply that adds Edit 5 or 6, writes Edit 5's URL over the URL with ETA, or
+apply that adds Edit 5 or 6, writes Edit 5's URL over the URL with ETA,
+writes Edit 6 with a URL other than the one that ran (after a change of
+the turn cards or arrival-time choice; leaving Edit 6 stock never puts a
+patch on trial), or
 writes a geometry of its own other than the one that ran, to a patch that ran healthy
 without them as this version writes them, or after the revert of such a
 patch (a revert record whose `mapurl`, `showui` or `res` is not what this

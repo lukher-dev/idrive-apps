@@ -12,7 +12,7 @@
  *     MAP_CASES: [name, mutate(buf), allowed outcomes of the map URL edit,
  *                 { slotIs, leaIs } expected when found]
  *     SHOWUI_CASES: [name, mutate(buf), allowed outcomes of the ShowUI URL
- *                 edit, { strIs, callIs } expected when found]
+ *                 edit, { strIs, callIs, form (when given) } expected when found]
  *     oldRelease(): [{ name, original, patched }]
  */
 'use strict';
@@ -373,6 +373,11 @@ function writeShow(b, str, call, cut) {
     if (str) SHOW_STR.copy(b, SHOW.str);
     if (call) SHOW_CALL.slice(0, cut === undefined ? 11 : cut).copy(b, SHOW.call);
 }
+/* The ShowUI URL edit in another form (--turns no): its log text and the call site. */
+function writeShowForm(b, name) {
+    Buffer.from(SHOW.forms.filter(function (f) { return f.name === name; })[0].strBytes, 'hex').copy(b, SHOW.str);
+    SHOW_CALL.copy(b, SHOW.call);
+}
 var SHOWUI_CASES = [
     ['the ShowUI URL edit written', function (b) { writeShow(b, true, true); }, ['correct'], { strIs: 'patched', callIs: 'patched' }],
     ['only the ShowUI log text written', function (b) { writeShow(b, true, false); }, ['correct'], { strIs: 'patched', callIs: 'stock' }],
@@ -380,6 +385,11 @@ var SHOWUI_CASES = [
     ['the ShowUI call site cut short after 5 bytes', function (b) { writeShow(b, false, true, 5); }, ['correct'], { strIs: 'stock', callIs: 'mixed' }],
     ['the ShowUI call site, written, its first 4 bytes stock again', function (b) { writeShow(b, true, true); SHOW_STOCK.copy(b, SHOW.call, 0, 4); }, ['correct'], { strIs: 'patched', callIs: 'mixed' }],
     ['the ShowUI log text cut short after 40 bytes', function (b) { SHOW_STR.copy(b, SHOW.str, 0, 40); }, ['correct'], { strIs: 'mixed', callIs: 'stock' }],
+    ['the ShowUI URL edit without turn cards, with the arrival-time card, written', function (b) { writeShowForm(b, 'map-eta'); }, ['correct'],
+        { strIs: 'patched', callIs: 'patched', form: 'map-eta' }],
+    ['the ShowUI URL edit without turn cards written', function (b) { writeShowForm(b, 'map'); }, ['correct'], { strIs: 'patched', callIs: 'patched', form: 'map' }],
+    ['the longest ShowUI URL form with the first 64 bytes of its log text stock', function (b) { writeShowForm(b, 'map-eta'); REF.copy(b, SHOW.str, SHOW.str, SHOW.str + 64); },
+        ['correct'], { strIs: 'mixed', callIs: 'patched' }],
     ['the two movs swapped', function (b) { REF.copy(b, SHOW.call + 5, SHOW.call + 8, SHOW.call + 11); REF.copy(b, SHOW.call + 8, SHOW.call + 5, SHOW.call + 8); },
         ['correct'], { strIs: 'stock', callIs: 'stock' }],
     ['mov rdi from rbx', function (b) { b[SHOW.call + 5] = 0x48; b[SHOW.call + 7] = 0xdf; }, ['correct'], { strIs: 'stock', callIs: 'stock' }],
@@ -388,6 +398,7 @@ var SHOWUI_CASES = [
     }, ['refused'], null, true],
     ['the log text loaded a second time', function (b) { var l = leasIn(REF, VICTIM2)[0]; setRel(b, l.at + 3, l.at + 7, SHOW.str); }, ['refused']],
     ['a string merged into the log text', function (b) { var l = leasIn(REF, VICTIM2)[0]; setRel(b, l.at + 3, l.at + 7, SHOW.str + 40); }, ['refused']],
+    ['a string merged into the log text at byte 66, inside the longest form', function (b) { var l = leasIn(REF, VICTIM2)[0]; setRel(b, l.at + 3, l.at + 7, SHOW.str + 66); }, ['refused']],
     ['ShowUI handed another URL (mShowUiUrl)', function (b) { b.write('mShowUiUrl.c_str(),', SHOW.str + 24, 'latin1'); }, ['refused']],
     ['AlternateDisplays::setShowUiUrl in the build', function (b) {
         return Buffer.concat([b, Buffer.from('\0void carplay::navi_handler::AlternateDisplays::setShowUiUrl()\0', 'latin1')]);
@@ -414,6 +425,7 @@ var SHOWUI_CASES = [
     ['ShowUI\'s result not checked', function (b) { b[SHOW_MOV_EDI + 1] = 0xc6; }, ['refused']],
     ['a jump into the call site', function (b) { b[VICTIM.off] = 0xe9; setRel(b, VICTIM.off + 1, VICTIM.off + 5, SHOW.call + 5); }, ['refused']],
     ['a data pointer into the log text', function (b) { b.writeUInt32LE(vaOf(b, SHOW.str) + 30, firstRela(b) + 16); b.writeUInt32LE(0, firstRela(b) + 20); }, ['refused']],
+    ['a data pointer into the log text at byte 66, inside the longest form', function (b) { b.writeUInt32LE(vaOf(b, SHOW.str) + 66, firstRela(b) + 16); b.writeUInt32LE(0, firstRela(b) + 20); }, ['refused']],
     ['a dynamic relocation over the call site', function (b) { b.writeUInt32LE(vaOf(b, SHOW.call + 2), firstRela(b)); }, ['refused']],
 ];
 

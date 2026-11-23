@@ -14,8 +14,12 @@
  * for the next head-unit start and status says so. Never systemctl
  * restart/stop. Runs the real patchd.js and carplay_patch.js on a temporary
  * copy, with a fake systemctl, mount, recmgr list and /proc/stat, and a dummy
- * process standing in for carplay. Without CARPLAY_BIN it
- * skips.
+ * process standing in for carplay. First, on a synthetic build
+ * (synthetic_carplay.js), with or without CARPLAY_BIN: CarPlay's choices,
+ * the turn cards and the arrival-time card on the cluster (carplay-turns,
+ * carplay-eta), saved, reported, applied at once to a patch on disk, and
+ * the mapurl status for every pair of choices and every form of the URL
+ * edits on disk. The rest needs CARPLAY_BIN and is skipped without it.
  *
  *   node patchd_patch_test.js
  */
@@ -41,8 +45,8 @@ function ok(name, cond, detail) {
     if (!cond) fails++;
 }
 
-if (!fs.existsSync(SRC)) { process.stdout.write('SKIP: set CARPLAY_BIN to a copy of the unit\'s /usr/bin/carplay (carplay 22.28.3)\n'); process.exit(0); }
-var SRCBUF = fs.readFileSync(SRC);
+var HAVE_BIN = fs.existsSync(SRC);
+var SRCBUF = HAVE_BIN ? fs.readFileSync(SRC) : null;
 
 var dir = fs.mkdtempSync(path.join(os.tmpdir(), 'woc-patchd-'));
 var children = [];
@@ -255,9 +259,117 @@ function rebootCmd(cmd) {
 function rebootCount() { return fs.readFileSync(REBOOTS, 'utf8').split('\n').filter(Boolean).length; }
 function slot() { return fs.readFileSync(TGT).slice(SLOT, SLOT + 4).toString('hex'); }
 
+/* CarPlay's choices on a synthetic build, whose patch the Patch button
+ * applies (--unproven): the turn cards on the cluster (carplay-turns, on by
+ * default) and the arrival-time card (carplay-eta, off by default), each
+ * saved in the state folder, reported in status as turns and eta, and
+ * applied at once to a patch on disk with --turns and --eta; and mapurl,
+ * whether the URL edits on disk are the ones the choices want ('eta' and
+ * 'map' when they are, with and without the arrival-time card; 'no-eta',
+ * for which the app offers the Patch button, when not; 'off' for a patch
+ * without them), for every pair of choices and every form of the edits:
+ * the ShowUI URL stock, with the arrival-time card, or without turn cards
+ * with and without it; the map URL stock, this version's, or with ETA; and
+ * on builds without the map URL edit or where the ShowUI URL edit does not
+ * apply. With the stock restart list every change waits for the next
+ * head-unit start (no systemctl call). */
+async function choices() {
+    var synthetic = require('./synthetic_carplay.js'), locator = require('../carplay_locate.js');
+    var s = synthetic.build({}), at = s.at, VAR = path.join(dir, 'var');
+    var TURNS = path.join(VAR, 'carplay-turns'), ETA = path.join(VAR, 'carplay-eta');
+    function clean() {
+        ['.woc-orig', '.woc-orig.json', '.woc-patch.json', '.woc-running', '.woc-running.1', '.woc-running.2'].forEach(function (x) { try { fs.unlinkSync(TGT + x); } catch (e) {} });
+        [TURNS, ETA, path.join(dir, 'sock', 'activation-pending')].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
+        cp.execFileSync('rm', ['-rf', path.join(PROC, '4242')]);
+    }
+    function form(b) { var u = locator.locate(b).showui; return !u.ok ? 'n/a' : u.strIs === 'patched' && u.callIs === 'patched' ? u.form : u.strIs + '/' + u.callIs; }
+    var r;
+    setRecmgr(['HBAdasMgu'], true);
+    clean();
+    fs.writeFileSync(TGT, s.buf, { mode: 0o755 });
+    nextStart();
+    r = await status();
+    ok('choices: by default the turn cards on, the arrival-time card off; a stock build reads original, its URL edits off',
+        r.state === 'original' && r.turns === 'on' && r.eta === 'off' && r.mapurl === 'off', JSON.stringify(r));
+    r = await op({ cmd: 'apply', panel: 'high', mode: 'avb' });
+    nextStart();
+    r = await status();
+    var patched = fs.readFileSync(TGT);
+    ok('choices: the Patch button with the defaults leaves the ShowUI URL stock; patchd reports the map URL alone, as chosen',
+        r.state === 'patched' && r.mapurl === 'map' && form(patched) === 'stock/stock' && locator.locate(patched).mapurl.slotIs === 'current', JSON.stringify(r));
+    /* Each choice changed: saved, and the patch on disk applied again with it. */
+    var STEPS = [['carplay-turns', 0, 'off', 'off', 'map', 'map'], ['carplay-eta', 1, 'off', 'on', 'map-eta', 'eta'],
+        ['carplay-turns', 1, 'on', 'on', 'eta', 'eta'], ['carplay-eta', 0, 'on', 'off', 'stock/stock', 'map']];
+    for (var k = 0; k < STEPS.length; k++) {
+        var t = STEPS[k], file = t[0] === 'carplay-turns' ? TURNS : ETA;
+        r = await op({ cmd: t[0], on: t[1] });
+        var applied = r.carplay === 'deferred' && r.pending === 'apply';
+        nextStart();
+        r = await status();
+        ok('choices: ' + t[0] + ' ' + t[1] + ': saved, applied at once, the ShowUI URL ' + t[4] + ' on disk, turns ' + t[2] + ', eta ' + t[3] + ', mapurl ' + t[5],
+            applied && fs.readFileSync(file, 'utf8') === (t[1] ? 'on' : 'off') + '\n' && r.state === 'patched' && r.turns === t[2] && r.eta === t[3] &&
+            form(fs.readFileSync(TGT)) === t[4] && r.mapurl === t[5], JSON.stringify(r) + ' ' + form(fs.readFileSync(TGT)));
+    }
+    r = await session({ cmd: 'carplay-turns', on: 2 }, function (m) { return m.ev === 'refused'; });
+    ok('choices: carplay-turns with another value refused, nothing saved', r.reason === 'on must be 0 or 1' && fs.readFileSync(TURNS, 'utf8') === 'on\n', JSON.stringify(r));
+    /* Without a patch on disk a choice is saved for the next apply. */
+    fs.writeFileSync(TGT, s.buf);
+    [TGT + '.woc-orig', TGT + '.woc-orig.json'].forEach(function (f) { fs.unlinkSync(f); });
+    nextStart();
+    r = await session({ cmd: 'carplay-turns', on: 0 }, function (m) { return m.ev === 'status' && m.state !== 'busy' && m.turns === 'off'; });
+    ok('choices: carplay-turns with no patch on disk: saved, nothing written', r.state === 'original' && !r.pending && fs.readFileSync(TGT).equals(s.buf) &&
+        fs.readFileSync(TURNS, 'utf8') === 'off\n', JSON.stringify(r));
+
+    /* mapurl: every pair of choices over every form of the edits on disk. */
+    var mu = locator.locate(patched).mapurl, MAP = { stock: s.buf.slice(mu.slot, mu.slot + mu.len) };
+    mu.forms.forEach(function (f) { MAP[f.name] = Buffer.from(f.slotBytes, 'hex'); });
+    function lea(name) { return name === 'stock' ? s.buf.slice(mu.lea, mu.lea + 7) : Buffer.from(mu.forms.filter(function (f) { return f.name === name; })[0].leaBytes, 'hex'); }
+    function withForms(base, b0, map, show) {
+        var b = Buffer.from(base), u = locator.locate(b0).showui;
+        if (map) { MAP[map].copy(b, mu.slot); lea(map).copy(b, mu.lea); }
+        b0.copy(b, u.str, u.str, u.str + u.len); b0.copy(b, u.call, u.call, u.call + u.callLen);
+        if (show !== 'stock') { locator.SHOWUI_FORMS.filter(function (f) { return f.name === show; })[0].bytes.copy(b, u.str); Buffer.from(u.callBytes, 'hex').copy(b, u.call); }
+        return b;
+    }
+    var PAIRS = [['on', 'on'], ['on', 'off'], ['off', 'on'], ['off', 'off']];
+    /* the map URL this version writes: by on-disk ShowUI URL, mapurl for each pair above */
+    var WANT = { stock: ['no-eta', 'map', 'no-eta', 'no-eta'], eta: ['eta', 'no-eta', 'no-eta', 'no-eta'],
+        'map-eta': ['no-eta', 'no-eta', 'eta', 'no-eta'], map: ['no-eta', 'no-eta', 'no-eta', 'map'] };
+    /* a build without the map URL edit: the ShowUI URL alone */
+    var WANT_NO_MAP = { stock: ['off', 'off', 'off', 'off'], eta: ['eta', 'eta', 'no-eta', 'no-eta'],
+        'map-eta': ['no-eta', 'no-eta', 'eta', 'no-eta'], map: ['no-eta', 'no-eta', 'no-eta', 'map'] };
+    var nm = synthetic.build({ gateCmp: 2 }), na = synthetic.build({ setShowUi: true });
+    var CASES = [];
+    ['stock', 'eta', 'map-eta', 'map'].forEach(function (show) {
+        CASES.push(['the map URL this version writes, the ShowUI URL ' + show, withForms(patched, s.buf, 'current', show), WANT[show]]);
+        CASES.push(['the map URL with ETA (0.10.2-0.10.3), the ShowUI URL ' + show, withForms(patched, s.buf, 'eta', show), ['no-eta', 'no-eta', 'no-eta', 'no-eta']]);
+        CASES.push(['the map URL stock, the ShowUI URL ' + show, withForms(patched, s.buf, 'stock', show), show === 'stock' ? ['off', 'off', 'off', 'off'] : ['no-eta', 'no-eta', 'no-eta', 'no-eta']]);
+        CASES.push(['no map URL edit in the build, the ShowUI URL ' + show, withForms(nm.buf, nm.buf, null, show), WANT_NO_MAP[show]]);
+    });
+    var naMu = locator.locate(na.buf).mapurl, naPatched = Buffer.from(na.buf);
+    Buffer.from(naMu.slotBytes, 'hex').copy(naPatched, naMu.slot); Buffer.from(naMu.leaBytes, 'hex').copy(naPatched, naMu.lea);
+    CASES.push(['the ShowUI URL edit not applicable, the map URL this version writes', naPatched, ['map', 'map', 'map', 'map']]);
+    clean();
+    for (var c = 0; c < CASES.length; c++) {
+        fs.writeFileSync(TGT, CASES[c][1]);
+        var got = [];
+        for (var p = 0; p < PAIRS.length; p++) {
+            fs.writeFileSync(TURNS, PAIRS[p][0] + '\n'); fs.writeFileSync(ETA, PAIRS[p][1] + '\n');
+            r = await status();
+            got.push(r.turns === PAIRS[p][0] && r.eta === PAIRS[p][1] ? r.mapurl : 'turns ' + r.turns + ' eta ' + r.eta);
+        }
+        ok('mapurl, ' + CASES[c][0] + ': for turns/eta on/on, on/off, off/on, off/off ' + CASES[c][2].join(' '), JSON.stringify(got) === JSON.stringify(CASES[c][2]), JSON.stringify(got));
+    }
+    clean();
+    try { fs.unlinkSync(TGT); } catch (e) {}
+    newCalls();
+}
+
 async function main() {
     for (var i = 0; i < 200 && !fs.existsSync(SOCK); i++) await sleep(25);
     var r, calls, dummy;
+    await choices();
+    if (!HAVE_BIN) { process.stdout.write('skip the rest: set CARPLAY_BIN to a copy of the unit\'s /usr/bin/carplay (carplay 22.28.3)\n'); return; }
 
     /* Status: patched needs every edit. */
     fs.writeFileSync(TGT, edit12Only());

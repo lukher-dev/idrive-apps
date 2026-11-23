@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+CarPlay: the phone's turn cards on the cluster are a setting, on by
+default. Turned off, CarPlay asks the phone for its map-only cluster page,
+which leaves out the turn card and still shows the arrival-time card when
+that is on. This follows from how iOS draws that page and is not yet
+confirmed on the car.
+
 ## 0.10.19
 
 The HUD map's edge fade is gone, and its corners are rounded again.

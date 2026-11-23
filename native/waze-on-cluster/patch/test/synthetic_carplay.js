@@ -18,8 +18,10 @@
  * with relocSink, relocUrl, pointSpare, relocShow or pointShow, a dynamic
  * relocation over the sink slot, the initial URL's lea or the ShowUI call
  * site, or one storing an address inside the spare string or the ShowUI log
- * text. Code and data sit in two segments whose addresses differ from their
- * file offsets by different amounts.
+ * text (pointShow: true, 30 bytes in, or how many). showLoadAt: a function
+ * loading the ShowUI log text that many bytes in. Code and data sit in two
+ * segments whose addresses differ from their file offsets by different
+ * amounts.
  *
  *   build({ pad, codeVa, dataVa, dataAt, highViaJne, midFirst, twoSinks,
  *           twoConverters, noEhFrame, relocSink, relocUrl, pointSpare,
@@ -27,7 +29,8 @@
  *           urlBuiltTwice, urlFrom, urlCtorOther, noUrlGlobal, noUrlDtor,
  *           showSwapped, showFrom, showRaxRead, showRsiSet, showUnchecked,
  *           showExpr, setShowUi, twoAltGetters, altGetterCalls, altBuiltTwice,
- *           altAlone, showJumpedInto, showReadTwice, relocShow, pointShow })
+ *           altAlone, showJumpedInto, showReadTwice, showLoadAt, relocShow,
+ *           pointShow })
  *     -> { buf, at: the offsets and values the locator should report }
  */
 'use strict';
@@ -119,6 +122,7 @@ function build(o) {
     lea(0x48, 0x15, 's.rsShort'); lea(0x48, 0x35, 's.show'); b(0x89, o.showUnchecked ? 0xc6 : 0xc7); call('check');
     lea(0x48, 0x35, 's.kf'); call('ss'); b(0xc3);
     if (o.showReadTwice) { fn('reader3'); lea(0x48, 0x35, 's.show'); b(0xc3); }
+    if (o.showLoadAt !== undefined) { fn('reader4'); b(0x48, 0x8d, 0x35); fixes.push({ at: pc, next: pc + 4, target: 's.show', size: 4, plus: o.showLoadAt }); pc += 4; b(0xc3); }
     if (o.showJumpedInto) { fn('jumper2'); b(0xe9); rel('rs.showui.mid', 4); }
     fn('osu'); lea(0x48, 0x0d, 's.osu');
     b(0xc7, 0x44, 0x24, 0x08, 0x01, 0x00, 0x00, 0x00, 0x48, 0x83, 0xc0, 0x10, 0x48, 0x89, 0x04, 0x24);
@@ -241,7 +245,7 @@ function build(o) {
     if (o.relocUrl) relas.push({ at: 'sinit.url' });
     if (o.pointSpare) relas.push({ at: 'g.dso', addend: 's.spare', plus: 4 });
     if (o.relocShow) relas.push({ at: 'rs.showui' });
-    if (o.pointShow) relas.push({ at: 'g.dso', addend: 's.show', plus: 30 });
+    if (o.pointShow) relas.push({ at: 'g.dso', addend: 's.show', plus: o.pointShow === true ? 30 : o.pointShow });
     if (relas.length) {
         pd = (pd + 7) & ~7;
         labels.rela = pd;
@@ -261,7 +265,7 @@ function build(o) {
 
     fixes.forEach(function (f) {
         if (f.va) { buf.writeUInt32LE(va(labels[f.va]) + (f.plus || 0), f.at); return; }
-        var v = f.base ? va(labels[f.target]) - va(labels[f.base]) : va(labels[f.target]) - va(f.next);
+        var v = f.base ? va(labels[f.target]) - va(labels[f.base]) : va(labels[f.target]) + (f.plus || 0) - va(f.next);
         if (f.size === 1) buf.writeInt8(v, f.at); else buf.writeInt32LE(v, f.at);
     });
 

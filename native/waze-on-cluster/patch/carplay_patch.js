@@ -50,16 +50,25 @@
  *            that releases 0.10.2-0.10.3 wrote read as `eta`, which an apply
  *            replaces and a revert restores.
  *   showui   the URL the ShowUI command sends the phone when CarPlay starts
- *            the cluster stream: `maps:/car/instrumentcluster` as built,
- *            `maps:/car/instrumentcluster?showETA=yes` patched, so Apple Maps
- *            and Google Maps draw their arrival-time card on the cluster map
- *            during a route. Two sites: the log text of that ShowUI call's
- *            result check, cut to `mCinemoCarPlay->ShowUI(` followed by the
- *            URL, and requestStream's 11 bytes reading the cluster display's
- *            URL for ShowUI, rewritten to load the URL. Applied in every
- *            mode on a build where it is found; a build where it is not, or
- *            one that adds carplay.conf's SHOW_UI_OPTIONS to the URL itself,
- *            gets the other edits without it.
+ *            the cluster stream: `maps:/car/instrumentcluster` as built. Two
+ *            choices pick what is sent instead (PATCH.md, Edit 6):
+ *            --eta yes (the default) asks for the arrival-time card, which
+ *            Apple Maps and Google Maps draw on the cluster map during a
+ *            route, and --turns no (default yes) asks for the map-content-
+ *            only cluster page, which leaves out the turn card:
+ *              --turns yes --eta yes  maps:/car/instrumentcluster?showETA=yes
+ *              --turns yes --eta no   left stock
+ *              --turns no  --eta yes  maps:/car/instrumentcluster/map?showETA=yes
+ *              --turns no  --eta no   maps:/car/instrumentcluster/map
+ *            Two sites: the log text of that ShowUI call's result check,
+ *            cut to `mCinemoCarPlay->ShowUI(` followed by the URL, the
+ *            stock text after it, and requestStream's 11 bytes reading the
+ *            cluster display's URL for ShowUI, rewritten to load the URL
+ *            (the same bytes for every URL). An apply writes the form the
+ *            choices want over any other. Applied in every mode on a build
+ *            where it is found; a build where it is not, or one that adds
+ *            carplay.conf's SHOW_UI_OPTIONS to the URL itself, gets the
+ *            other edits without it, whatever the choices.
  *
  *            The two sites of the map URL or the ShowUI URL edit holding
  *            different forms, or one written and not the other, read as
@@ -86,15 +95,16 @@
  * it across later applies, and a revert of such a patch records healthy:
  * true, which the next apply of the same build takes as proven. An apply that
  * writes the map URL or ShowUI URL edit over a patch that ran healthy
- * without it, or with another URL, or another geometry over one that ran
- * healthy with a different one, is on trial again: only a healthy run with
- * these URLs and this geometry proves it.
+ * without it, or with another URL (another form of the ShowUI URL among
+ * them), or another geometry over one that ran healthy with a different
+ * one, is on trial again: only a healthy run with these URLs and this
+ * geometry proves it.
  *
  * Node 8.16.2 on the unit, no dependencies.
  *
  *   carplay_patch.js status [--target <file>] [--coding <shm>]
  *   carplay_patch.js probe  [<file>]
- *   carplay_patch.js apply  --panel high|mid [--sink <url> | --capture <fifo>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--target <file>] [--coding <shm>] [--unproven] [--yes]
+ *   carplay_patch.js apply  --panel high|mid [--sink <url> | --capture <fifo>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--turns yes|no] [--target <file>] [--coding <shm>] [--unproven] [--yes]
  *   carplay_patch.js revert [--target <file>] [--yes] [--drop-backup]
  *   carplay_patch.js verify [--target <file>]
  *
@@ -118,6 +128,16 @@ function latin1(s) { return Buffer.from(s, 'latin1').toString('hex'); }
 var MAP_URL = locator.MAP_URL;
 var ETA_URL = locator.MAP_URL_FORMS.filter(function (f) { return f.name === 'eta'; })[0].url;
 var SHOWUI_URL = locator.SHOWUI_URL;
+/* The ShowUI URL forms by name, and what each asks the phone for. */
+function showUiForm(name) { return locator.SHOWUI_FORMS.filter(function (f) { return f.name === name; })[0]; }
+var SHOWUI_ASKS = { eta: 'with the arrival-time card', 'map-eta': 'without turn cards, with the arrival-time card', map: 'without turn cards' };
+
+/* The URL the ShowUI URL edit sends for the choices turns and eta ('yes' or
+ * 'no', anything else counting as yes), or null where the edit is left
+ * stock: turn cards with no arrival-time card is what CarPlay sends. */
+function showUiUrlFor(turns, eta) {
+    return turns === 'no' ? showUiForm(eta === 'no' ? 'map' : 'map-eta').url : eta === 'no' ? null : SHOWUI_URL;
+}
 
 /* Builds proven as shipped, by GNU build-id. A first edit of one needs the
  * whole file to be the shipped one, and anything else counts as modified. A
@@ -133,7 +153,7 @@ var PROVEN = {
         stock: [[0x2ba4f0, 'ecf2f7ff'], [0x2a20b0, latin1(locator.SINK_STOCK)], [0x18176c, 'e8effdffff'],
                 [0x20ca32, 'ea0000006e000000'], [0x20ca54, '8007000084030000'], [0x20ca66, '0000000064020000'], [0x20ca74, '0e0200000202c000'],
                 [0x257838, latin1('Head-Unit does not support Alternate Displays feature.\0')], [0x7b533, '488d3559922100'],
-                [0x2908a0, latin1('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::a')], [0x18188a, 'e851cd07004c89e7488b30']],
+                [0x2908a0, latin1('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::alter')], [0x18188a, 'e851cd07004c89e7488b30']],
     },
     /* Confirmed on a G07 X7 (variant 7) through CarPlay's Patch button
      * (issue #95), from its probe output. stock holds the sink, self-start
@@ -188,17 +208,19 @@ function vetted(rec) {
 }
 
 /* What the patch the vetted record `rec` vouches for held, as this version
- * writes it: { mapurl, showui }, each true or false, and res, the IC_HIGH
- * geometry it advertised (resKey) or false for the stock one. For a patch
- * record, the target's own (classified as `c`); for a revert, the revert
- * record's mapurl, showui and res (earlier releases recorded `mapurl: true`
- * for maps:/car/instrumentcluster/map and the URL with `?showETA=yes` as a
+ * writes it: mapurl, true or false; showui, the URL of the ShowUI URL
+ * edit's form or false; and res, the IC_HIGH geometry it advertised
+ * (resKey) or false for the stock one. For a patch record, the target's own
+ * (classified as `c`); for a revert, the revert record's mapurl, showui and
+ * res (earlier releases recorded `mapurl: true` for
+ * maps:/car/instrumentcluster/map and the URL with `?showETA=yes` as a
  * string, and no showui or res). */
 function ranEdits(rec, c) {
-    if (rec.patched === true) return { mapurl: !!c.mapurl && c.mapurl.state === 'patched', showui: !!c.showui && c.showui.state === 'patched',
+    if (rec.patched === true) return { mapurl: !!c.mapurl && c.mapurl.state === 'patched', showui: !!c.showui && c.showui.state === 'patched' && c.showui.url,
         res: !!c.res && c.res.state === 'patched' && resKey(c.res.res) };
-    return { mapurl: rec.mapurl === MAP_URL, showui: rec.showui === SHOWUI_URL, res: typeof rec.res === 'string' && rec.res };
+    return { mapurl: rec.mapurl === MAP_URL, showui: !!showUiOfUrl(rec.showui) && rec.showui, res: typeof rec.res === 'string' && rec.res };
 }
+function showUiOfUrl(url) { return locator.SHOWUI_FORMS.filter(function (f) { return f.url === url; })[0] || null; }
 
 /* The record an apply writes (prior: the record before it; cd: the coding
  * as readCoding read it). Proven only for a proven build on a car with the
@@ -206,13 +228,14 @@ function ranEdits(rec, c) {
  * on trial, and so is a proven build's patch while the coding cannot be
  * read, so a healthy run can prove it. A car coded otherwise, or a build
  * outside the proven list, is unproven for good. c: the target before the
- * apply; writes: { mapurl, showui }, whether the apply leaves each URL edit
- * written, and res, the geometry it leaves advertised (null for the stock
+ * apply; writes: mapurl, whether the apply leaves that URL edit written;
+ * showui, the URL of the ShowUI URL edit's form it leaves written, or
+ * false; and res, the geometry it leaves advertised (null for the stock
  * one): a healthy run without that URL edit, or with another URL or
  * geometry, does not prove it. */
 function applyRecord(prior, provenBuild, cd, c, writes) {
     var held = vetted(prior) && ranEdits(prior, c);
-    var ran = !!held && (!writes.mapurl || held.mapurl) && (!writes.showui || held.showui) && (!writes.res || held.res === resKey(writes.res));
+    var ran = !!held && (!writes.mapurl || held.mapurl) && (!writes.showui || held.showui === writes.showui) && (!writes.res || held.res === resKey(writes.res));
     if (provenBuild && !codingRefusal(cd)) return ran ? { patched: true, proven: true } : { patched: true, proven: false, trial: true };
     if (provenBuild && cd.err) return { patched: true, proven: false, trial: true };
     /* trial: false only to end a trial: record.ensure compares the keys it is given, no others. */
@@ -221,12 +244,13 @@ function applyRecord(prior, provenBuild, cd, c, writes) {
 
 /* The record a revert of the target (classified as `c`) writes: a patch
  * that ran healthy is remembered, with the URLs of the URL edits it held as
- * this version writes them (false for none or another URL) and the geometry
- * it advertised (false for the stock one). */
+ * this version writes them (false for none or another URL; the ShowUI URL
+ * of whichever form it held) and the geometry it advertised (false for the
+ * stock one). */
 function revertRecord(prior, c) {
     if (!vetted(prior)) return { patched: false };
     var held = ranEdits(prior, c);
-    return { patched: false, healthy: true, mapurl: held.mapurl ? MAP_URL : false, showui: held.showui ? SHOWUI_URL : false, res: held.res || false };
+    return { patched: false, healthy: true, mapurl: held.mapurl ? MAP_URL : false, showui: held.showui || false, res: held.res || false };
 }
 
 function backupPath(t) { return t + '.woc-orig'; }
@@ -258,17 +282,20 @@ function mapUrlState(m) {
 }
 function mapUrlOurs(s) { return s.state === 'patched' || s.state === 'eta'; }
 
-/* 'original' or 'patched' (SHOWUI_URL) when both sites read stock or both
- * patched; 'unknown' when they differ or one holds a mix of the two (a write
- * of ours cut short), which only the whole backup restores; 'absent' with
- * why when the locator does not find it (na: the build adds carplay.conf's
- * options itself): the edit is then left alone. sites: [offset, hex the
- * edit writes] of each. */
+/* 'original' when both sites read stock, 'patched' with the form's name
+ * (form) and URL (url) when the log text holds a form and the call site
+ * loads it; 'unknown' when they differ or one holds a mix (a write of ours
+ * cut short, also from one form to another), which only the whole backup
+ * restores; 'absent' with why when the locator does not find it (na: the
+ * build adds carplay.conf's options itself): the edit is then left alone.
+ * sites: [offset, length] of each, the log text's the window every form
+ * fits in. */
 function showUiState(m) {
     if (!m.ok) return { state: 'absent', reason: m.reason, na: !!m.na };
-    var sites = [[m.str, m.strBytes], [m.call, m.callBytes]];
+    var sites = [[m.str, m.len], [m.call, m.callLen]];
     if (m.strIs !== m.callIs || m.strIs === 'mixed') return { state: 'unknown', reason: 'ShowUI URL: partly patched', sites: sites };
-    return { state: m.strIs === 'stock' ? 'original' : 'patched', sites: sites };
+    if (m.strIs === 'stock') return { state: 'original', sites: sites };
+    return { state: 'patched', form: m.form, url: showUiForm(m.form).url, sites: sites };
 }
 
 /* The URL edits' states (`c` classified): ours when any holds our bytes. */
@@ -364,7 +391,8 @@ function located(loc) {
  * restores only these, so changes another tool made elsewhere stay. */
 function regions(c) {
     var out = located(c.loc);
-    URL_EDITS.forEach(function (e) { if (c[e].sites) out = out.concat(c[e].sites.map(function (s) { return [s[0], s[1].length / 2]; })); });
+    if (c.mapurl.sites) out = out.concat(c.mapurl.sites.map(function (s) { return [s[0], s[1].length / 2]; }));
+    if (c.showui.sites) out = out.concat(c.showui.sites);
     return out;
 }
 
@@ -392,7 +420,7 @@ function describe(name, s) {
         : 'PATCHED (the phone streams the cluster map from connect: ' + MAP_URL + ')';
     if (name === 'showui') return s.state === 'absent' ? 'NOT APPLIED (' + s.reason + ')'
         : s.state === 'original' ? 'ORIGINAL (ShowUI asks the phone for ' + locator.ALT_URL + ')'
-        : 'PATCHED (ShowUI asks the phone for ' + SHOWUI_URL + ', with the arrival-time card)';
+        : 'PATCHED (ShowUI asks the phone for ' + s.url + ', ' + SHOWUI_ASKS[s.form] + ')';
     if (name === 'selfstart') return s.state === 'original' ? 'ORIGINAL (waits for NavController; stream never starts)' : 'SELF-START (CarPlay starts the cluster stream itself)';
     return s.state === 'original' ? 'ORIGINAL (IC_HIGH advertises ' + s.res.w + 'x' + s.res.h + ')' : 'PATCHED (IC_HIGH advertises ' + geomText(s.res) + ')';
 }
@@ -517,8 +545,8 @@ function checkedBackup(target, pre) {
 /* The most bytes a binary may differ in from its backup and still count as
  * the backup's build when either lacks a GNU build-id: the edits' bytes
  * (variant 4, sink 59, self-start 5, geometry 4 x 8, map URL 55 + 7, ShowUI
- * URL 64 + 11), twice over. */
-var SAME_BUILD_MAX_DIFF = 2 * (4 + 59 + 5 + 4 * 8 + 55 + 7 + 64 + 11);
+ * URL 68 + 11), twice over. */
+var SAME_BUILD_MAX_DIFF = 2 * (4 + 59 + 5 + 4 * 8 + 55 + 7 + 68 + 11);
 
 /* Why `cur` is not the build `orig` is the original of, or null when it is:
  * the same build-id and size, or, when either has no build-id, the same size
@@ -549,17 +577,18 @@ function trustedBackup(target, cur) {
 }
 
 /* The backup's URL edit sites (located in it as `bc`) where `cur` holds
- * the bytes a patched form writes: [offset, length] each. A region-wise
- * revert restores them also where the locator does not find the edit in
- * `cur`. */
+ * the bytes a patched form writes: [offset, length] each, the ShowUI log
+ * text's the whole window. A region-wise revert restores them also where
+ * the locator does not find the edit in `cur`. */
 function urlsLeft(cur, bc) {
     var m = bc.ok && bc.loc.mapurl, u = bc.ok && bc.loc.showui, out = [];
     if (m && m.ok) out = [[m.slot, 'slotBytes'], [m.lea, 'leaBytes']].filter(function (s) {
         return m.forms.some(function (f) { return cur.toString('hex', s[0], s[0] + f[s[1]].length / 2) === f[s[1]]; });
     }).map(function (s) { return [s[0], m[s[1]].length / 2]; });
-    if (u && u.ok) out = out.concat([[u.str, u.strBytes], [u.call, u.callBytes]].filter(function (s) {
-        return cur.toString('hex', s[0], s[0] + s[1].length / 2) === s[1];
-    }).map(function (s) { return [s[0], s[1].length / 2]; }));
+    if (u && u.ok) {
+        if (u.forms.some(function (f) { return cur.toString('hex', u.str, u.str + f.strBytes.length / 2) === f.strBytes; })) out.push([u.str, u.len]);
+        if (cur.toString('hex', u.call, u.call + u.callLen) === u.callBytes) out.push([u.call, u.callLen]);
+    }
     return out;
 }
 
@@ -589,7 +618,7 @@ function restorePlan(target, cur, c) {
     return { b: b, bc: bc, regionWise: false, out: orig };
 }
 
-function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, codingFile, eta) {
+function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, codingFile, eta, turns) {
     var hu = headUnit.refused();
     if (hu) die('refusing: ' + hu);
     if (panel !== 'high' && panel !== 'mid') die('--panel must be high or mid');
@@ -666,13 +695,20 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
     });
 
     /* The map URL edit (the cluster map from connect) where the build has it.
-     * The ShowUI URL edit, which asks for the arrival-time card, with --eta
-     * yes (the default); with --eta no it is left stock, restored from the
-     * backup where an earlier apply wrote it. */
-    var writes = { mapurl: c.mapurl.state !== 'absent', showui: c.showui.state !== 'absent' && eta !== 'no', res: wantRes };
+     * The ShowUI URL edit in the form --turns and --eta choose (showUiUrlFor),
+     * its URL over the start of the log text and the backup's text after
+     * it, so the bytes are the same whichever form was there; turn cards
+     * with no arrival-time card leave it stock, restored from the backup
+     * where an earlier apply wrote it. */
+    var showUrl = c.showui.state !== 'absent' && showUiUrlFor(turns, eta);
+    var writes = { mapurl: c.mapurl.state !== 'absent', showui: showUrl || false, res: wantRes };
     if (writes.mapurl) c.mapurl.sites.forEach(function (s) { put('map URL -> ' + MAP_URL, s[0], Buffer.from(s[1], 'hex')); });
-    if (writes.showui) c.showui.sites.forEach(function (s) { put('ShowUI URL -> ' + SHOWUI_URL, s[0], Buffer.from(s[1], 'hex')); });
-    else if (c.showui.sites) c.showui.sites.forEach(function (s) { put('ShowUI URL -> stock', s[0], orig.slice(s[0], s[0] + s[1].length / 2)); });
+    if (writes.showui) {
+        var su = loc.showui, text = Buffer.from(orig.slice(su.str, su.str + su.len));
+        showUiOfUrl(showUrl).bytes.copy(text);
+        put('ShowUI URL -> ' + showUrl, su.str, text);
+        put('ShowUI URL -> ' + showUrl, su.call, Buffer.from(su.callBytes, 'hex'));
+    } else if (c.showui.sites) c.showui.sites.forEach(function (s) { put('ShowUI URL -> stock', s[0], orig.slice(s[0], s[0] + s[1])); });
 
     var rec = applyRecord(record.current(target), !!PROVEN[loc.buildId], coding, c, writes);
     if (changed.length === 0) {
@@ -688,7 +724,7 @@ function cmdApply(target, panel, capture, sink, res, safe, yes, unproven, coding
         : cc.selfstart.state !== 'patched' ? 'self-start'
         : cc.res.state !== (wantRes ? 'patched' : 'original') ? 'resolution'
         : cc.mapurl.state !== (writes.mapurl ? 'patched' : 'absent') ? 'map URL'
-        : cc.showui.state !== (writes.showui ? 'patched' : c.showui.state === 'absent' ? 'absent' : 'original') ? 'ShowUI URL'
+        : cc.showui.state !== (writes.showui ? 'patched' : c.showui.state === 'absent' ? 'absent' : 'original') || (writes.showui && cc.showui.url !== writes.showui) ? 'ShowUI URL'
         : !onlyRegionsDiffer(buf, out, regions(c)) ? 'bytes outside the edit regions' : null;
     if (wrong) die('refusing: the edited binary does not verify (' + wrong + '); no change made');
 
@@ -770,7 +806,7 @@ function cmdVerify(target) {
         ', self-start ' + (c.selfstart.state === 'patched' ? 'on' : 'off') +
         ', res ' + (c.res.state === 'patched' ? c.res.res.w + 'x' + c.res.res.h : 'stock') +
         ', map URL ' + (c.mapurl.state === 'patched' ? 'on' : c.mapurl.state === 'eta' ? 'on with ETA' : c.mapurl.state === 'original' ? 'off' : 'n/a') +
-        ', ShowUI URL ' + (c.showui.state === 'patched' ? 'with ETA' : c.showui.state === 'original' ? 'stock' : 'n/a') + '\n');
+        ', ShowUI URL ' + (c.showui.state === 'patched' ? c.showui.url : c.showui.state === 'original' ? 'stock' : 'n/a') + '\n');
 }
 
 function fsyncFile(path) {
@@ -842,6 +878,9 @@ function parseArgs(argv) {
         } else if (t === '--eta') {
             a.eta = argv[++i];
             if (a.eta !== 'yes' && a.eta !== 'no') die('--eta needs yes or no');
+        } else if (t === '--turns') {
+            a.turns = argv[++i];
+            if (a.turns !== 'yes' && a.turns !== 'no') die('--turns needs yes or no');
         } else if (t === '--safe') {
             a.safe = (i + 1 < argv.length && argv[i + 1].indexOf('--') !== 0) ? argv[++i] : null;
         } else a._.push(t);
@@ -856,12 +895,14 @@ function main() {
     var coding = a.coding || process.env.WOC_CODING || '/dev/shm/rawcodingdata';
     if (cmd === 'status') { cmdStatus(target, coding); line('end', 'complete'); }
     else if (cmd === 'probe') cmdProbe(a.target || a._[1] || '/usr/bin/carplay');
-    else if (cmd === 'apply') cmdApply(target, a.panel, a.capture, a.sink, a.res, a.safe, a.yes, a.unproven, coding, a.eta);
+    else if (cmd === 'apply') cmdApply(target, a.panel, a.capture, a.sink, a.res, a.safe, a.yes, a.unproven, coding, a.eta, a.turns);
     else if (cmd === 'revert') cmdRevert(target, a.yes, a.force, a.dropBackup);
     else if (cmd === 'verify') cmdVerify(target);
-    else { process.stderr.write('usage: carplay_patch.js status|probe|apply|revert|verify [--target <file>] [--coding <shm>] [--panel high|mid] [--capture <fifo> | --sink <url>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--unproven] [--yes] [--force] [--drop-backup]\n'); process.exit(2); }
+    else { process.stderr.write('usage: carplay_patch.js status|probe|apply|revert|verify [--target <file>] [--coding <shm>] [--panel high|mid] [--capture <fifo> | --sink <url>] [--res WxH|stock] [--safe WxH+X+Y|full] [--eta yes|no] [--turns yes|no] [--unproven] [--yes] [--force] [--drop-backup]\n'); process.exit(2); }
 }
 
-module.exports = { trustedBackup: trustedBackup, PROVEN: PROVEN };
+module.exports = { trustedBackup: trustedBackup, PROVEN: PROVEN, showUiUrlFor: showUiUrlFor,
+    /* for the tests */
+    classify: classify, applyRecord: applyRecord, revertRecord: revertRecord };
 
 if (require.main === module) main();
