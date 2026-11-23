@@ -480,6 +480,16 @@ async function main() {
         const old = got.filter((m) => m.cmd === 'hud').pop();
         assert(!('hud_near_m' in old), 'a patchd before it: not told');
     });
+    await check('ProfileSync: the vignette goes to the render with the other HUD settings', async () => {
+        const got = [];
+        const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,
+            sender: { send: (msgs) => got.push.apply(got, msgs) } });
+        s._toRender(Object.assign(settings(1, 1, 40, 0, 0, 0), { hud_vignette: 0 }));
+        assert.strictEqual(got.filter((m) => m.cmd === 'hud').pop().hud_vignette, '0');
+        got.length = 0;
+        s._toRender(settings(1, 1, 40, 0, 0, 0));
+        assert(!('hud_vignette' in got.filter((m) => m.cmd === 'hud').pop()), 'a patchd before it: not told');
+    });
     await check('ProfileSync: settings go to the render through its RenderSender', async () => {
         const got = [];
         const s = new ProfileSync({ readProfile: () => Promise.resolve(null), patchPath: PSOCK, renderPath: RSOCK,

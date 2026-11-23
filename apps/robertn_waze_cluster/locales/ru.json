@@ -118,6 +118,7 @@
     "Turn and arrival cards on the cluster": "Подсказки поворотов и время прибытия на приборах",
     "Speed area": "Поле скорости",
     "HUD map settings": "Настройки карты на HUD",
-    "Android Auto map": "Карта Android Auto"
+    "Android Auto map": "Карта Android Auto",
+    "Vignette: {0}": "Виньетка: {0}"
   }
 }

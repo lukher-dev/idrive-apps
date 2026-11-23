@@ -4,8 +4,10 @@
  * U, V and Y never mix, a 2:1 scale is the exact 2x2 average, non-integer
  * ratios keep a gradient's mean, rounding to level bits, refusals, a crop
  * (exact 1:1, scaled as the part cut out first), rounded corners, the
- * speed patch, and the time a 1088x480 frame takes to scale to the HUD's
- * sizes. */
+ * speed patch, the vignette (fixed to the scene: its shape, the same scene
+ * pixel alike whatever the map's size and place, level 0 nothing, with the
+ * corners and the patch), and the time a 1088x480 frame takes to scale to
+ * the HUD's sizes. */
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -248,6 +250,126 @@ int main()
                                                                                       out[475 * 800 + 400] == 235);
     }
 
+    {
+        /* the vignette: fixed to the 800x480 scene, not to the map. A white
+         * frame; at 135 % the map is 800x476 at 0,2 of the scene, so the
+         * scene's top left is at 0,-2 of the map. */
+        std::vector<uint8_t> white(1088 * 720, 235);
+        for (size_t i = 1088 * 480; i < white.size(); i++) white[i] = 200;
+        const auto wide = [&](unsigned level, int32_t sx, int32_t sy, std::vector<uint8_t> *o) {
+            AtlasScaler v;
+            v.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
+            v.set_vignette(level, sx, sy, 800, 480);
+            v.scale(white.data(), o);
+        };
+        std::vector<uint8_t> plain, a, b;
+        AtlasScaler none;
+        none.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
+        none.scale(white.data(), &plain);
+        wide(5, 0, -2, &a);
+        const uint8_t *y = a.data(), *u = y + 800 * 476;
+        ok("vignette: the scene's centre (400,240) kept whole, chroma too, at the strongest level",
+           y[238 * 800 + 400] == 235 && y[237 * 800 + 399] == 235 && u[119 * 800 + 200] == 200);
+        wide(1, 0, -2, &a);
+        y = a.data();
+        u = y + 800 * 476;
+        ok("vignette: the scene's left and right edges black at the weakest level, chroma neutral",
+           y[238 * 800] == 16 && y[238 * 800 + 799] == 16 && u[119 * 800] == 128 && u[119 * 800 + 399] == 128);
+        ok("vignette: the weakest level keeps the scene's middle whole (x 40-759, y 28-452)",
+           y[238 * 800 + 40] == 235 && y[238 * 800 + 759] == 235 && y[26 * 800 + 400] == 235 && y[450 * 800 + 400] == 235);
+        wide(1, 0, 10, &b);   /* the map 10 px above the scene's top: its rows 0-9 are off the scene */
+        ok("vignette: the map's part off the scene black", b[0 * 800 + 400] == 16 && b[9 * 800 + 400] == 16 &&
+                                                              b[250 * 800 + 400] == 235);
+        wide(0, 0, -2, &a);
+        ok("vignette: level 0 changes nothing", a == plain);
+        AtlasScaler off;
+        off.configure(1088, 480, 800, 476, 0, 142, 0, 804, 480);
+        off.set_vignette(3, 0, -2, 800, 480);
+        off.scale(white.data(), &a);
+        const bool was_on = a != plain;
+        off.set_vignette(0, 0, -2, 800, 480);
+        off.scale(white.data(), &a);
+        ok("vignette: set back to 0, none again", was_on && a == plain);
+
+        /* the shape: a scene pixel keeps 1 - smoothstep(r0, 1, d) of itself,
+         * d = (u^4 + v^4)^(1/4) from the scene's centre, r0 = 1 - 0.07 level */
+        const auto keep = [](unsigned level, int sx, int sy) {
+            const double u = std::fabs(sx + 0.5 - 400) / 400, v = std::fabs(sy + 0.5 - 240) / 240;
+            const double d = std::pow(u * u * u * u + v * v * v * v, 0.25), r0 = 1 - 0.07 * level;
+            double t = (d - r0) / (1 - r0);
+            t = t < 0 ? 0 : t > 1 ? 1 : t;
+            return 1 - t * t * (3 - 2 * t);
+        };
+        const auto want = [&](unsigned level, int sx, int sy) {
+            return (int)(16 + 219 * std::lround(256 * keep(level, sx, sy)) / 256);
+        };
+        const int pts[][2] = {{100, 200}, {700, 60}, {400, 470}, {50, 50}, {760, 240}, {400, 10}, {200, 420}, {600, 100}};
+        bool exact = true, ramp = false;
+        for (unsigned level = 1; level <= 5; level++) {
+            wide(level, 0, -2, &a);
+            for (const auto &p : pts) {
+                const int got = a[(size_t)(p[1] - 2) * 800 + p[0]];
+                exact = exact && got == want(level, p[0], p[1]);
+                ramp = ramp || (got > 16 && got < 235);
+            }
+        }
+        ok("vignette: each level's shape the superellipse's smoothstep, from r0 = 1 - 0.07 level to the scene's edge", exact && ramp);
+
+        /* the same scene pixel, the same factor, whatever the map's size and place */
+        AtlasScaler m85, m85b;
+        std::vector<uint8_t> c, e;
+        m85.configure(1088, 480, 680, 300, 0);   /* 85 %, 40 down: 680x300 at 60,130 */
+        m85.set_vignette(5, -60, -130, 800, 480);
+        m85.scale(white.data(), &c);
+        m85b.configure(1088, 480, 680, 300, 0);   /* 85 %, moved 50 left and 80 up: at 10,10 */
+        m85b.set_vignette(5, -10, -10, 800, 480);
+        m85b.scale(white.data(), &e);
+        wide(5, 0, -2, &a);   /* 135 %: 800x476 at 0,2 */
+        const int same_pts[][2] = {{65, 135}, {70, 300}, {100, 240}, {685, 200}, {650, 150}, {300, 305}};
+        bool same = true;
+        ramp = false;
+        for (const auto &p : same_pts) {
+            const int sx = p[0], sy = p[1];
+            const uint8_t at85 = c[(size_t)(sy - 130) * 680 + sx - 60], at85b = e[(size_t)(sy - 10) * 680 + sx - 10],
+                          at135 = a[(size_t)(sy - 2) * 800 + sx];
+            same = same && at85 == at135 && at85b == at135 && at85 == want(5, sx, sy);
+            ramp = ramp || (at135 > 16 && at135 < 235);
+        }
+        ok("vignette: a scene pixel the same at 85 % (two places) and 135 %", same && ramp);
+
+        /* with the rounded corners and the speed patch: all three multiply */
+        const auto combined = [&](bool corners, bool patch, bool vignette, std::vector<uint8_t> *o) {
+            AtlasScaler v;
+            v.configure(1088, 480, 680, 300, 0);   /* 680x300 at 60,130 */
+            v.set_corner_radius(corners ? 25 : 0);
+            if (patch)
+                v.set_clear(110 - 60, 320 - 130, 220, 90);
+            v.set_vignette(vignette ? 5 : 0, -60, -130, 800, 480);
+            v.scale(white.data(), o);
+        };
+        std::vector<uint8_t> co, pa, vi, all;
+        combined(true, false, false, &co);
+        combined(false, true, false, &pa);
+        combined(false, false, true, &vi);
+        combined(true, true, true, &all);
+        const auto product = [](int p, int q) { return 16 + (p - 16) * (q - 16) / 219; };
+        const auto near = [](int got, int want) { return got >= want - 2 && got <= want + 2; };
+        /* a corner's anti-aliased edge (its top row) and a patch's feather, each in the vignette's ramp */
+        int cx = -1;
+        for (int x = 0; x < 25 && cx < 0; x++)
+            if (co[x] > 40 && co[x] < 200 && vi[x] > 40 && vi[x] < 200)
+                cx = x;
+        const size_t fp = (size_t)(365 - 130) * 680 + (115 - 60);   /* the scene's 115,365: 5 px into the patch's feather */
+        ok("vignette with corners and patch: the corner pixel and the patch's middle black, the box's middle whole",
+           all[0] == 16 && all[299 * 680 + 679] == 16 && all[(size_t)(365 - 130) * 680 + 220 - 60] == 16 &&
+               all[150 * 680 + 340] == 235);
+        ok("vignette with corners and patch: a corner's edge pixel is the corner's times the vignette's",
+           cx >= 0 && near(all[cx], product(co[cx], vi[cx])) && all[cx] < co[cx] && all[cx] < vi[cx]);
+        ok("vignette with corners and patch: the patch's feather is the patch's times the vignette's",
+           pa[fp] > 16 && pa[fp] < 235 && vi[fp] > 16 && vi[fp] < 235 && near(all[fp], product(pa[fp], vi[fp])) &&
+               all[fp] < pa[fp] && all[fp] < vi[fp]);
+    }
+
     const struct { uint32_t w, h; } sizes[] = {{452, 200}, {560, 244}, {680, 300}, {800, 352}, {320, 140}};
     for (const auto &z : sizes) {
         AtlasScaler t;
@@ -269,6 +391,14 @@ int main()
         for (int i = 0; i < 20; i++) t.scale(ramp.data(), &out);
         const double each = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() / 20;
         std::printf("     1088x480 (804x480 of it) -> 800x476, corners and patch: %.2f ms a frame on this machine\n", each);
+        t.set_vignette(2, 0, -2, 800, 480);
+        const auto t1 = std::chrono::steady_clock::now();
+        t.scale(ramp.data(), &out);   /* the mask made again */
+        const double first = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t1).count();
+        const auto t2 = std::chrono::steady_clock::now();
+        for (int i = 0; i < 20; i++) t.scale(ramp.data(), &out);
+        const double with = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t2).count() / 20;
+        std::printf("     and the vignette (2): %.2f ms a frame, %.2f ms the frame after the change on this machine\n", with, first);
     }
 
     std::printf(failures ? "%d FAILED\n" : "all ok\n", failures);

@@ -284,6 +284,21 @@ void AtlasScaler::set_clear(int32_t x, int32_t y, uint32_t w, uint32_t h)
     mask_due_ = true;
 }
 
+void AtlasScaler::set_vignette(unsigned level, int32_t x, int32_t y, uint32_t w, uint32_t h)
+{
+    level = level > kVignetteMax ? kVignetteMax : level;
+    if (!level || !w || !h)
+        level = 0, x = y = 0, w = h = 0;
+    if (level == vig_level_ && x == vig_x_ && y == vig_y_ && w == vig_w_ && h == vig_h_)
+        return;
+    vig_level_ = level;
+    vig_x_ = x;
+    vig_y_ = y;
+    vig_w_ = w;
+    vig_h_ = h;
+    mask_due_ = true;
+}
+
 namespace {
 
 /* Smoothstep of t, 0-1. */
@@ -303,30 +318,61 @@ double covered(int64_t i, int64_t a, uint32_t len, uint32_t feather)
     return !feather || d >= (int64_t)feather ? 1.0 : smooth((d + 0.5) / feather);
 }
 
+/* The fourth power of pixel i's centre's distance from the middle of the
+ * span [a, a + len), in halves of len. */
+double quartic(int64_t i, int32_t a, uint32_t len)
+{
+    const double half = len / 2.0, u = (i - a + 0.5 - half) / half, uu = u * u;
+    return uu * uu;
+}
+
 }  // namespace
 
 /* Separable: the patch's cover is its column's times its row's, and a
- * pixel keeps 1 - cover. U and V take the mean of their four Y's, so their
- * feather is half as wide. */
+ * pixel keeps 1 - cover. The vignette's d^4 is its column's u^4 plus its
+ * row's v^4, so a pixel takes two square roots, once per change; inside r0
+ * (d^4 at most r0^4) it keeps all. A pixel keeps the patch's times the
+ * vignette's. U and V take the mean of their four Y's, so their feather
+ * is half as wide. */
 void AtlasScaler::make_mask()
 {
     mask_due_ = false;
     ymask_.clear();
     cmask_.clear();
-    if (!dw_ || !clear_w_)
+    if (!dw_ || (!clear_w_ && !vig_level_))
         return;
-    uint32_t feather = clear_w_ < clear_h_ ? clear_w_ / 4 : clear_h_ / 4;
-    feather = feather > kClearFeather ? kClearFeather : feather;
-    std::vector<double> cx(dw_), cy(dh_);
-    for (uint32_t x = 0; x < dw_; x++)
-        cx[x] = covered(x, clear_x_, clear_w_, feather);
-    for (uint32_t y = 0; y < dh_; y++)
-        cy[y] = covered(y, clear_y_, clear_h_, feather);
+    std::vector<double> cx(dw_, 0), cy(dh_, 0);
+    if (clear_w_) {
+        uint32_t feather = clear_w_ < clear_h_ ? clear_w_ / 4 : clear_h_ / 4;
+        feather = feather > kClearFeather ? kClearFeather : feather;
+        for (uint32_t x = 0; x < dw_; x++)
+            cx[x] = covered(x, clear_x_, clear_w_, feather);
+        for (uint32_t y = 0; y < dh_; y++)
+            cy[y] = covered(y, clear_y_, clear_h_, feather);
+    }
+    std::vector<double> vx, vy;
+    const double r0 = 1 - 0.07 * vig_level_, r04 = r0 * r0 * r0 * r0;
+    if (vig_level_) {
+        vx.resize(dw_);
+        vy.resize(dh_);
+        for (uint32_t x = 0; x < dw_; x++)
+            vx[x] = quartic(x, vig_x_, vig_w_);
+        for (uint32_t y = 0; y < dh_; y++)
+            vy[y] = quartic(y, vig_y_, vig_h_);
+    }
     ymask_.resize((size_t)dw_ * dh_);
     bool any = false;
     for (uint32_t y = 0; y < dh_; y++)
         for (uint32_t x = 0; x < dw_; x++) {
-            const uint16_t m = (uint16_t)std::lround(256 * (1 - cx[x] * cy[y]));
+            double keep = 1 - cx[x] * cy[y];
+            if (vig_level_) {
+                const double d4 = vx[x] + vy[y];
+                if (d4 >= 1)
+                    keep = 0;
+                else if (d4 > r04)
+                    keep *= 1 - smooth((std::sqrt(std::sqrt(d4)) - r0) / (1 - r0));
+            }
+            const uint16_t m = (uint16_t)std::lround(256 * keep);
             ymask_[(size_t)y * dw_ + x] = m;
             any = any || m < 256;
         }
@@ -425,6 +471,8 @@ void ScaleWorker::run(std::shared_ptr<State> s)
                 if (!was.dw || was.black != s->shape.black || was.dw != s->shape.dw || was.dh != s->shape.dh)
                     s->scaler.set_black_background(s->shape.black);
                 s->scaler.set_clear(s->shape.clear_x, s->shape.clear_y, s->shape.clear_w, s->shape.clear_h);
+                s->scaler.set_vignette(s->shape.vignette, s->shape.scene_x, s->shape.scene_y, s->shape.scene_w,
+                                       s->shape.scene_h);
                 s->made = s->shape;
             }
         }

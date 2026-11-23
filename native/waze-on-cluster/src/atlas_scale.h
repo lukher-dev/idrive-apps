@@ -55,6 +55,20 @@ public:
     static const uint32_t kClearFeather = 12;
     void set_clear(int32_t x, int32_t y, uint32_t w, uint32_t h);
 
+    /* The vignette: the picture fading to black towards the edges of the
+     * scene it is shown in (the HUD's), fixed to the scene, not to the
+     * picture. The scene is w x h with its top left at x, y in output
+     * pixels (scene pixel sx, sy is output pixel x + sx, y + sy). A scene
+     * pixel keeps 1 - smoothstep(r0, 1, d) of itself: d = (u^4 + v^4)^(1/4),
+     * u and v its pixel centre's distance from the scene's centre in halves
+     * of the scene's width and height (a superellipse, 1 at the scene's
+     * edges), r0 = 1 - 0.07 x level. Level 1 fades the outer 7 %, level
+     * kVignetteMax the outer 35 %; past the scene's edges nothing is kept.
+     * Level 0, or w or h 0: none, and no work. Applied by scale(), in one
+     * mask with the speed patch (the two multiply), after the corners. */
+    static const unsigned kVignetteMax = 5;
+    void set_vignette(unsigned level, int32_t x, int32_t y, uint32_t w, uint32_t h);
+
     /* Black background: the map's background (its most common Y, followed
      * smoothly frame to frame) and the shades just above it fade to black,
      * so a HUD, which shows black as nothing, shows the roads, route and
@@ -94,9 +108,12 @@ private:
     std::vector<uint16_t> ycov_, ccov_;   /* corner coverage: Y at radius_, U and V at radius_ / 2 */
     int32_t clear_x_ = 0, clear_y_ = 0;
     uint32_t clear_w_ = 0, clear_h_ = 0;
-    /* The patch as a mask (0-256 of each pixel kept), Y's and U and V's
-     * (each the mean of its four Y), applied after the corners; empty:
-     * none. Made again by scale() after a change. */
+    unsigned vig_level_ = 0;
+    int32_t vig_x_ = 0, vig_y_ = 0;
+    uint32_t vig_w_ = 0, vig_h_ = 0;
+    /* The patch and the vignette as one mask (0-256 of each pixel kept),
+     * Y's and U and V's (each the mean of its four Y), applied after the
+     * corners; empty: neither. Made again by scale() after a change. */
     std::vector<uint16_t> ymask_, cmask_;
     bool mask_due_ = false;
     void make_mask();
@@ -105,9 +122,11 @@ private:
 
 /* What a ScaleWorker makes of a frame: a w x h atlas (its crop_w x crop_h
  * part at crop_x, crop_y with crop_w) scaled to dw x dh, rounded to
- * level_bits, with AtlasScaler's corners, background and speed patch
+ * level_bits, with AtlasScaler's corners, background, speed patch
  * (clear_w x clear_h at clear_x, clear_y in output pixels; none with
- * clear_w 0). */
+ * clear_w 0) and vignette (of level vignette on the scene_w x scene_h
+ * scene whose top left is at scene_x, scene_y in output pixels; none with
+ * vignette 0). */
 struct ScaleShape {
     uint32_t w = 0, h = 0, dw = 0, dh = 0;
     uint32_t crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
@@ -116,12 +135,16 @@ struct ScaleShape {
     bool black = false;
     int32_t clear_x = 0, clear_y = 0;
     uint32_t clear_w = 0, clear_h = 0;
+    unsigned vignette = 0;
+    int32_t scene_x = 0, scene_y = 0;
+    uint32_t scene_w = 0, scene_h = 0;
     bool operator==(const ScaleShape &o) const
     {
         return w == o.w && h == o.h && dw == o.dw && dh == o.dh && crop_x == o.crop_x && crop_y == o.crop_y &&
                crop_w == o.crop_w && crop_h == o.crop_h && level_bits == o.level_bits && radius == o.radius &&
                black == o.black && clear_x == o.clear_x && clear_y == o.clear_y &&
-               clear_w == o.clear_w && clear_h == o.clear_h;
+               clear_w == o.clear_w && clear_h == o.clear_h && vignette == o.vignette && scene_x == o.scene_x &&
+               scene_y == o.scene_y && scene_w == o.scene_w && scene_h == o.scene_h;
     }
     bool operator!=(const ScaleShape &o) const { return !(*this == o); }
 };

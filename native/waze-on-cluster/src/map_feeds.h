@@ -79,6 +79,9 @@ public:
     /* The HUD map's speed patch (FeedConfig::hud_clear*), at once, kept
      * for a HUD feed made later. */
     void set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigned h);
+    /* The HUD map's vignette (FeedConfig::hud_vignette), at once, kept for
+     * a HUD feed made later. */
+    void set_hud_vignette(unsigned level);
     /* The HUD map's settings as asked last (the base of a HUD feed made later). */
     const FeedConfig &hud_settings() const { return base_; }
 

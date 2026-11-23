@@ -118,6 +118,7 @@
     "Turn and arrival cards on the cluster": "Kääntymiskortit ja saapumisaika mittaristossa",
     "Speed area": "Nopeusalue",
     "HUD map settings": "HUD-kartan asetukset",
-    "Android Auto map": "Android Auto -kartta"
+    "Android Auto map": "Android Auto -kartta",
+    "Vignette: {0}": "Vinjetti: {0}"
   }
 }

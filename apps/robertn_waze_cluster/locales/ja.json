@@ -118,6 +118,7 @@
     "Turn and arrival cards on the cluster": "メーターに進路案内カードと到着予定時刻",
     "Speed area": "速度エリア",
     "HUD map settings": "HUDの地図の設定",
-    "Android Auto map": "Android Autoの地図"
+    "Android Auto map": "Android Autoの地図",
+    "Vignette: {0}": "周辺減光：{0}"
   }
 }

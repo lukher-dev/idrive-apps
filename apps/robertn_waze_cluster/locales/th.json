@@ -118,6 +118,7 @@
     "Turn and arrival cards on the cluster": "การ์ดบอกทางเลี้ยวและเวลาถึงบนหน้าปัด",
     "Speed area": "พื้นที่ความเร็ว",
     "HUD map settings": "การตั้งค่าแผนที่บน HUD",
-    "Android Auto map": "แผนที่ Android Auto"
+    "Android Auto map": "แผนที่ Android Auto",
+    "Vignette: {0}": "ขอบมืด: {0}"
   }
 }

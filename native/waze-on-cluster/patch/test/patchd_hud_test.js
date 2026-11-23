@@ -3,7 +3,7 @@
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings ({"cmd":"cluster"}, "hud", "hud-size", "hud-pos",
  * "hud-keep-shown", "hud-near-turn", "hud-zoom", "hud-clear",
- * "hud-clear-rect", "hud-near-dist"):
+ * "hud-clear-rect", "hud-near-dist", "hud-vignette"):
  * each saved in map.state.conf for the render's next start, replacing an
  * earlier value and keeping the other lines, waze-on-cluster.local.conf
  * untouched; a bad value is refused and nothing written. A burst of changes
@@ -89,7 +89,7 @@ function ask(obj) {
             buf.split('\n').forEach(function (l) {
                 var m = null;
                 try { m = JSON.parse(l); } catch (e) {}
-                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-clear|hud-clear-rect|hud-near-dist)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
+                if (m && (/^(cluster|hud|hud-size|hud-pos|hud-keep-shown|hud-near-turn|hud-zoom|hud-clear|hud-clear-rect|hud-near-dist|hud-vignette)-reply$/.test(m.ev) || m.ev === 'refused')) { s.end(); resolve(m); }
             });
         });
         s.on('error', reject);
@@ -213,6 +213,23 @@ function ok(name, cond) {
     refused.push(await ask({ cmd: 'hud-near-dist' }));
     ok('a distance outside 200-2000, missing or not a whole number is refused, nothing written',
         refused.every(function (x) { return !x.ok && !!x.reason; }) && fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
+    r = await ask({ cmd: 'hud-vignette', level: 4 });
+    ok('the HUD map\'s vignette is saved next to them', r.ok && r.hud_vignette === 4 &&
+        /hud_near_m = 1100\nhud_vignette = 4\n$/.test(fs.readFileSync(STATE, 'utf8')), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-vignette', level: 0 });
+    ok('no vignette, 0, is saved', r.ok && r.hud_vignette === 0 && /hud_vignette = 0\n$/.test(fs.readFileSync(STATE, 'utf8')),
+        JSON.stringify(r));
+    r = await ask({ cmd: 'hud-vignette', level: 5 });
+    ok('the strongest, 5, is saved', r.ok && r.hud_vignette === 5 && /hud_vignette = 5\n$/.test(fs.readFileSync(STATE, 'utf8')),
+        JSON.stringify(r));
+    state = fs.readFileSync(STATE, 'utf8');
+    refused = [];
+    var badV = [6, -1, 2.5, '2', null, true];
+    for (i = 0; i < badV.length; i++) refused.push(await ask({ cmd: 'hud-vignette', level: badV[i] }));
+    refused.push(await ask({ cmd: 'hud-vignette' }));
+    ok('a vignette outside 0-5, missing or not a whole number is refused, nothing written',
+        refused.every(function (x) { return x.ev === 'hud-vignette-reply' && !x.ok && !!x.reason; }) &&
+        fs.readFileSync(STATE, 'utf8') === state, JSON.stringify(refused));
     ok('the local conf untouched by every setting', fs.readFileSync(CONF, 'utf8') === conf);
     /* A burst: one write SAVE_MS after the last change, every reply after it. */
     var saves = function () { return out.split('(saved for the next start)').length - 1; };

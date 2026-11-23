@@ -96,7 +96,7 @@ std::string status_line(const FeedStatus &s)
            ",\"hud_clear\":" + (s.hud_clear ? "1" : "0") +
            ",\"hud_clear_x\":" + std::to_string(s.hud_clear_x) + ",\"hud_clear_y\":" + std::to_string(s.hud_clear_y) +
            ",\"hud_clear_w\":" + std::to_string(s.hud_clear_w) + ",\"hud_clear_h\":" + std::to_string(s.hud_clear_h) +
-           ",\"hud_near_m\":" + std::to_string(s.hud_near_m) +
+           ",\"hud_near_m\":" + std::to_string(s.hud_near_m) + ",\"hud_vignette\":" + std::to_string(s.hud_vignette) +
            /* only while hosted: otherwise the line is as it always was */
            (s.hosted ? ",\"hosted\":1" : "") + "}";
 }
@@ -117,7 +117,7 @@ public:
         auto hx = msg.find("hud_x"), hy = msg.find("hud_y"), on = msg.find("on");
         auto keep = msg.find("hud_keep_shown");
         auto near_turn = msg.find("hud_near_turn"), near = msg.find("near"), zoom = msg.find("hud_zoom_pct");
-        auto clear = msg.find("hud_clear"), near_m = msg.find("hud_near_m");
+        auto clear = msg.find("hud_clear"), near_m = msg.find("hud_near_m"), vignette = msg.find("hud_vignette");
         auto cx = msg.find("hud_clear_x"), cy = msg.find("hud_clear_y"), cw = msg.find("hud_clear_w"), ch = msg.find("hud_clear_h");
         if (cmd == "guide" && hide != msg.end() && guide_->set(hide->second)) {
             log_info("guide: BMW's turn box %s while the map shows", guide_->hide() ? "hidden" : "shown");
@@ -130,7 +130,8 @@ public:
         } else if (cmd == "hud" && (on != msg.end() || pct != msg.end() || hx != msg.end() || hy != msg.end() ||
                                     keep != msg.end() || near_turn != msg.end() || zoom != msg.end() ||
                                     clear != msg.end() || cx != msg.end() || cy != msg.end() ||
-                                    cw != msg.end() || ch != msg.end() || near_m != msg.end())) {
+                                    cw != msg.end() || ch != msg.end() || near_m != msg.end() ||
+                                    vignette != msg.end())) {
             if (on != msg.end()) {
                 if (on->second == "0" || on->second == "1")
                     feeds_->set_hud(on->second == "1");
@@ -203,6 +204,14 @@ public:
                 if (good)
                     feeds_->set_hud_clear(on != 0, (unsigned)x, (unsigned)y, (unsigned)w, (unsigned)h);
             }
+            /* and its vignette: the HUD scene's edges faded to black, 1-5, or none (0) */
+            if (vignette != msg.end()) {
+                long v = 0;
+                if (whole(vignette->second, 0, 5, &v))
+                    feeds_->set_hud_vignette((unsigned)v);
+                else
+                    log_warn("hud: hud_vignette must be 0-5, not %s", vignette->second.c_str());
+            }
         } else {
             log_warn("control: unknown or malformed command %s", cmd.c_str());
         }
@@ -273,7 +282,7 @@ int serve(Config cfg)
         {"hud_near_m", 200, 2000},
         {"hud_zoom_pct", 100, 250}, {"hud_crop_cx_pm", 0, 1000},     {"hud_crop_cy_pm", 0, 1000},
         {"hud_clear", 0, 1},        {"hud_clear_x", 0, 799},         {"hud_clear_y", 0, 479},
-        {"hud_clear_w", 10, 800},   {"hud_clear_h", 10, 480},
+        {"hud_clear_w", 10, 800},   {"hud_clear_h", 10, 480},      {"hud_vignette", 0, 5},
         {"freeze_ms", 0, 600000},   {"freeze_min_fps", 1, 60},       {"alt_screen_port", 0, 65535},
         {"idle_ms", 1000, 600000},  {"blank_ms", 1000, 600000},
         {"alt_screen_uid", 0, 4294967294L}, {"gpu_copy", 0, 1},   {"hosted_vpp_scale", 0, 1},
@@ -331,6 +340,7 @@ int serve(Config cfg)
     fc.hud_clear_y = (unsigned)cfg.num("hud_clear_y");
     fc.hud_clear_w = (unsigned)cfg.num("hud_clear_w");
     fc.hud_clear_h = (unsigned)cfg.num("hud_clear_h");
+    fc.hud_vignette = (unsigned)cfg.num("hud_vignette");
     fc.vpp_scale = cfg.num("hosted_vpp_scale") == 1;
     if (fc.vpp_scale)
         log_info("hosted_vpp_scale: a host's part of the map is cropped and scaled by VPP, on the GPU");
@@ -591,6 +601,7 @@ void define_keys(Config *cfg)
     cfg->define("hud_clear_y", "320");
     cfg->define("hud_clear_w", "250");
     cfg->define("hud_clear_h", "90");
+    cfg->define("hud_vignette", "2");
     cfg->define("render_socket", "/dev/shm/cluster-render/render.sock");
     cfg->define("log_file", "/var/opt/waze-on-cluster/log/waze-on-cluster.log");
     cfg->define("log_file_kb", "512");

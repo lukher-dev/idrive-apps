@@ -507,6 +507,30 @@ test('the HUD map only near turns: off by default; a flip goes to the render and
     c.close();
 });
 
+test('the HUD vignette as a slider: 0 (none) to 5, 2 by default; the render at once, patchd saves it', async (render, patch) => {
+    render.hud = 1;
+    const c = control();
+    c.open();
+    await until('connected', () => c.connectedRender() && c.connectedPatch());
+    render.stream(true);
+    await until('on', () => c.renderStatus && c.canChangeHudSize());
+    assert.deepStrictEqual([c.hudVignetteText(), c.hudVignette(), c.canChangeHudVignette()], ['Vignette: 2', 2, true], '2 by default');
+    c.setHudVignetteStep(5);
+    assert.deepStrictEqual([c.hudVignetteText(), c.hudVignette()], ['Vignette: 5', 5], 'shown at once');
+    await until('5', () => render.hudVignette === 5 && c.renderStatus.hud_vignette === 5 && patch.map.hud_vignette === 5);
+    c.setHudVignetteStep(0);
+    await until('none', () => c.renderStatus.hud_vignette === 0 && c.hudVignetteText() === 'Vignette: 0');
+    const sent = render.received.length;
+    [-1, 6, 2.5, '3', 0].forEach((step) => c.setHudVignetteStep(step));
+    assert.strictEqual(render.received.length, sent, 'nothing sent past either end, between steps or for the same step');
+    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'hud-vignette'), [{ cmd: 'hud-vignette', level: 5 }, { cmd: 'hud-vignette', level: 0 }]);
+    assert.deepStrictEqual(render.received.filter((m) => m.hud_vignette !== undefined), [{ cmd: 'hud', hud_vignette: '5' }, { cmd: 'hud', hud_vignette: '0' }]);
+    render.hudVignette = null;
+    render.announce(render.state, render.reason);
+    await until('a render without it', () => c.hudVignette() === null && !c.canChangeHudVignette() && c.hudVignetteText() === 'Vignette: \u2014');
+    c.close();
+});
+
 test('the HUD zoom as a slider: 10 % steps from 100 to 250 %; the text the zoom the render uses', async (render, patch) => {
     render.hud = 1;
     const c = control();

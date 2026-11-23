@@ -77,14 +77,17 @@ The app is in the head unit's display language.
   HUD arrow does. Google Maps sends them; Apple Maps should too, though it
   is untried. With an app that sends none, such as Waze, the map never
   shows.
-- **HUD map settings:** opens a page with the map's size, zoom and
-  place, and how far before a turn it shows:
+- **HUD map settings:** opens a page with the map's size, zoom, vignette
+  and place, and how far before a turn it shows:
   - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map)
     to 250 %. The map is never scaled up, so a wide HUD map takes less zoom:
     the row shows the zoom in use. By default it is as close as the HUD map's
     size allows, which is the cluster's own scale.
   - **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
     HUD's edges cut the map's sides.
+  - **Vignette:** fades the map out towards the HUD's edges, 0 (none) to 5
+    (the widest fade), 2 by default. The fade follows the HUD itself, not the
+    map, so moving or resizing the map does not move it.
   - **Move map left / right / up / down** and **Centre map:** where the
     map sits on the HUD. Above 100 %, left and right slide the map inside the
     HUD.

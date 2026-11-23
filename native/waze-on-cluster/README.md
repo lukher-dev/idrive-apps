@@ -146,6 +146,19 @@ map black in a rectangle of the HUD (`hud_clear_x`, `hud_clear_y`,
 readable over the map. The rectangle belongs to the HUD, not the map: moving
 or resizing the map leaves it in place. It needs `hud_scale_down`.
 
+**Vignette** (`hud_vignette`, 0 to 5, 2 by default) fades the HUD map
+smoothly to black towards the edges of the HUD's 800x480 scene, in a
+rounded-rectangle shape centred on the scene's middle and as large as the
+scene. Level 1 fades the outer 7 % of each side, each level 7 % more, up to
+35 % at 5; 0 turns it off. Like the speed rectangle it belongs to the HUD:
+the map's size, zoom and position do not move it, and a map that stays
+inside the unfaded middle is not touched. It combines with the rounded
+corners and the speed rectangle. The app saves it per driver profile
+through patchd (`{"cmd":"hud-vignette","level":N}`) and sends
+`{"cmd":"hud","hud_vignette":"N"}` to change the running map; the status
+reports it as `hud_vignette`. It needs `hud_scale_down`; `hud-preview`
+shows it with `--vignette N`.
+
 **Inside another app's scene.** An app that shows a scene file on a target
 with `layers` 1 can host the map there (cluster-render PROTOCOL.md
 "Hosting another target"): the map is then drawn only in the rect it
