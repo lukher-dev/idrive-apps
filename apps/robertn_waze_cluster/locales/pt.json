@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Zoom do mapa: {0}",
     "Waiting for a turn": "À espera de uma viragem",
     "No turn data": "Sem dados de viragens",
-    "Arrival time on the cluster": "Hora de chegada no quadrante",
     "Hide map behind BMW's speed": "Ocultar mapa sob a velocidade BMW",
     "Speed area: {0}": "Área da velocidade: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} em {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Área da velocidade mais estreita",
     "Speed area taller": "Área da velocidade mais alta",
     "Speed area shorter": "Área da velocidade mais baixa",
-    "Turn cards on the cluster": "Indicações de viragem no quadrante",
+    "Turn and arrival cards on the cluster": "Indicações de viragem e hora de chegada no quadrante",
     "Speed area": "Área da velocidade",
     "HUD map settings": "Definições do mapa no HUD",
     "Android Auto map": "Mapa do Android Auto"

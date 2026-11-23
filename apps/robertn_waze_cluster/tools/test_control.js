@@ -266,7 +266,7 @@ test('the cluster map stays while a change runs or fails on the side in effect, 
     c.close();
 });
 
-test('the turn cards on CarPlay\'s cluster: a checkbox with a patch on disk, on by default, the asked choice while it applies, after restart',
+test('the turn and arrival cards on CarPlay\'s cluster: one checkbox with a patch on disk, on by default, the asked choice while it applies, after restart',
     async (render, patch) => {
         const c = control();
         c.open();
@@ -274,7 +274,7 @@ test('the turn cards on CarPlay\'s cluster: a checkbox with a patch on disk, on 
         patch.turns = 'on';
         patch.announce('original', null, null);
         await until('no patch', () => c.patchStatus && c.patchStatus.turns === 'on');
-        assert.deepStrictEqual([c.canToggleCarplayTurns(), c.carplayTurns(), c.turnsText()], [false, true, 'Turn cards on the cluster'],
+        assert.deepStrictEqual([c.canToggleCarplayTurns(), c.carplayTurns(), c.turnsText()], [false, true, 'Turn and arrival cards on the cluster'],
             'ticked by default, greyed without a patch');
         patch.mapurl = 'eta';
         patch.announce('patched', 'high', null);
@@ -282,7 +282,7 @@ test('the turn cards on CarPlay\'s cluster: a checkbox with a patch on disk, on 
         c.toggleCarplayTurns();
         assert.strictEqual(c.carplayTurns(), false, 'unticked at once');
         await until('applied', () => c.patchStatus.turns === 'off' && c.pending() === 'apply' && !c.busy());
-        assert.deepStrictEqual([c.carplayTurns(), c.turnsText(), c.canToggleCarplayTurns()], [false, 'Turn cards on the cluster (after restart)', true]);
+        assert.deepStrictEqual([c.carplayTurns(), c.turnsText(), c.canToggleCarplayTurns()], [false, 'Turn and arrival cards on the cluster (after restart)', true]);
         assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'carplay-turns'), [{ cmd: 'carplay-turns', on: 0 }]);
         c.toggleCarplayTurns();
         await until('on again', () => c.patchStatus.turns === 'on' && !c.busy());
@@ -298,38 +298,6 @@ test('the turn cards on CarPlay\'s cluster: a checkbox with a patch on disk, on 
         assert.deepStrictEqual([c.canToggleCarplayTurns(), c.carplayTurns()], [false, null], 'a patchd without the choice: greyed');
         c.close();
     });
-
-test('the arrival-time card on CarPlay\'s cluster: a checkbox with a patch on disk, the asked choice while it applies, after restart', async (render, patch) => {
-    const c = control();
-    c.open();
-    await until('connected', () => c.connectedPatch());
-    patch.eta = 'off';
-    patch.announce('original', null, null);
-    await until('no patch', () => c.patchStatus && c.patchStatus.eta === 'off');
-    assert.deepStrictEqual([c.canToggleCarplayEta(), c.carplayEta(), c.etaText()], [false, false, 'Arrival time on the cluster'], 'greyed without a patch');
-    patch.mapurl = 'map';
-    patch.announce('patched', 'high', null);
-    await until('patched', () => c.canToggleCarplayEta());
-    c.toggleCarplayEta();
-    assert.strictEqual(c.carplayEta(), true, 'ticked at once');
-    await until('applied', () => c.patchStatus.eta === 'on' && c.pending() === 'apply' && !c.busy());
-    assert.deepStrictEqual([c.carplayEta(), c.etaText(), c.canToggleCarplayEta()], [true, 'Arrival time on the cluster (after restart)', true]);
-    assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'carplay-eta'), [{ cmd: 'carplay-eta', on: 1 }]);
-    c.toggleCarplayEta();
-    await until('off again', () => c.patchStatus.eta === 'off' && !c.busy());
-    assert.strictEqual(c.carplayEta(), false);
-    /* refused: the choice patchd holds */
-    patch.busy = true;
-    patch.announce('patched', 'high', null);
-    await until('busy', () => c.busy());
-    assert.strictEqual(c.canToggleCarplayEta(), false, 'greyed while patchd is busy');
-    patch.busy = false;
-    patch.eta = undefined;
-    patch.announce('patched', 'high', null);
-    await until('an older patchd', () => c.patchStatus && c.patchStatus.eta === undefined && !c.busy());
-    assert.deepStrictEqual([c.canToggleCarplayEta(), c.carplayEta()], [false, null], 'a patchd without the choice: greyed');
-    c.close();
-});
 
 test('the turn card checkbox: the asked card until its change ends; the one on disk after a failure or a refusal', async (render, patch) => {
     const c = control();

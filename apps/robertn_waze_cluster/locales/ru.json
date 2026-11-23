@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Масштаб карты: {0}",
     "Waiting for a turn": "Ожидание поворота",
     "No turn data": "Нет данных о поворотах",
-    "Arrival time on the cluster": "Время прибытия на приборах",
     "Hide map behind BMW's speed": "Скрыть карту под скоростью BMW",
     "Speed area: {0}": "Поле скорости: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} в {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Поле скорости уже",
     "Speed area taller": "Поле скорости выше",
     "Speed area shorter": "Поле скорости ниже",
-    "Turn cards on the cluster": "Подсказки поворотов на приборах",
+    "Turn and arrival cards on the cluster": "Подсказки поворотов и время прибытия на приборах",
     "Speed area": "Поле скорости",
     "HUD map settings": "Настройки карты на HUD",
     "Android Auto map": "Карта Android Auto"

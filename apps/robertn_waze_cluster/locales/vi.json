@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Thu phóng bản đồ: {0}",
     "Waiting for a turn": "Đang chờ chỗ rẽ",
     "No turn data": "Không có dữ liệu chỗ rẽ",
-    "Arrival time on the cluster": "Giờ đến trên bảng đồng hồ",
     "Hide map behind BMW's speed": "Ẩn bản đồ sau tốc độ BMW",
     "Speed area: {0}": "Vùng tốc độ: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} tại {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Vùng tốc độ hẹp hơn",
     "Speed area taller": "Vùng tốc độ cao hơn",
     "Speed area shorter": "Vùng tốc độ thấp hơn",
-    "Turn cards on the cluster": "Thẻ chỉ hướng trên bảng đồng hồ",
+    "Turn and arrival cards on the cluster": "Thẻ chỉ hướng và giờ đến trên bảng đồng hồ",
     "Speed area": "Vùng tốc độ",
     "HUD map settings": "Cài đặt bản đồ trên HUD",
     "Android Auto map": "Bản đồ Android Auto"

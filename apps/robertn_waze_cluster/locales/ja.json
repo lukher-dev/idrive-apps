@@ -104,7 +104,6 @@
     "Map zoom: {0}": "地図のズーム：{0}",
     "Waiting for a turn": "曲がり角待ち",
     "No turn data": "曲がり角データなし",
-    "Arrival time on the cluster": "メーターに到着予定時刻",
     "Hide map behind BMW's speed": "BMWの速度表示の下の地図を非表示",
     "Speed area: {0}": "速度エリア：{0}",
     "{0}x{1} at {2},{3}": "{2},{3} に {0}x{1}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "速度エリアの幅を狭める",
     "Speed area taller": "速度エリアを高くする",
     "Speed area shorter": "速度エリアを低くする",
-    "Turn cards on the cluster": "メーターに進路案内カード",
+    "Turn and arrival cards on the cluster": "メーターに進路案内カードと到着予定時刻",
     "Speed area": "速度エリア",
     "HUD map settings": "HUDの地図の設定",
     "Android Auto map": "Android Autoの地図"

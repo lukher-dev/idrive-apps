@@ -15,11 +15,10 @@
  * restart/stop. Runs the real patchd.js and carplay_patch.js on a temporary
  * copy, with a fake systemctl, mount, recmgr list and /proc/stat, and a dummy
  * process standing in for carplay. First, on a synthetic build
- * (synthetic_carplay.js), with or without CARPLAY_BIN: CarPlay's choices,
- * the turn cards and the arrival-time card on the cluster (carplay-turns,
- * carplay-eta), saved, reported, applied at once to a patch on disk, and
- * the mapurl status for every pair of choices and every form of the URL
- * edits on disk. The rest needs CARPLAY_BIN and is skipped without it.
+ * (synthetic_carplay.js), with or without CARPLAY_BIN: CarPlay's cards
+ * choice, the turn and arrival-time cards on the cluster (carplay-turns),
+ * saved, reported, applied at once to a patch on disk, and the mapurl
+ * status for either choice and every form of the URL edits on disk. The rest needs CARPLAY_BIN and is skipped without it.
  *
  *   node patchd_patch_test.js
  */
@@ -259,15 +258,15 @@ function rebootCmd(cmd) {
 function rebootCount() { return fs.readFileSync(REBOOTS, 'utf8').split('\n').filter(Boolean).length; }
 function slot() { return fs.readFileSync(TGT).slice(SLOT, SLOT + 4).toString('hex'); }
 
-/* CarPlay's choices on a synthetic build, whose patch the Patch button
- * applies (--unproven): the turn cards on the cluster (carplay-turns, on by
- * default) and the arrival-time card (carplay-eta, off by default), each
- * saved in the state folder, reported in status as turns and eta, and
- * applied at once to a patch on disk with --turns and --eta; and mapurl,
- * whether the URL edits on disk are the ones the choices want ('eta' and
- * 'map' when they are, with and without the arrival-time card; 'no-eta',
- * for which the app offers the Patch button, when not; 'off' for a patch
- * without them), for every pair of choices and every form of the edits:
+/* CarPlay's cards choice on a synthetic build, whose patch the Patch button
+ * applies (--unproven): the phone's turn and arrival-time cards on the
+ * cluster (carplay-turns, on by default), saved in the state folder,
+ * reported in status as turns, and applied at once to a patch on disk with
+ * --turns and --eta both following it; and mapurl, whether the URL edits on
+ * disk are the ones the choice wants ('eta' and 'map' when they are, with
+ * and without the cards; 'no-eta', for which the app offers the Patch
+ * button, when not; 'off' for a patch without them), for either choice and
+ * every form of the edits:
  * the ShowUI URL stock, with the arrival-time card, or without turn cards
  * with and without it; the map URL stock, this version's, or with ETA; and
  * on builds without the map URL edit or where the ShowUI URL edit does not
@@ -276,10 +275,10 @@ function slot() { return fs.readFileSync(TGT).slice(SLOT, SLOT + 4).toString('he
 async function choices() {
     var synthetic = require('./synthetic_carplay.js'), locator = require('../carplay_locate.js');
     var s = synthetic.build({}), at = s.at, VAR = path.join(dir, 'var');
-    var TURNS = path.join(VAR, 'carplay-turns'), ETA = path.join(VAR, 'carplay-eta');
+    var TURNS = path.join(VAR, 'carplay-turns');
     function clean() {
         ['.woc-orig', '.woc-orig.json', '.woc-patch.json', '.woc-running', '.woc-running.1', '.woc-running.2'].forEach(function (x) { try { fs.unlinkSync(TGT + x); } catch (e) {} });
-        [TURNS, ETA, path.join(dir, 'sock', 'activation-pending')].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
+        [TURNS, path.join(dir, 'sock', 'activation-pending')].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
         cp.execFileSync('rm', ['-rf', path.join(PROC, '4242')]);
     }
     function form(b) { var u = locator.locate(b).showui; return !u.ok ? 'n/a' : u.strIs === 'patched' && u.callIs === 'patched' ? u.form : u.strIs + '/' + u.callIs; }
@@ -289,26 +288,25 @@ async function choices() {
     fs.writeFileSync(TGT, s.buf, { mode: 0o755 });
     nextStart();
     r = await status();
-    ok('choices: by default the turn cards on, the arrival-time card off; a stock build reads original, its URL edits off',
-        r.state === 'original' && r.turns === 'on' && r.eta === 'off' && r.mapurl === 'off', JSON.stringify(r));
+    ok('choices: by default the cards on, no separate arrival-time choice; a stock build reads original, its URL edits off',
+        r.state === 'original' && r.turns === 'on' && !('eta' in r) && r.mapurl === 'off', JSON.stringify(r));
     r = await op({ cmd: 'apply', panel: 'high', mode: 'avb' });
     nextStart();
     r = await status();
     var patched = fs.readFileSync(TGT);
-    ok('choices: the Patch button with the defaults leaves the ShowUI URL stock; patchd reports the map URL alone, as chosen',
-        r.state === 'patched' && r.mapurl === 'map' && form(patched) === 'stock/stock' && locator.locate(patched).mapurl.slotIs === 'current', JSON.stringify(r));
-    /* Each choice changed: saved, and the patch on disk applied again with it. */
-    var STEPS = [['carplay-turns', 0, 'off', 'off', 'map', 'map'], ['carplay-eta', 1, 'off', 'on', 'map-eta', 'eta'],
-        ['carplay-turns', 1, 'on', 'on', 'eta', 'eta'], ['carplay-eta', 0, 'on', 'off', 'stock/stock', 'map']];
+    ok('choices: the Patch button with the default asks for the cards with the arrival-time card; patchd reports it as chosen',
+        r.state === 'patched' && r.mapurl === 'eta' && form(patched) === 'eta' && locator.locate(patched).mapurl.slotIs === 'current', JSON.stringify(r));
+    /* The choice changed: saved, and the patch on disk applied again with it. */
+    var STEPS = [[0, 'off', 'map', 'map'], [1, 'on', 'eta', 'eta']];
     for (var k = 0; k < STEPS.length; k++) {
-        var t = STEPS[k], file = t[0] === 'carplay-turns' ? TURNS : ETA;
-        r = await op({ cmd: t[0], on: t[1] });
+        var t = STEPS[k];
+        r = await op({ cmd: 'carplay-turns', on: t[0] });
         var applied = r.carplay === 'deferred' && r.pending === 'apply';
         nextStart();
         r = await status();
-        ok('choices: ' + t[0] + ' ' + t[1] + ': saved, applied at once, the ShowUI URL ' + t[4] + ' on disk, turns ' + t[2] + ', eta ' + t[3] + ', mapurl ' + t[5],
-            applied && fs.readFileSync(file, 'utf8') === (t[1] ? 'on' : 'off') + '\n' && r.state === 'patched' && r.turns === t[2] && r.eta === t[3] &&
-            form(fs.readFileSync(TGT)) === t[4] && r.mapurl === t[5], JSON.stringify(r) + ' ' + form(fs.readFileSync(TGT)));
+        ok('choices: carplay-turns ' + t[0] + ': saved, applied at once, the ShowUI URL ' + t[2] + ' on disk, turns ' + t[1] + ', mapurl ' + t[3],
+            applied && fs.readFileSync(TURNS, 'utf8') === (t[0] ? 'on' : 'off') + '\n' && r.state === 'patched' && r.turns === t[1] &&
+            form(fs.readFileSync(TGT)) === t[2] && r.mapurl === t[3], JSON.stringify(r) + ' ' + form(fs.readFileSync(TGT)));
     }
     r = await session({ cmd: 'carplay-turns', on: 2 }, function (m) { return m.ev === 'refused'; });
     ok('choices: carplay-turns with another value refused, nothing saved', r.reason === 'on must be 0 or 1' && fs.readFileSync(TURNS, 'utf8') === 'on\n', JSON.stringify(r));
@@ -331,34 +329,32 @@ async function choices() {
         if (show !== 'stock') { locator.SHOWUI_FORMS.filter(function (f) { return f.name === show; })[0].bytes.copy(b, u.str); Buffer.from(u.callBytes, 'hex').copy(b, u.call); }
         return b;
     }
-    var PAIRS = [['on', 'on'], ['on', 'off'], ['off', 'on'], ['off', 'off']];
-    /* the map URL this version writes: by on-disk ShowUI URL, mapurl for each pair above */
-    var WANT = { stock: ['no-eta', 'map', 'no-eta', 'no-eta'], eta: ['eta', 'no-eta', 'no-eta', 'no-eta'],
-        'map-eta': ['no-eta', 'no-eta', 'eta', 'no-eta'], map: ['no-eta', 'no-eta', 'no-eta', 'map'] };
+    var CHOICES = ['on', 'off'];
+    /* the map URL this version writes: by on-disk ShowUI URL, mapurl for each choice above */
+    var WANT = { stock: ['no-eta', 'no-eta'], eta: ['eta', 'no-eta'], 'map-eta': ['no-eta', 'no-eta'], map: ['no-eta', 'map'] };
     /* a build without the map URL edit: the ShowUI URL alone */
-    var WANT_NO_MAP = { stock: ['off', 'off', 'off', 'off'], eta: ['eta', 'eta', 'no-eta', 'no-eta'],
-        'map-eta': ['no-eta', 'no-eta', 'eta', 'no-eta'], map: ['no-eta', 'no-eta', 'no-eta', 'map'] };
+    var WANT_NO_MAP = { stock: ['off', 'off'], eta: ['eta', 'no-eta'], 'map-eta': ['no-eta', 'no-eta'], map: ['no-eta', 'map'] };
     var nm = synthetic.build({ gateCmp: 2 }), na = synthetic.build({ setShowUi: true });
     var CASES = [];
     ['stock', 'eta', 'map-eta', 'map'].forEach(function (show) {
         CASES.push(['the map URL this version writes, the ShowUI URL ' + show, withForms(patched, s.buf, 'current', show), WANT[show]]);
-        CASES.push(['the map URL with ETA (0.10.2-0.10.3), the ShowUI URL ' + show, withForms(patched, s.buf, 'eta', show), ['no-eta', 'no-eta', 'no-eta', 'no-eta']]);
-        CASES.push(['the map URL stock, the ShowUI URL ' + show, withForms(patched, s.buf, 'stock', show), show === 'stock' ? ['off', 'off', 'off', 'off'] : ['no-eta', 'no-eta', 'no-eta', 'no-eta']]);
+        CASES.push(['the map URL with ETA (0.10.2-0.10.3), the ShowUI URL ' + show, withForms(patched, s.buf, 'eta', show), ['no-eta', 'no-eta']]);
+        CASES.push(['the map URL stock, the ShowUI URL ' + show, withForms(patched, s.buf, 'stock', show), show === 'stock' ? ['off', 'off'] : ['no-eta', 'no-eta']]);
         CASES.push(['no map URL edit in the build, the ShowUI URL ' + show, withForms(nm.buf, nm.buf, null, show), WANT_NO_MAP[show]]);
     });
     var naMu = locator.locate(na.buf).mapurl, naPatched = Buffer.from(na.buf);
     Buffer.from(naMu.slotBytes, 'hex').copy(naPatched, naMu.slot); Buffer.from(naMu.leaBytes, 'hex').copy(naPatched, naMu.lea);
-    CASES.push(['the ShowUI URL edit not applicable, the map URL this version writes', naPatched, ['map', 'map', 'map', 'map']]);
+    CASES.push(['the ShowUI URL edit not applicable, the map URL this version writes', naPatched, ['map', 'map']]);
     clean();
     for (var c = 0; c < CASES.length; c++) {
         fs.writeFileSync(TGT, CASES[c][1]);
         var got = [];
-        for (var p = 0; p < PAIRS.length; p++) {
-            fs.writeFileSync(TURNS, PAIRS[p][0] + '\n'); fs.writeFileSync(ETA, PAIRS[p][1] + '\n');
+        for (var p = 0; p < CHOICES.length; p++) {
+            fs.writeFileSync(TURNS, CHOICES[p] + '\n');
             r = await status();
-            got.push(r.turns === PAIRS[p][0] && r.eta === PAIRS[p][1] ? r.mapurl : 'turns ' + r.turns + ' eta ' + r.eta);
+            got.push(r.turns === CHOICES[p] ? r.mapurl : 'turns ' + r.turns);
         }
-        ok('mapurl, ' + CASES[c][0] + ': for turns/eta on/on, on/off, off/on, off/off ' + CASES[c][2].join(' '), JSON.stringify(got) === JSON.stringify(CASES[c][2]), JSON.stringify(got));
+        ok('mapurl, ' + CASES[c][0] + ': for the cards on, off ' + CASES[c][2].join(' '), JSON.stringify(got) === JSON.stringify(CASES[c][2]), JSON.stringify(got));
     }
     clean();
     try { fs.unlinkSync(TGT); } catch (e) {}

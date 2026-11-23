@@ -4,7 +4,8 @@ Shows your phone's navigation map on the instrument cluster of a BMW with
 iDrive 7. It can also show it on the head-up display (experimental).
 
 - **CarPlay:** Waze, Apple Maps or Google Maps. During a route, Apple Maps
-  and Google Maps also show their arrival-time card on the cluster.
+  and Google Maps also show their turn and arrival-time cards on the
+  cluster.
 - **Android Auto:** Google Maps.
 
 Whether your car and its software are supported can differ for CarPlay and
@@ -102,14 +103,11 @@ The app is in the head unit's display language.
 - **Status:** whether the map is on for that phone type.
 - **Patch** and **Remove patch:** see
   [above](#do-i-need-to-press-patch-or-remove-patch).
-- **Arrival time on the cluster** (CarPlay only): whether the cluster map
-  shows the phone's arrival-time card. Off by default; a change takes effect
-  after the head unit restarts.
-- **Turn cards on the cluster** (CarPlay only, experimental): whether the
-  phone draws its turn cards on the cluster map. On by default. Unticked,
-  CarPlay asks the phone for the map alone; the arrival time follows its own
-  checkbox. A change takes effect after the head unit restarts. The HUD shows
-  the cluster's picture, so this applies to the HUD map too.
+- **Turn and arrival cards on the cluster** (CarPlay only): whether the
+  phone draws its turn card and arrival-time card on the cluster map. On by
+  default. Unticked, CarPlay asks the phone for the map alone. A change takes
+  effect after the head unit restarts. The HUD shows the cluster's picture,
+  so this applies to the HUD map too.
 - **CarPlay Wi-Fi** (CarPlay only): the Wi-Fi band your iPhone uses.
 - **Android Auto map** (Android Auto only): opens a page with **Cluster map
   zoom** and:

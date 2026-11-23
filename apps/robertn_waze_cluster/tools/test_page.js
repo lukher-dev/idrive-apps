@@ -312,7 +312,7 @@ async function main() {
         'wocHeadHud HUD', 'wocHud HUD map: \u2014', "wocHudKeep Keep HUD map over BMW's pop-ups", 'wocHudNearTurn Show HUD map only near turns',
         'wocHudMapPage HUD map settings', 'wocSpeedPage Speed area',
         'wocHeadCarPlay CarPlay', 'wocStatus Status: Connecting…', 'wocEnable Patch', 'wocDisable Remove patch',
-        'wocCpEta Arrival time on the cluster', 'wocCpTurns Turn cards on the cluster', 'wocWifi ', 'wocWifiHint ',
+        'wocCpTurns Turn and arrival cards on the cluster', 'wocWifi ', 'wocWifiHint ',
         'wocHeadAa Android Auto', 'wocAaStatus Status: Connecting…', 'wocAaEnable Patch', 'wocAaDisable Remove patch', 'wocAaPage Android Auto map',
         'wocRestart Restart head unit', 'wocRestartStatus '],
         'the main page: four sections, in order');
@@ -416,7 +416,7 @@ async function main() {
         await until('page shows the map', () => byName.wocMap.text === `Cluster map: Showing ${RENDER_PAGE} — ${RENDER_FPS}` && status.text === 'Status: Patched');
         assert(!logs.some((l) => /^error/.test(l)), logs.filter((l) => /^error/.test(l)).join('\n'));
         const bound = logs.filter((l) => l.startsWith('info: BIND OK: ')).map((l) => l.split(' ')[3]).sort();
-        assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaPage', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture', 'wocCpEta',
+        assert.deepStrictEqual(bound, ['wocAaCard', 'wocAaDisable', 'wocAaEnable', 'wocAaPage', 'wocAaZoomIn', 'wocAaZoomOut', 'wocCapture',
             'wocCpTurns', 'wocDisable', 'wocEnable', 'wocGuide', 'wocHudCentre', 'wocHudClear', 'wocHudClearDown', 'wocHudClearLeft', 'wocHudClearNarrower',
             'wocHudClearRight', 'wocHudClearShorter', 'wocHudClearTaller', 'wocHudClearUp', 'wocHudClearWider',
             'wocHudDown', 'wocHudKeep', 'wocHudLeft', 'wocHudMapPage', 'wocHudNearTurn', 'wocHudRight', 'wocHudUp', 'wocLogs', 'wocLogsSave', 'wocProfile',
@@ -892,7 +892,7 @@ async function main() {
             await until('shown again', () => patch._clients.size === 1);
             console.log('ok   HUD map settings, Speed area and Android Auto map open their pages; moving there and back keeps the app shown ' +
                 'and its sockets open; leaving from one hides it');
-            /* the turn cards: a press asks patchd; its answer decides the tick */
+            /* the cards: a press asks patchd; its answer decides the tick */
             const turns = byName.wocCpTurns;
             const was = { state: patch.state, panel: patch.panel, carplay: patch.carplay, pending: patch.pending, reason: patch.reason,
                 restart: patch.restart, _rebooting: patch._rebooting };
@@ -901,16 +901,17 @@ async function main() {
             ctl._restartRequested = false;
             Object.assign(patch, { pending: null, restart: null, _rebooting: false, turns: 'on' });
             patch.announce('patched', 'high', null);
-            await until('the turn cards ticked, enabled', () => turns.selected === true && turns.enabled === true && turns.text === 'Turn cards on the cluster');
+            await until('the cards ticked, enabled', () => turns.selected === true && turns.enabled === true &&
+                turns.text === 'Turn and arrival cards on the cluster');
             turns.press();
             await until('asked off: patchd applies it', () => patch.turns === 'off' && !patch.busy && turns.selected === false &&
-                turns.text === 'Turn cards on the cluster (after restart)');
+                turns.text === 'Turn and arrival cards on the cluster (after restart)');
             assert.deepStrictEqual(patch.received.filter((m) => m.cmd === 'carplay-turns'), [{ cmd: 'carplay-turns', on: 0 }], 'one command');
             Object.assign(patch, was, { turns: undefined });
             ctl._restartRequested = asked;
             patch.announce(was.state, was.panel, was.reason);
             await until('a patchd without it: greyed', () => turns.enabled === false);
-            console.log('ok   Turn cards on the cluster: ticked as patchd holds it, a press asks patchd to change it');
+            console.log('ok   Turn and arrival cards on the cluster: ticked as patchd holds it, a press asks patchd to change it');
         }
 
         /* ---- the Logs page ---- */

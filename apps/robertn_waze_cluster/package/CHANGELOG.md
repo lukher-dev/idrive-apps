@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+Vignette is gone from HUD map settings for now: it did not show on the car.
+CarPlay's Arrival time on the cluster and Turn cards on the cluster are one
+checkbox, Turn and arrival cards on the cluster, on by default: turning the
+turn cards off took the arrival time away too. If CarPlay's Status says
+Update needed after the update, press Patch.
+
 ## 0.6.21
 
 The page is shorter: HUD map settings, Speed area and Android Auto map each

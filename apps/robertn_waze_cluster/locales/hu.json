@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Térkép nagyítása: {0}",
     "Waiting for a turn": "Várakozás kanyarra",
     "No turn data": "Nincs kanyaradat",
-    "Arrival time on the cluster": "Érkezési idő a műszerfalon",
     "Hide map behind BMW's speed": "Térkép rejtése BMW-sebesség alatt",
     "Speed area: {0}": "Sebességmező: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} itt: {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Sebességmező keskenyebb",
     "Speed area taller": "Sebességmező magasabb",
     "Speed area shorter": "Sebességmező alacsonyabb",
-    "Turn cards on the cluster": "Kanyarodási kártyák a műszerfalon",
+    "Turn and arrival cards on the cluster": "Kanyarodási kártyák és érkezési idő a műszerfalon",
     "Speed area": "Sebességmező",
     "HUD map settings": "HUD-térkép beállításai",
     "Android Auto map": "Android Auto-térkép"

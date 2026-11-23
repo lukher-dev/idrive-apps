@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+The HUD map's vignette is gone for now: it did not show on the car.
+
+CarPlay: the phone's turn card and arrival-time card on the cluster are one
+setting, on by default. Turned off, CarPlay asks the phone for its map-only
+cluster page, which has neither card. A patch written with the arrival-time
+card off now reads as needing an update, and CarPlay's Patch button brings
+it up to date.
+
 ## 0.10.20
 
 The HUD map can fade to black towards the edges of the HUD (the vignette,

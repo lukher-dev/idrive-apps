@@ -106,7 +106,6 @@
     "Map zoom: {0}": "Kaartzoom: {0}",
     "Waiting for a turn": "Wachten op afslag",
     "No turn data": "Geen afslaggegevens",
-    "Arrival time on the cluster": "Aankomsttijd in paneel",
     "Hide map behind BMW's speed": "Kaart verbergen achter BMW-snelheid",
     "Speed area: {0}": "Snelheidsvlak: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} op {2},{3}",
@@ -118,7 +117,7 @@
     "Speed area narrower": "Snelheidsvlak smaller",
     "Speed area taller": "Snelheidsvlak hoger",
     "Speed area shorter": "Snelheidsvlak lager",
-    "Turn cards on the cluster": "Afslagkaarten in paneel",
+    "Turn and arrival cards on the cluster": "Afslagkaarten en aankomsttijd in paneel",
     "Speed area": "Snelheidsvlak",
     "HUD map settings": "Instellingen kaart in HUD",
     "Android Auto map": "Android Auto-kaart"

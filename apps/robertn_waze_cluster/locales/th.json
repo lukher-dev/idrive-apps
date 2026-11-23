@@ -104,7 +104,6 @@
     "Map zoom: {0}": "ซูมแผนที่: {0}",
     "Waiting for a turn": "กำลังรอทางเลี้ยว",
     "No turn data": "ไม่มีข้อมูลทางเลี้ยว",
-    "Arrival time on the cluster": "เวลาถึงบนหน้าปัด",
     "Hide map behind BMW's speed": "ซ่อนแผนที่หลังความเร็วของ BMW",
     "Speed area: {0}": "พื้นที่ความเร็ว: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} ที่ {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "พื้นที่ความเร็วแคบลง",
     "Speed area taller": "พื้นที่ความเร็วสูงขึ้น",
     "Speed area shorter": "พื้นที่ความเร็วเตี้ยลง",
-    "Turn cards on the cluster": "การ์ดบอกทางเลี้ยวบนหน้าปัด",
+    "Turn and arrival cards on the cluster": "การ์ดบอกทางเลี้ยวและเวลาถึงบนหน้าปัด",
     "Speed area": "พื้นที่ความเร็ว",
     "HUD map settings": "การตั้งค่าแผนที่บน HUD",
     "Android Auto map": "แผนที่ Android Auto"

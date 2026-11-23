@@ -415,8 +415,10 @@ sites is on that build's `stock` list.
 When CarPlay starts the cluster stream, `requestStream` (Edit 3) sends the
 phone `ShowUI(url, uuid)` with the cluster display's URL,
 `maps:/car/instrumentcluster`. Edit 6 sends another URL, picked by two
-choices: the arrival-time card (`apply --eta`, patchd's `carplay-eta`) and
-the turn cards (`apply --turns`, patchd's `carplay-turns`):
+options: the arrival-time card (`apply --eta`) and the turn cards (`apply
+--turns`). patchd has one choice for both, the phone's cards on the cluster
+(`carplay-turns`), and passes it as both options, so it writes the first
+row or the last:
 
 | `--turns` | `--eta` | ShowUI URL | log text window (68 B) |
 |---|---|---|---|
@@ -427,7 +429,10 @@ the turn cards (`apply --turns`, patchd's `carplay-turns`):
 
 By default `apply` takes `--turns yes --eta yes`, which writes the same
 bytes as every earlier release with Edit 6. patchd passes the owner's
-choices: the turn cards on and the arrival-time card off until changed.
+choice, on until changed. Releases 0.10.18 to 0.10.20 had a second patchd
+choice for the arrival-time card (`carplay-eta`, off by default); on the
+car, turning the turn cards off took the arrival-time card away too, so
+the two became one.
 
 The root path keeps the phone's full cluster page, turn card included. `showETA=yes` asks for
 the arrival-time card during a route: Google Maps draws an ETA line on the
@@ -445,8 +450,9 @@ CarPlaySupport's `CPSInstrumentClusterCardViewController` has
 (turn) card and the paused card but still updates the trip estimates, and
 its `setShowETA:` shows the arrival time on a map-only page whatever the
 card layout. `--turns no` should therefore show the map without the
-phone's turn card, with the arrival-time card under `--eta yes`. This is
-read from iOS and not yet seen on the car.
+phone's turn card, with the arrival-time card under `--eta yes`. On the
+car the page with `--eta yes` showed neither card, so patchd never asks
+for that form.
 
 The URL is a global `std::string` (`0x556ce0`) that a static initializer
 builds from `maps:/car/instrumentcluster` (`0x2a2be4`), read through its
@@ -536,20 +542,18 @@ URL:
 
 and `verify` ends `ShowUI URL stock` or `ShowUI URL <URL>`.
 
-`patchd` keeps the choices in `/var/opt/waze-on-cluster/carplay-eta` and
-`carplay-turns` (`on` or `off`), reports them in its status as `eta` and
-`turns`, and applies a patch on disk again as soon as one changes. Its
-`mapurl` says whether the URL edits on disk are what an apply writes for
-those choices: `"eta"` or `"map"` when they are (with or without the
-arrival-time card); `"no-eta"`, for which the app shows `Status: Update
-needed`, when Edit 6 holds another URL than the choices ask for or is
-stock where they ask for one, when Edit 5 holds the URL with ETA, or when
-Edit 5 is stock and Edit 6 is not; `"off"` when both are stock, as in a
-patch of a release without Edit 5, which an update's `activate` brings up
-to date. With the turn cards on these are the values earlier releases
-reported. On a build without Edit 5, the URL with the arrival-time card
-reads `"eta"` while the turn cards are on, whatever the arrival-time
-choice, as before.
+`patchd` keeps the choice in `/var/opt/waze-on-cluster/carplay-turns`
+(`on` or `off`), reports it in its status as `turns`, and applies a patch
+on disk again as soon as it changes. Its `mapurl` says whether the URL
+edits on disk are what an apply writes for that choice: `"eta"` or
+`"map"` when they are (with or without the cards); `"no-eta"`, for which
+the app shows `Status: Update needed`, when Edit 6 holds another URL than
+the choice asks for or is stock, when Edit 5 holds the URL with ETA, or
+when Edit 5 is stock and Edit 6 is not; `"off"` when both are stock, as in
+a patch of a release without Edit 5, which an update's `activate` brings
+up to date. A patch with the stock ShowUI URL, which releases 0.10.18 to
+0.10.20 wrote with the arrival-time card off, reads `"no-eta"` with the
+cards on: CarPlay's Patch button writes the URL with the card.
 
 carplay 23.12.3 has `setShowUiUrl`, so the edit does not apply there (nor
 do Edits 2–4, whose sites it lacks). On carplay 21.27.4 `probe` says

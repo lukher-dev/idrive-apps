@@ -106,7 +106,6 @@
     "Map zoom: {0}": "地圖縮放：{0}",
     "Waiting for a turn": "等待轉彎",
     "No turn data": "無轉彎資料",
-    "Arrival time on the cluster": "儀表板顯示抵達時間",
     "Hide map behind BMW's speed": "隱藏 BMW 車速後方的地圖",
     "Speed area: {0}": "車速區域：{0}",
     "{0}x{1} at {2},{3}": "{0}x{1}，位於 {2},{3}",
@@ -118,7 +117,7 @@
     "Speed area narrower": "車速區域變窄",
     "Speed area taller": "車速區域加高",
     "Speed area shorter": "車速區域變矮",
-    "Turn cards on the cluster": "儀表板顯示轉向卡片",
+    "Turn and arrival cards on the cluster": "儀表板顯示轉向卡片和抵達時間",
     "Speed area": "車速區域",
     "HUD map settings": "HUD 地圖設定",
     "Android Auto map": "Android Auto 地圖"

@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Zoom peta: {0}",
     "Waiting for a turn": "Menunggu belokan",
     "No turn data": "Tidak ada data belokan",
-    "Arrival time on the cluster": "Waktu tiba di panel",
     "Hide map behind BMW's speed": "Sembunyikan peta di kecepatan BMW",
     "Speed area: {0}": "Area kecepatan: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} di {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Area kecepatan lebih sempit",
     "Speed area taller": "Area kecepatan lebih tinggi",
     "Speed area shorter": "Area kecepatan lebih pendek",
-    "Turn cards on the cluster": "Kartu belok di panel",
+    "Turn and arrival cards on the cluster": "Kartu belok dan waktu tiba di panel",
     "Speed area": "Area kecepatan",
     "HUD map settings": "Pengaturan peta HUD",
     "Android Auto map": "Peta Android Auto"

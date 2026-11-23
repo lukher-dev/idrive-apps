@@ -104,7 +104,6 @@
     "Map zoom: {0}": "تكبير الخريطة: {0}",
     "Waiting for a turn": "بانتظار منعطف",
     "No turn data": "لا توجد بيانات منعطفات",
-    "Arrival time on the cluster": "وقت الوصول على لوحة العدادات",
     "Hide map behind BMW's speed": "إخفاء الخريطة خلف سرعة BMW",
     "Speed area: {0}": "منطقة السرعة: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} عند {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "منطقة السرعة أضيق",
     "Speed area taller": "منطقة السرعة أطول",
     "Speed area shorter": "منطقة السرعة أقصر",
-    "Turn cards on the cluster": "بطاقات الانعطاف على لوحة العدادات",
+    "Turn and arrival cards on the cluster": "بطاقات الانعطاف ووقت الوصول على لوحة العدادات",
     "Speed area": "منطقة السرعة",
     "HUD map settings": "إعدادات خريطة HUD",
     "Android Auto map": "خريطة Android Auto"

@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Kartan zoomaus: {0}",
     "Waiting for a turn": "Odotetaan käännöstä",
     "No turn data": "Ei käännöstietoja",
-    "Arrival time on the cluster": "Saapumisaika mittaristossa",
     "Hide map behind BMW's speed": "Piilota kartta BMW:n nopeuden alta",
     "Speed area: {0}": "Nopeusalue: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} kohdassa {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Nopeusalue kapeammaksi",
     "Speed area taller": "Nopeusalue korkeammaksi",
     "Speed area shorter": "Nopeusalue matalammaksi",
-    "Turn cards on the cluster": "Kääntymiskortit mittaristossa",
+    "Turn and arrival cards on the cluster": "Kääntymiskortit ja saapumisaika mittaristossa",
     "Speed area": "Nopeusalue",
     "HUD map settings": "HUD-kartan asetukset",
     "Android Auto map": "Android Auto -kartta"

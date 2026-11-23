@@ -275,8 +275,7 @@ class FakePatch extends LineServer {
         this.res = null;    /* the advertised geometry patchd reports: "WxH" */
         this.safe = null;   /* and its safe area: "WxH+X+Y" */
         this.mapurl = undefined;   /* the map URL edit: 'eta' | 'no-eta' | 'off' | null; undefined: a daemon that does not send it */
-        this.eta = undefined;      /* the arrival-time card chosen: 'on' | 'off'; undefined: a daemon without the choice */
-        this.turns = undefined;    /* the turn cards chosen: 'on' | 'off'; undefined: a daemon without the choice */
+        this.turns = undefined;    /* the cards chosen (turn and arrival-time): 'on' | 'off'; undefined: a daemon without the choice */
         this.carplay = null;  /* 'deferred' once a patch is written but not active */
         this.pending = null;  /* 'apply' | 'revert': the change waiting for a head-unit start */
         this.conflict = null; /* why the install left carplay as it was */
@@ -313,7 +312,7 @@ class FakePatch extends LineServer {
 
     _status() {
         return { ev: 'status', state: this.busy ? 'busy' : this.state, panel: this.panel,
-            res: this.res, safe: this.safe, mapurl: this.mapurl, eta: this.eta, turns: this.turns, carplay: this.carplay, reason: this.reason,
+            res: this.res, safe: this.safe, mapurl: this.mapurl, turns: this.turns, carplay: this.carplay, reason: this.reason,
             pending: this.pending, conflict: this.conflict, recovered: this.recovered, aa: this.aa,
             removable: this.removable !== null ? this.removable : this.pending === 'apply' || (!this.pending && ['patched', 'unknown', 'error'].includes(this.state)),
             busy: this.busy ? 'carplay' : this.aa.state === 'busy' ? 'aa' : this._rebooting ? 'restart' : null,
@@ -439,10 +438,9 @@ class FakePatch extends LineServer {
                 this.log('apply done');
                 this._broadcast(this._status());
             }, STEP_MS);
-        } else if ((msg.cmd === 'carplay-eta' && this.eta !== undefined) || (msg.cmd === 'carplay-turns' && this.turns !== undefined)) {
+        } else if (msg.cmd === 'carplay-turns' && this.turns !== undefined) {
             /* the choice saved; a patch on disk applied again, CarPlay taking it at the next head-unit start */
-            if (msg.cmd === 'carplay-eta') this.eta = msg.on ? 'on' : 'off';
-            else this.turns = msg.on ? 'on' : 'off';
+            this.turns = msg.on ? 'on' : 'off';
             if (this.state !== 'patched') {
                 this._broadcast(this._status());
                 return;

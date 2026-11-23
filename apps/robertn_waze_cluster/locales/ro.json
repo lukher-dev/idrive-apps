@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Zoom hartă: {0}",
     "Waiting for a turn": "Se așteaptă un viraj",
     "No turn data": "Fără date despre viraje",
-    "Arrival time on the cluster": "Ora sosirii pe bord",
     "Hide map behind BMW's speed": "Ascunde harta sub viteza BMW",
     "Speed area: {0}": "Zona vitezei: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} la {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Zona vitezei mai îngustă",
     "Speed area taller": "Zona vitezei mai înaltă",
     "Speed area shorter": "Zona vitezei mai joasă",
-    "Turn cards on the cluster": "Indicații de viraj pe bord",
+    "Turn and arrival cards on the cluster": "Indicații de viraj și ora sosirii pe bord",
     "Speed area": "Zona vitezei",
     "HUD map settings": "Setări hartă HUD",
     "Android Auto map": "Hartă Android Auto"

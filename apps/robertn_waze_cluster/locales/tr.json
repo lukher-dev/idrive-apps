@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Harita yakınlaştırma: {0}",
     "Waiting for a turn": "Dönüş bekleniyor",
     "No turn data": "Dönüş verisi yok",
-    "Arrival time on the cluster": "Göstergede varış saati",
     "Hide map behind BMW's speed": "Haritayı BMW hızının altında gizle",
     "Speed area: {0}": "Hız alanı: {0}",
     "{0}x{1} at {2},{3}": "{2},{3} konumunda {0}x{1}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Hız alanı daha dar",
     "Speed area taller": "Hız alanı daha yüksek",
     "Speed area shorter": "Hız alanı daha alçak",
-    "Turn cards on the cluster": "Göstergede dönüş kartları",
+    "Turn and arrival cards on the cluster": "Göstergede dönüş kartları ve varış saati",
     "Speed area": "Hız alanı",
     "HUD map settings": "HUD harita ayarları",
     "Android Auto map": "Android Auto haritası"

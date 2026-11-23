@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Kartzoom: {0}",
     "Waiting for a turn": "Venter på en sving",
     "No turn data": "Ingen svingdata",
-    "Arrival time on the cluster": "Ankomsttid i instrumentpanel",
     "Hide map behind BMW's speed": "Skjul kart bak BMW-hastighet",
     "Speed area: {0}": "Hastighetsfelt: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} ved {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Hastighetsfelt smalere",
     "Speed area taller": "Hastighetsfelt høyere",
     "Speed area shorter": "Hastighetsfelt lavere",
-    "Turn cards on the cluster": "Svinganvisninger i instrumentpanel",
+    "Turn and arrival cards on the cluster": "Svinganvisninger og ankomsttid i instrumentpanel",
     "Speed area": "Hastighetsfelt",
     "HUD map settings": "Innstillinger for kart i HUD",
     "Android Auto map": "Android Auto-kart"

@@ -104,7 +104,6 @@
     "Map zoom: {0}": "זום המפה: {0}",
     "Waiting for a turn": "ממתין לפנייה",
     "No turn data": "אין נתוני פניות",
-    "Arrival time on the cluster": "שעת הגעה בלוח המחוונים",
     "Hide map behind BMW's speed": "הסתרת המפה מאחורי המהירות של BMW",
     "Speed area: {0}": "אזור המהירות: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} ב-{2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "אזור המהירות צר יותר",
     "Speed area taller": "אזור המהירות גבוה יותר",
     "Speed area shorter": "אזור המהירות נמוך יותר",
-    "Turn cards on the cluster": "כרטיסי פנייה בלוח המחוונים",
+    "Turn and arrival cards on the cluster": "כרטיסי פנייה ושעת הגעה בלוח המחוונים",
     "Speed area": "אזור המהירות",
     "HUD map settings": "הגדרות המפה ב-HUD",
     "Android Auto map": "מפת Android Auto"

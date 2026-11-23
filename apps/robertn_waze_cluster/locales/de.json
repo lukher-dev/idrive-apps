@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Kartenzoom: {0}",
     "Waiting for a turn": "Warten auf Abbiegehinweis",
     "No turn data": "Keine Abbiegedaten",
-    "Arrival time on the cluster": "Ankunftszeit im Kombi",
     "Hide map behind BMW's speed": "Karte hinter BMW-Tempo ausblenden",
     "Speed area: {0}": "Tempobereich: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} bei {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Tempobereich schmaler",
     "Speed area taller": "Tempobereich höher",
     "Speed area shorter": "Tempobereich niedriger",
-    "Turn cards on the cluster": "Abbiegekarten im Kombi",
+    "Turn and arrival cards on the cluster": "Abbiegekarten und Ankunftszeit im Kombi",
     "Speed area": "Tempobereich",
     "HUD map settings": "HUD-Karteneinstellungen",
     "Android Auto map": "Android-Auto-Karte"

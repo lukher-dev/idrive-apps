@@ -104,7 +104,6 @@
     "Map zoom: {0}": "Priblíženie mapy: {0}",
     "Waiting for a turn": "Čaká sa na odbočku",
     "No turn data": "Žiadne údaje o odbočkách",
-    "Arrival time on the cluster": "Čas príchodu na prístrojovej doske",
     "Hide map behind BMW's speed": "Skryť mapu pod rýchlosťou BMW",
     "Speed area: {0}": "Plocha rýchlosti: {0}",
     "{0}x{1} at {2},{3}": "{0}x{1} na {2},{3}",
@@ -116,7 +115,7 @@
     "Speed area narrower": "Plocha rýchlosti užšia",
     "Speed area taller": "Plocha rýchlosti vyššia",
     "Speed area shorter": "Plocha rýchlosti nižšia",
-    "Turn cards on the cluster": "Karty odbočenia na prístrojovej doske",
+    "Turn and arrival cards on the cluster": "Karty odbočenia a čas príchodu na prístrojovej doske",
     "Speed area": "Plocha rýchlosti",
     "HUD map settings": "Nastavenia mapy na HUD",
     "Android Auto map": "Mapa Android Auto"
