@@ -15,6 +15,8 @@
  *                  {"cmd":"hud","hud_clear":"0"|"1","hud_clear_x":"0".."799","hud_clear_y":"0".."479",
  *                   "hud_clear_w":"10".."800","hud_clear_h":"10".."480"}  the speed patch: the map black in
  *                   that rectangle of the HUD's scene, or not (any of them; those not sent stay)
+ *                  {"cmd":"hud","hud_vignette":"0".."5"}  the HUD map's vignette: the HUD scene's edges
+ *                   faded to black, from 1 (the outer 7 % of each side) to 5 (35 %), or none (0)
  *                  {"cmd":"turn","near":"0"|"1"}  a turn near, or not (the app's turn watch)
  *                  {"cmd":"guide","hide":0|1}  BMW's turn box hidden or not (guide_setting.h)
  *   tool -> owner  {"ev":"status",...,"hide_bmw_guidance":0|1,"guide_disabled":0|1,
@@ -22,7 +24,7 @@
  *                   "hud_width_pct":...,"hud_x":...,"hud_y":...,"hud_keep_shown":0|1,
  *                   "hud_near_turn":0|1,"hud_gate":0|1,"hud_zoom_pct":...,"hud_zoom_used":...,
  *                   "hud_clear":0|1,"hud_clear_x":...,"hud_clear_y":...,"hud_clear_w":...,
- *                   "hud_clear_h":...,"hud_near_m":...}
+ *                   "hud_clear_h":...,"hud_near_m":...,"hud_vignette":0..5}
  *                  {"ev":"log","line":...}
  *
  * One connection is the owner; a second one is told "busy" and closed. */

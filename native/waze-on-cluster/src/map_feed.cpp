@@ -167,7 +167,7 @@ void MapFeed::make_layer()
                  crop.h, crop.x, crop.y, dw, dh, part_.set() ? ", made by VPP (hosted_vpp_scale)" : "");
     } else if (cfg_.target == "hud" && cfg_.scale_down && (sw < cfg_.video.w || sh < cfg_.video.h) && sw >= 64 &&
                sh >= 32 && sw <= cfg_.video.w && sh <= cfg_.video.h) {
-        hud_shape(&q);
+        hud_shape(&q, tw, th);
         vo.w = q.w;
         vo.h = q.h;
         scaling_ = true;
@@ -178,6 +178,9 @@ void MapFeed::make_layer()
         if (shape_.clear_w)
             log_info("render: HUD map black behind the speed readout: %ux%u at %d,%d of the map", shape_.clear_w,
                      shape_.clear_h, shape_.clear_x, shape_.clear_y);
+        if (shape_.vignette)
+            log_info("render: HUD map vignette %u, on the %ux%u scene at %d,%d of the map", shape_.vignette,
+                     shape_.scene_w, shape_.scene_h, shape_.scene_x, shape_.scene_y);
     }
     /* a VPP-made picture is of no use to a layer of another part, or none */
     if (held_part_.set() && held_part_ != part_) {
@@ -279,8 +282,9 @@ crk::QuadRect MapFeed::quad(uint32_t tw, uint32_t th) const
  * than its box shows that part's window (hud_window), panned by the x
  * offset. The scaled picture is a multiple of 4 each way, centred in the
  * box; the speed patch is the scene's rectangle less the picture's place,
- * none where it misses the picture. */
-void MapFeed::hud_shape(crk::QuadRect *q)
+ * none where it misses the picture; the vignette's scene is the whole
+ * scene less the picture's place. */
+void MapFeed::hud_shape(crk::QuadRect *q, uint32_t tw, uint32_t th)
 {
     const uint32_t sw = q->w & ~3u, sh = q->h & ~3u;
     const bool wide = virt_w_ > q->w;
@@ -317,6 +321,13 @@ void MapFeed::hud_shape(crk::QuadRect *q)
         shape_.clear_w = cfg_.hud_clear_w;
         shape_.clear_h = cfg_.hud_clear_h;
     }
+    if (cfg_.hud_vignette && tw && th) {
+        shape_.vignette = cfg_.hud_vignette;
+        shape_.scene_x = -(int32_t)q->x;
+        shape_.scene_y = -(int32_t)q->y;
+        shape_.scene_w = tw;
+        shape_.scene_h = th;
+    }
 }
 
 void MapFeed::restyle()
@@ -329,7 +340,7 @@ void MapFeed::restyle()
     bool reshaped = false;
     if (scaling_) {
         const ScaleShape was = shape_;
-        hud_shape(&q);
+        hud_shape(&q, tw, th);
         reshaped = shape_ != was;
         /* the newest picture scaled again for the new shape (one the worker has
          * comes back, its scaled frame dropped) */
@@ -370,6 +381,18 @@ void MapFeed::set_hud_clear(bool on, unsigned x, unsigned y, unsigned w, unsigne
         log_info("render: HUD map black behind the speed readout, %ux%u at %u,%u of the HUD", w, h, x, y);
     else
         log_info("render: HUD map not cleared behind the speed readout");
+    restyle();
+}
+
+void MapFeed::set_hud_vignette(unsigned level)
+{
+    if (level == cfg_.hud_vignette)
+        return;
+    cfg_.hud_vignette = level;
+    if (level)
+        log_info("render: HUD map vignette %u, its outer %u %% faded", level, level * 7);
+    else
+        log_info("render: HUD map without a vignette");
     restyle();
 }
 
@@ -687,6 +710,7 @@ FeedStatus MapFeed::status(const std::string &decode, const std::string &stream)
     s.hud_clear_y = cfg_.hud_clear_y;
     s.hud_clear_w = cfg_.hud_clear_w;
     s.hud_clear_h = cfg_.hud_clear_h;
+    s.hud_vignette = cfg_.hud_vignette;
     s.hud_offset_y = placed_y_;
     s.upload_cap_kb = cap_kb_;
     s.upload_reason = budget_reason_;
