@@ -30,6 +30,9 @@
  *                  {"cmd":"aa-apply"} | {"cmd":"aa-revert"}   the Android Auto patch
  *                  {"cmd":"carplay-eta","on":0|1}  save whether CarPlay's patch asks for
  *                                   the arrival-time card and, with the patch on disk, apply it
+ *                  {"cmd":"carplay-turns","on":0|1}  the same for the turn cards on the
+ *                                   cluster (on by default; off asks for the
+ *                                   map-content-only page, PATCH.md Edit 6)
  *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"}
  *                                   save the choice and, with the patch on disk,
  *                                   apply it (one change per DENSITY_SPACING_MS)
@@ -96,9 +99,16 @@
  *                  {"cmd":"capture-start"|"capture-stop"|"capture-status"}
  *                                   (capture-reply to the asker; every client gets
  *                                   ev capture, also once a second)
- *   patchd -> app  {"ev":"status","state":...,"panel":...,"mode":...,"res":...,"safe":...,"reason":...,"carplay":...,
- *                   "pending":...,"conflict":...,"removable":...,"busy":...,"restart":...,"aa":...}
+ *   patchd -> app  {"ev":"status","state":...,"panel":...,"mode":...,"res":...,"safe":...,"mapurl":...,"eta":...,"turns":...,
+ *                   "reason":...,"carplay":...,"pending":...,"conflict":...,"removable":...,"busy":...,"restart":...,"aa":...}
  *                    state: original | patched | unknown | busy | error
+ *                    mapurl: whether the URL edits on disk (Edits 5 and 6) are
+ *                    the ones the choices want: eta | map when they are (with
+ *                    and without the arrival-time card), no-eta when they
+ *                    are not (CarPlay's Patch button writes them), off for a
+ *                    patch without them, null (readState)
+ *                    eta, turns: the choices, on | off (carplay-eta,
+ *                    carplay-turns)
  *                    removable: Remove patch would change carplay now (a
  *                    patch of ours on disk, waiting for a restart or not);
  *                    aa.removable the same for aapd and aapd.conf
@@ -209,6 +219,11 @@ var AA_CARD_FILE = path.join(STATE_DIR, 'aa-card');
  * blank apps other than Apple Maps. */
 var CP_ETA_FILE = path.join(STATE_DIR, 'carplay-eta');
 var CP_ETA_DEFAULT = 'off';
+/* Whether CarPlay's cluster map keeps the phone's turn cards: "on" or "off",
+ * kept across updates. Off makes the ShowUI URL edit ask for the
+ * map-content-only cluster page (PATCH.md, Edit 6). */
+var CP_TURNS_FILE = path.join(STATE_DIR, 'carplay-turns');
+var CP_TURNS_DEFAULT = 'on';
 /* With the turn card hidden, the crop waze-on-cluster.service passes to the
  * render (EnvironmentFile): the card's rows grow with the density. The
  * shipped waze-on-cluster.conf holds the crop for the card shown. */
@@ -799,18 +814,7 @@ function readState(cb) {
         var resMatch = /res:\s+PATCHED \(IC_HIGH advertises (\d+x\d+)/.exec(text);
         var safeMatch = /res:\s+PATCHED \(IC_HIGH advertises [^,\n]*, safe (\d+x\d+) at (\d+),(\d+)\)/.exec(text);
         var resOriginal = /res:\s+ORIGINAL/.test(text);
-        /* The URL edits (map URL, ShowUI URL): 'eta' (the ShowUI URL with
-         * the arrival-time card, chosen on), 'map' (the map URL alone: the
-         * card chosen off, or a build without the ShowUI URL edit), 'no-eta'
-         * (either differing from the choice, or in a form CarPlay's Patch
-         * button replaces or completes), 'off', or null where the build lacks
-         * both or the status says neither. */
-        var m5 = /^mapurl:\s+(ORIGINAL|PATCHED WITH ETA|PATCHED) /m.exec(text), m6 = /^showui:\s+(ORIGINAL|PATCHED) /m.exec(text);
-        var e5 = m5 ? m5[1] : null, e6 = m6 ? m6[1] : null, etaOn = cpEta() === 'on';
-        var mapurl = e5 === 'PATCHED WITH ETA' || (e5 === 'ORIGINAL' && e6 === 'PATCHED') ? 'no-eta'
-            : e5 === 'PATCHED' && e6 === 'PATCHED' ? (etaOn ? 'eta' : 'no-eta')
-            : e5 === 'PATCHED' && e6 === 'ORIGINAL' ? (etaOn ? 'no-eta' : 'map')
-            : e6 === 'PATCHED' ? 'eta' : e5 === 'PATCHED' ? 'map' : e5 === 'ORIGINAL' || e6 === 'ORIGINAL' ? 'off' : null;
+        var mapurl = cpMapUrl(text);
         var known = /known:\s+NO/.test(text) ? false : true;
         var unknownWhy = /known:\s+NO — (.*)/.exec(text);
         var pristine = /known:\s+yes, pristine/.test(text);
@@ -988,6 +992,33 @@ function cpEta() {
     var v = (readText(CP_ETA_FILE) || '').trim();
     return v === 'on' || v === 'off' ? v : CP_ETA_DEFAULT;
 }
+/* Whether the owner chose the turn cards on CarPlay's cluster map, else the default. */
+function cpTurns() {
+    var v = (readText(CP_TURNS_FILE) || '').trim();
+    return v === 'on' || v === 'off' ? v : CP_TURNS_DEFAULT;
+}
+
+/* The URL edits (map URL, ShowUI URL) in the patcher's status `text`
+ * against the choices: 'eta' or 'map' where they are what an apply writes
+ * now (the ShowUI URL with the arrival-time card or not), 'no-eta' where
+ * they differ from it (another ShowUI URL than the choices want, or a form
+ * CarPlay's Patch button replaces or completes), 'off' (a patch without
+ * them), or null where the build lacks both or the status says neither. A
+ * build without the map URL edit keeps what earlier releases reported for
+ * the ShowUI URL with the arrival-time card while the turn cards are on:
+ * 'eta', whatever the arrival-time choice. */
+function cpMapUrl(text) {
+    var m5 = /^mapurl:\s+(ORIGINAL|PATCHED WITH ETA|PATCHED) /m.exec(text);
+    var m6 = /^showui:\s+(ORIGINAL|PATCHED) \(ShowUI asks the phone for ([^,)\s]+)/m.exec(text);
+    var e5 = m5 ? m5[1] : null, e6 = m6 ? m6[1] : null, url = e6 === 'PATCHED' ? m6[2] : null, turnsOn = cpTurns() === 'on';
+    var urlFor = require('./carplay_patch.js').showUiUrlFor, want = urlFor(turnsOn ? 'yes' : 'no', cpEta() === 'on' ? 'yes' : 'no');
+    var held = url === want ? (/[?&]showETA=yes\b/.test(url) ? 'eta' : 'map') : 'no-eta';
+    return e5 === 'PATCHED WITH ETA' || (e5 === 'ORIGINAL' && e6 === 'PATCHED') ? 'no-eta'
+        : e5 === 'PATCHED' && e6 === 'PATCHED' ? held
+        : e5 === 'PATCHED' && e6 === 'ORIGINAL' ? (want ? 'no-eta' : 'map')
+        : e6 === 'PATCHED' ? (turnsOn && url === urlFor('yes', 'yes') ? 'eta' : held)
+        : e5 === 'PATCHED' ? 'map' : e5 === 'ORIGINAL' || e6 === 'ORIGINAL' ? 'off' : null;
+}
 
 /* The density and turn-card setting the owner chose, else the defaults. */
 function aaDensity() {
@@ -1029,7 +1060,7 @@ function status(extra, aaExtra) {
         readAaState(function (aa) {
             var cpBusy = busy === 'carplay';
             var msg = { ev: 'status', state: cpBusy ? 'busy' : st.state, panel: st.panel, mode: st.mode, res: st.res, safe: st.safe, mapurl: st.mapurl,
-                        eta: cpEta(), removable: !!st.restorable, busy: busy || (rebooting ? 'restart' : null), restart: restartMsg() };
+                        eta: cpEta(), turns: cpTurns(), removable: !!st.restorable, busy: busy || (rebooting ? 'restart' : null), restart: restartMsg() };
             if (!cpBusy && st.reason) msg.reason = st.reason;
             if (!cpBusy && st.carplay) msg.carplay = st.carplay;
             if (!cpBusy && st.pending) msg.pending = st.pending;
@@ -1623,7 +1654,8 @@ function patchWith(t, args, action, blocked, done, run) {
  * install-time activation never does. */
 function apply(panel, mode, noRestart, unproven, done) {
     if (panel !== 'high' && panel !== 'mid') { done(new Error('panel must be high or mid')); return; }
-    var args = ['apply', '--panel', panel, '--target', TARGET, '--coding', CODING, '--eta', cpEta() === 'on' ? 'yes' : 'no', '--yes']
+    var args = ['apply', '--panel', panel, '--target', TARGET, '--coding', CODING, '--eta', cpEta() === 'on' ? 'yes' : 'no',
+        '--turns', cpTurns() === 'on' ? 'yes' : 'no', '--yes']
         .concat(unproven ? ['--unproven'] : []);
     if (mode === 'avb') {
         log('apply IC_' + panel.toUpperCase() + ', stock AVB sink (the render joins the media bus)');
@@ -1969,20 +2001,21 @@ function handle(line, sock) {
         var mode = (msg.mode === 'avb' || msg.mode === 'udp') ? msg.mode : 'fifo';   /* capture mode; default fifo */
         operate('carplay', msg.cmd === 'apply' ? 'applying' : 'reverting',
             msg.cmd === 'apply' ? function (cb) { apply(panel, mode, false, true, cb); } : function (cb) { revert(false, false, cb); });
-    } else if (msg.cmd === 'carplay-eta') {
+    } else if (msg.cmd === 'carplay-eta' || msg.cmd === 'carplay-turns') {
         if (msg.on !== 0 && msg.on !== 1) { refuse('on must be 0 or 1'); return; }
+        var turns = msg.cmd === 'carplay-turns';
         /* Busy from here on. With a patch of ours on disk (or one waiting for
          * the restart) the choice is applied at once and, CarPlay running,
          * waits for the next head-unit start; without one, for the next apply. */
         busy = 'carplay';
         readState(function (st) {
-            try { saveFile(CP_ETA_FILE, (msg.on ? 'on' : 'off') + '\n'); } catch (e) {
+            try { saveFile(turns ? CP_TURNS_FILE : CP_ETA_FILE, (msg.on ? 'on' : 'off') + '\n'); } catch (e) {
                 busy = null;
                 status({ state: 'error', reason: 'saving the choice failed: ' + e.message });
                 quitWhenIdle();
                 return;
             }
-            log('CarPlay: arrival-time card ' + (msg.on ? 'on' : 'off') + ' chosen');
+            log('CarPlay: ' + (turns ? 'turn cards' : 'arrival-time card') + ' ' + (msg.on ? 'on' : 'off') + ' chosen');
             if (st.state === 'patched' || st.pending === 'apply') {
                 var mode = st.mode === 'udp' ? 'udp' : 'avb';
                 operate('carplay', 'applying', function (cb) { apply(st.panel || 'high', mode, false, true, cb); });

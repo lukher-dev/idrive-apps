@@ -73,7 +73,8 @@ M.SHOWUI_CASES.forEach(function (t) {
     var b = Buffer.from(REF), out;
     try { out = t[1](b) || b; } catch (e) { ok('ShowUI URL, ' + t[0] + ': mutation built', false, e.message); return; }
     var loc = locator.locate(out), u = loc.showui;
-    var outcome = !u.ok ? 'refused' : t[3] && u.str === SHOW.str && u.call === SHOW.call && u.strIs === t[3].strIs && u.callIs === t[3].callIs ? 'correct' : 'WRONG';
+    var outcome = !u.ok ? 'refused' : t[3] && u.str === SHOW.str && u.call === SHOW.call && u.strIs === t[3].strIs && u.callIs === t[3].callIs &&
+        (t[3].form === undefined || u.form === t[3].form) ? 'correct' : 'WRONG';
     showTally[outcome]++;
     ok('ShowUI URL, ' + t[0] + ': ' + outcome + (outcome === 'refused' ? ' (' + u.reason + ')' : '') + (t[4] ? '' : ', the other edits found'), t[2].indexOf(outcome) >= 0 && loc.ok === !t[4],
         'allowed ' + t[2].join('/') + '; ' + json([loc.reason, u]));

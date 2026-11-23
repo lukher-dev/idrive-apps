@@ -7,7 +7,8 @@
  * resolution geometry and safe-area rewrite, the map URL and ShowUI URL
  * edits (their bytes, the bytes of the URL with ETA 0.10.2-0.10.3 wrote, the
  * patch of each earlier release brought up to date, one cut short, bytes
- * another tool left there kept),
+ * another tool left there kept, each form of the ShowUI URL --turns and
+ * --eta choose),
  * region-bounded diffs, idempotence,
  * verify, partial patches, byte-exact revert of every edit, a build not in
  * the proven list, a read-only probe, the cluster-coding gate, and the
@@ -64,12 +65,20 @@ var MAPURL = [
  * 0x2908a0 hold `mCinemoCarPlay->ShowUI(` and the URL (at 0x2908b8), and
  * requestStream's 11 bytes at 0x18188a load the URL (mov rdi,r12 ; lea
  * rsi,[0x2908b8] ; nop) instead of reading the cluster display's URL
- * (call 0x1fe5e0 ; mov rdi,r12 ; mov rsi,[rax]). Index 1 stock, 2 patched. */
+ * (call 0x1fe5e0 ; mov rdi,r12 ; mov rsi,[rax]). Index 1 stock, 2 patched
+ * (the URL with the arrival-time card). SHOWUI_FORMS: the log text of each
+ * form (--turns, --eta) over the 68-byte window, the stock text after the
+ * form's URL; the call site is the same in every form. */
 var SHOWUI = [
     [0x2908a0, Buffer.from('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::a', 'latin1').toString('hex'),
         Buffer.from('mCinemoCarPlay->ShowUI(\0maps:/car/instrumentcluster?showETA=yes\0', 'latin1').toString('hex')],
     [0x18188a, 'e851cd07004c89e7488b30', '4c89e7488d3524f0100090'],
 ];
+var SHOWUI_STOCK68 = Buffer.from('mCinemoCarPlay->ShowUI( ::carplay::CarPlayConstantsRepository::alter', 'latin1');
+function showUiWindow(url) { var b = Buffer.from(SHOWUI_STOCK68); b.write('mCinemoCarPlay->ShowUI(\0' + url + '\0', 'latin1'); return b; }
+var SHOWUI_FORMS = [['yes', 'yes', 'maps:/car/instrumentcluster?showETA=yes', 'with the arrival-time card'], ['yes', 'no', null, null],
+    ['no', 'yes', 'maps:/car/instrumentcluster/map?showETA=yes', 'without turn cards, with the arrival-time card'],
+    ['no', 'no', 'maps:/car/instrumentcluster/map', 'without turn cards']];
 function rangeBytes(R, buf) { return R.map(function (m) { return buf.toString('hex', m[0], m[0] + m[1].length / 2); }); }
 function rangesAre(R, buf, i) { return JSON.stringify(rangeBytes(R, buf)) === JSON.stringify(R.map(function (m) { return m[i]; })); }
 function inRanges(R, x) { return R.some(function (m) { return x >= m[0] && x < m[0] + m[1].length / 2; }); }
@@ -172,7 +181,7 @@ try {
         /^mapurl:\s+PATCHED \(the phone streams the cluster map from connect: maps:\/car\/instrumentcluster\/map\)$/m.test(r.out) &&
         /^showui:\s+PATCHED \(ShowUI asks the phone for maps:\/car\/instrumentcluster\?showETA=yes, with the arrival-time card\)$/m.test(r.out), r.out);
     r = run(['verify', '--target', tgt]);
-    ok('verify: high avb exits 0 with res 1088x480, the map URL on and the ShowUI URL with ETA', r.code === 0 && /res 1088x480, map URL on, ShowUI URL with ETA$/m.test(r.out), r.out);
+    ok('verify: high avb exits 0 with res 1088x480, the map URL on and the ShowUI URL with ETA', r.code === 0 && /res 1088x480, map URL on, ShowUI URL maps:\/car\/instrumentcluster\?showETA=yes$/m.test(r.out), r.out);
 
     r = run(['revert', '--target', tgt, '--yes']);
     ok('revert restores byte-exact original (every edit)', r.code === 0 && sha256(tgt) === ORIG_SHA && callBytes(fs.readFileSync(tgt)) === CALL_STOCK &&
@@ -186,6 +195,41 @@ try {
     ok('no backup: the patch with the URL edits is restorable', /^restorable:\s+yes$/m.test(r.out), r.out);
     r = run(['revert', '--target', tgt, '--yes']);
     ok('no backup: revert rebuilds the shipped file, the URL edits\' ranges included', r.code === 0 && /shipped bytes/.test(r.out) && sha256(tgt) === ORIG_SHA, r.out);
+
+    /* The turn cards and the arrival-time card (--turns, --eta): each pair
+     * writes its form of the ShowUI URL over the 68-byte window, the stock
+     * text after the form's URL, or leaves the edit stock; status and verify
+     * name the URL; an apply moves from any form to any other, changing
+     * only the ShowUI URL's ranges; revert restores the original from each,
+     * with the backup and without it. */
+    SHOWUI_FORMS.forEach(function (x) {
+        SHOWUI_FORMS.forEach(function (y) {
+            fs.writeFileSync(tgt, SRCBUF);
+            [tgt + '.woc-orig', tgt + '.woc-orig.json'].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
+            run(['apply', '--target', tgt, '--panel', 'high', '--turns', x[0], '--eta', x[1], '--yes']);
+            var before = fs.readFileSync(tgt);
+            r = run(['apply', '--target', tgt, '--panel', 'high', '--turns', y[0], '--eta', y[1], '--yes']);
+            var after = fs.readFileSync(tgt), what = '--turns ' + x[0] + ' --eta ' + x[1] + ', then --turns ' + y[0] + ' --eta ' + y[1];
+            var win = after.slice(SHOWUI[0][0], SHOWUI[0][0] + 68), call = after.toString('hex', SHOWUI[1][0], SHOWUI[1][0] + 11);
+            ok(what + ': the ShowUI URL ' + (y[2] || 'stock') + ', only its ranges changed', r.code === 0 &&
+                win.equals(y[2] ? showUiWindow(y[2]) : SHOWUI_STOCK68) && call === SHOWUI[1][y[2] ? 2 : 1] &&
+                diffs(before, after).every(function (z) { return (z >= SHOWUI[0][0] && z < SHOWUI[0][0] + 68) || (z >= SHOWUI[1][0] && z < SHOWUI[1][0] + 11); }), r.out);
+            if (x !== y) return;
+            r = run(['status', '--target', tgt]);
+            ok(what + ': status names the URL', y[2] ? r.out.indexOf('\nshowui:    PATCHED (ShowUI asks the phone for ' + y[2] + ', ' + y[3] + ')\n') >= 0
+                : /^showui:\s+ORIGINAL \(ShowUI asks the phone for maps:\/car\/instrumentcluster\)$/m.test(r.out), r.out);
+            r = run(['verify', '--target', tgt]);
+            ok(what + ': verify names the URL', r.code === 0 && r.out.indexOf(', map URL on, ShowUI URL ' + (y[2] || 'stock') + '\n') >= 0, r.out);
+            r = run(['revert', '--target', tgt, '--yes']);
+            ok(what + ': revert restores the original', r.code === 0 && sha256(tgt) === ORIG_SHA, r.out);
+            run(['apply', '--target', tgt, '--panel', 'high', '--turns', y[0], '--eta', y[1], '--yes']);
+            [tgt + '.woc-orig', tgt + '.woc-orig.json'].forEach(function (f) { fs.unlinkSync(f); });
+            r = run(['revert', '--target', tgt, '--yes']);
+            ok(what + ': without a backup, revert rebuilds the shipped file', r.code === 0 && /shipped bytes/.test(r.out) && sha256(tgt) === ORIG_SHA, r.out);
+        });
+    });
+    fs.writeFileSync(tgt, SRCBUF);
+    [tgt + '.woc-orig', tgt + '.woc-orig.json'].forEach(function (f) { try { fs.unlinkSync(f); } catch (e) {} });
 
     /* variant + capture together */
     var fifo = '/run/woc/alt.h264';
@@ -675,7 +719,7 @@ try {
     ok('unproven build: a later apply (our backup present) needs no --unproven', r.code === 0 && /variant -> IC_MID/.test(r.out), r.out);
     r = run(['apply', '--target', ot, '--panel', 'high', '--sink', 'udp://127.0.0.1:20557?mime_type=video/H264', '--yes']);
     r = run(['verify', '--target', ot]);
-    ok('unproven build: verify passes, map URL on, ShowUI URL with ETA', r.code === 0 && /IC_HIGH, sink udp:\/\/127\.0\.0\.1:20557/.test(r.out) && /map URL on, ShowUI URL with ETA$/m.test(r.out), r.out);
+    ok('unproven build: verify passes, map URL on, ShowUI URL with ETA', r.code === 0 && /IC_HIGH, sink udp:\/\/127\.0\.0\.1:20557/.test(r.out) && /map URL on, ShowUI URL maps:\/car\/instrumentcluster\?showETA=yes$/m.test(r.out), r.out);
     r = run(['revert', '--target', ot, '--yes']);
     ok('unproven build: revert restores it byte-exact', r.code === 0 && fs.readFileSync(ot).equals(other), r.out);
 
@@ -841,6 +885,32 @@ function codingAndRecord() {
             r = run(['apply', '--target', ct, '--panel', 'high', '--yes']);
             ok('record: after an earlier release\'s revert record ' + JSON.stringify(o) + ', the patch is on trial', r.code === 0 && rec() === want({ patched: true, proven: false, trial: true }), r.out + rec());
         });
+
+        /* The turn cards off (--turns no): the ShowUI URL in another form
+         * than the one that ran healthy is on trial, as adding the
+         * arrival-time card is; leaving it stock is not; a revert of a
+         * healthy patch records its form's URL, and the next apply of that
+         * form is proven at once, another form's on trial. */
+        var TURNS_OFF = 'maps:/car/instrumentcluster/map?showETA=yes', MAP_ONLY = 'maps:/car/instrumentcluster/map';
+        fresh();
+        run(['apply', '--target', ct, '--panel', 'high', '--yes']);
+        [[['--turns', 'no'], TURNS_OFF, false], [['--turns', 'no', '--eta', 'no'], MAP_ONLY, false], [['--turns', 'yes', '--eta', 'no'], null, true]].forEach(function (t) {
+            record.write(ct, { patched: true, proven: true });
+            r = run(['apply', '--target', ct, '--panel', 'high', '--yes'].concat(t[0]));
+            ok('record: ' + t[0].join(' ') + ' over a patch that ran healthy with another ShowUI URL: ' + (t[2] ? 'proven' : 'on trial'), r.code === 0 &&
+                r.out.indexOf('ShowUI URL -> ' + (t[1] || 'stock') + '\n') >= 0 &&
+                rec() === want(t[2] ? { patched: true, proven: true } : { patched: true, proven: false, trial: true }), r.out + rec());
+        });
+        run(['apply', '--target', ct, '--panel', 'high', '--turns', 'no', '--eta', 'no', '--yes']);
+        record.write(ct, { patched: true, proven: true });
+        r = run(['revert', '--target', ct, '--yes']);
+        ok('record: the revert of a healthy patch without turn cards records its URL', r.code === 0 && sha256(ct) === ORIG_SHA &&
+            record.current(ct).healthy === true && record.current(ct).showui === MAP_ONLY, r.out + rec());
+        r = run(['apply', '--target', ct, '--panel', 'high', '--turns', 'no', '--eta', 'no', '--yes']);
+        ok('record: patched again with that form, proven at once', r.code === 0 && rec() === want({ patched: true, proven: true }), r.out + rec());
+        r = run(['revert', '--target', ct, '--yes']);
+        r = run(['apply', '--target', ct, '--panel', 'high', '--turns', 'no', '--yes']);
+        ok('record: patched again with another form, on trial', r.code === 0 && rec() === want({ patched: true, proven: false, trial: true }), r.out + rec());
 
         /* A patch on trial on a car whose coding then reads otherwise: the
          * Patch button's apply ends the trial. */

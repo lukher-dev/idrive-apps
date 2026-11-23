@@ -30,7 +30,8 @@
  * and know the map URL (`maps:/car/instrumentcluster/map`) only, G writes the
  * URL with `?showETA=yes` and restores either, H and this version write the
  * map URL and the ShowUI URL and restore either form of the map URL. Only H
- * and this version know the ShowUI URL edit.
+ * and this version know the ShowUI URL edit, and only this version its
+ * forms without turn cards (--turns no), which H reads as partly patched.
  *
  * With CARPLAY_BIN every release runs on a copy of carplay 22.28.3; without
  * it B-G run on a synthetic build (synthetic_carplay.js), A not at all.
@@ -297,7 +298,7 @@ REPS.forEach(function (p) {
  * of a patched form and the other stock, or the two of different forms, the
  * ShowUI URL edit written; and with the map URL edit written, one ShowUI URL
  * site written and the other stock, or either cut short inside, either way
- * round. This version's crash loop, Remove patch and removal end stock and
+ * round, also in the longest form or from one form to another. This version's crash loop, Remove patch and removal end stock and
  * its activate leaves it as it is; under every release from D on a crash
  * loop ends stock. */
 (function () {
@@ -318,7 +319,16 @@ REPS.forEach(function (p) {
         ['ShowUI URL cut short (the log text\'s first 40 bytes written, call site stock)', function (b) {
             STOCK.copy(b, SHOW.str, SHOW.str, SHOW.str + SHOW.len); str.copy(b, SHOW.str, 0, 40); callStock.copy(b, SHOW.call); }],
         ['ShowUI URL cut short (the log text\'s first 40 bytes stock, call site written)', function (b) { STOCK.copy(b, SHOW.str, SHOW.str, SHOW.str + 40); }],
+        ['ShowUI URL cut short (without turn cards, the first 64 bytes of the log text stock)', function (b) {
+            showWin('map-eta').copy(b, SHOW.str); STOCK.copy(b, SHOW.str, SHOW.str, SHOW.str + 64); }],
+        ['ShowUI URL cut short (from the arrival-time card to without turn cards, after 60 bytes of the log text)', function (b) { showWin('map').copy(b, SHOW.str, 0, 60); }],
     ]);
+    /* The log text's window with the ShowUI URL form `n` as this version writes it. */
+    function showWin(n) {
+        var w = Buffer.from(STOCK.slice(SHOW.str, SHOW.str + SHOW.len));
+        locator.SHOWUI_FORMS.filter(function (f) { return f.name === n; })[0].bytes.copy(w);
+        return w;
+    }
     CUT.forEach(function (c) {
         put(NEW_PATCH);
         var b = fs.readFileSync(TGT);
@@ -390,6 +400,39 @@ REPS.forEach(function (p) {
         RELEASES.filter(function (v) { return wholeBackup(v); }).forEach(function (v) {
             put(cut); var rr = recover(path.join(dir, 'rel', v), group(v));
             ok(name + ', ' + v + ' (' + group(v) + '): a crash loop ends stock', holds() === 'stock', rr + ' ' + holds());
+        });
+    });
+})();
+
+/* 7. This version's patch with the turn cards off (--turns no), its ShowUI
+ * URL in a form only this version writes (PATCH.md, Edit 6): this
+ * version's crash loop, Remove patch and removal end stock, and its
+ * activate writes its default patch over it. Under the first and last
+ * release of each group, with no deactivate between: a crash loop and
+ * Remove patch as over this version's default patch (part 3); the
+ * activate of a release that knows the ShowUI URL edit (H), which reads
+ * that form as partly patched, refuses it, and any other release's writes
+ * its own patch and keeps the URL edits. */
+(function () {
+    [['map-eta', []], ['map', ['--eta', 'no']]].forEach(function (f) {
+        clear(); fs.writeFileSync(TGT, STOCK, { mode: 0o755 });
+        r = patcher(NEW, ['apply', '--panel', 'high', '--target', TGT, '--turns', 'no', '--yes'].concat(f[1], BIN ? [] : ['--unproven']));
+        var snap = snapshot(), formOk = r.code === 0 && locator.locate(snap['']).showui.form === f[0] && holds() === 'patched';
+        put(snap); var rec = recover(NEW, 'N'), recH = holds();
+        put(snap); r = removePatch(NEW); var rmH = r.code ? 'refused' : holds();
+        put(snap); r = uninstall(NEW); var unH = r.code ? 'refused' : holds();
+        put(snap); r = apply(NEW); var up = r.code === 0 && fs.readFileSync(TGT).equals(NEW_PATCH['']);
+        ok('this version\'s patch without turn cards (' + f[0] + '): a crash loop, Remove patch and removal end stock, its activate writes its default patch',
+            formOk && recH === 'stock' && rmH === 'stock' && unH === 'stock' && up, [formOk, rec, recH, rmH, unH, up].join(' '));
+        REPS.filter(function (v) { return v !== 'this'; }).forEach(function (v) {
+            var d = relDir(v), g = relGroup(v);
+            put(snap); rec = recover(d, g); recH = holds();
+            put(snap); r = removePatch(d); rmH = r.code ? 'refused' : holds();
+            put(snap); r = apply(d);
+            var act = r.code ? 'refused' : holds() + (mapUrlIn() ? ', map URL kept' : '') + (showUiIn() ? ', ShowUI URL kept' : '');
+            var wantRm = leftBy(v, 'this'), wantRec = wholeBackup(v) ? 'stock' : wantRm, wantAct = knowsShowUi(v) ? 'refused' : 'patched, map URL kept, ShowUI URL kept';
+            ok(v + ' (' + g + ') over this version\'s patch without turn cards (' + f[0] + '): crash loop ' + wantRec + ', Remove patch ' + wantRm + ', its activate ' + wantAct,
+                recH === wantRec && rmH === wantRm && act === wantAct, [rec, recH, rmH, act].join(' | '));
         });
     });
 })();

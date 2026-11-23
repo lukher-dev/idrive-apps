@@ -9,7 +9,8 @@
  * resolution sites are found from the functions that load their own name
  * strings, the map URL sites from the cluster display's builder and the log
  * path the variant edit disables, the ShowUI URL sites from requestStream's
- * ShowUI call and its result check, and a site a dynamic relocation would
+ * ShowUI call and its result check (each form of the URL in the same
+ * window), and a site a dynamic relocation would
  * rewrite at load is refused.
  * It only reads the buffer.
  *
@@ -716,16 +717,29 @@ function locateMapUrl(im, res, sp, r, rela, inits) {
 
 /* requestStream sends the phone ShowUI(alternateDisplayUrl().c_str(), uuid):
  * the cluster display's URL, a global std::string built from ALT_URL, read
- * through its getter. The edit hands ShowUI SHOWUI_URL instead, held in the
+ * through its getter. The edit hands ShowUI another URL instead, held in the
  * bytes of the log text of that same call's result check: patched, the text
- * up to `ShowUI(`, its NUL, then the URL (SHOWUI_FORM). The call site
+ * up to `ShowUI(`, its NUL, then the URL and its NUL, over the start of the
+ * text, the stock text after them. SHOWUI_FORMS are the URLs it writes:
+ * `eta`, the root path with the arrival-time card (SHOWUI_URL, what every
+ * release with the edit wrote), and the map-content-only path without turn
+ * cards, `map-eta` with the arrival-time card and `map` without it. Every
+ * form puts its URL at the same place, so the call site
  * `call getter ; mov rdi,rN ; mov rsi,[rax]` (either order of the two movs)
- * becomes `mov rdi,rN ; lea rsi,[rip+URL] ; nop`, the same 11 bytes. */
+ * becomes `mov rdi,rN ; lea rsi,[rip+URL] ; nop`, the same 11 bytes, in
+ * each. SHOWUI_LEN, the window the checks cover, is the longest form's. */
 var ALT_URL = 'maps:/car/instrumentcluster';
-var SHOWUI_URL = ALT_URL + '?showETA=yes';
 var SHOWUI_TEXT = 'mCinemoCarPlay->ShowUI(';
-var SHOWUI_FORM = Buffer.from(SHOWUI_TEXT + '\0' + SHOWUI_URL + '\0', 'latin1');
-var SHOWUI_LEN = SHOWUI_FORM.length, SHOWUI_AT = SHOWUI_TEXT.length + 1, SHOWUI_CALL = 11;
+var SHOWUI_AT = SHOWUI_TEXT.length + 1, SHOWUI_CALL = 11;
+function showUiForm(name, url) {
+    var bytes = Buffer.from(SHOWUI_TEXT + '\0' + url + '\0', 'latin1');
+    return { name: name, url: url, len: bytes.length, bytes: bytes };
+}
+var SHOWUI_FORMS = [showUiForm('eta', ALT_URL + '?showETA=yes'), showUiForm('map-eta', MAP_URL + '?showETA=yes'), showUiForm('map', MAP_URL)];
+var SHOWUI_URL = SHOWUI_FORMS[0].url;
+var SHOWUI_LEN = Math.max.apply(null, SHOWUI_FORMS.map(function (f) { return f.len; }));
+/* Where a form holds a NUL in the window; the stock text has none there. */
+var SHOWUI_NULS = [SHOWUI_AT - 1].concat(SHOWUI_FORMS.map(function (f) { return f.len - 1; }));
 /* The check's log text as built: the expression the call was written as. */
 var SHOWUI_EXPR = /^mCinemoCarPlay->ShowUI\( ::(?:\w+::)*CarPlayConstantsRepository::alternateDisplayUrl\(\)\.c_str\(\), /;
 var MOV_RSI_RAX = [0x48, 0x8b, 0x30], LEA_RSI = Buffer.from([0x48, 0x8d, 0x35]);
@@ -824,18 +838,26 @@ function branchIntoWhyNot(im, rs, a, b) {
     return null;
 }
 
+/* How the log text at `s` reads: 'stock' (the check of `ShowUI(
+ * …alternateDisplayUrl().c_str(), …`), a SHOWUI_FORMS entry (its bytes, and
+ * no NUL after them where a longer form has one), 'mixed' (a NUL at one of
+ * SHOWUI_NULS otherwise: a write of ours cut short, also from one form to
+ * another) or null. */
+function showUiText(buf, s) {
+    function nulAfter(n) { return SHOWUI_NULS.some(function (i) { return i >= n && buf[s + i] === 0; }); }
+    var form = SHOWUI_FORMS.filter(function (f) { return buf.slice(s, s + f.len).equals(f.bytes) && !nulAfter(f.len); })[0];
+    return form || (nulAfter(0) ? 'mixed' : SHOWUI_EXPR.test(stringAt(buf, s)) ? 'stock' : null);
+}
+
 /* Both sites (str: the name strings; refs: leaRefs of their every byte and
  * of ALT_URL's; inits: stringInits; rela: the RELA addends). Not applicable
  * to a build with AlternateDisplays::setShowUiUrl, which builds the ShowUI
  * URL with carplay.conf's SHOW_UI_OPTIONS itself.
  *   The log text: the one string starting `mCinemoCarPlay->ShowUI(`,
- * reading as the check of `ShowUI( …alternateDisplayUrl().c_str(), …`
- * (stock) or as SHOWUI_FORM (patched); without either, a NUL at either of
- * SHOWUI_FORM's NULs (the stock text has none in its first SHOWUI_LEN bytes)
- * is a write of ours cut short ('mixed'). It is loaded by one lea, in
- * requestStream (the function loading its own name at its entry), nothing
- * else loads inside it but, at the URL, the call site's lea, and no RELA
- * addend points into it.
+ * reading as stock, as a form or as mixed (showUiText). It is loaded by one
+ * lea, in requestStream (the function loading its own name at its entry),
+ * nothing else loads inside its first SHOWUI_LEN bytes but, at the URL, the
+ * call site's lea, and no RELA addend points into them.
  *   The URL getter: the one small function returning the global std::string
  * built from ALT_URL (its own string, loaded once), built once, by a static
  * initializer that builds other string globals the same way, and registered
@@ -843,16 +865,15 @@ function branchIntoWhyNot(im, rs, a, b) {
  *   The call site: the one window in requestStream holding the stock or
  * patched form (or, cut short, a mix of the two), followed by the ShowUI
  * call and its result's check with the log text; no branch lands inside it.
- * strIs and callIs say which form each site holds: 'stock', 'patched' or
- * 'mixed'. */
+ * strIs and callIs say what each site holds: 'stock', 'patched' or 'mixed';
+ * form names the log text's form when it holds one, else null. strBytes is
+ * the `eta` form's log text, forms each form's { name, url, strBytes }. */
 function locateShowUi(im, str, refs, inits, rela) {
     if (!str.setShowUi.err) return { ok: false, na: true, reason: 'ShowUI URL: not applicable (the build adds carplay.conf\'s SHOW_UI_OPTIONS to it)' };
     if (!im.starts.length) return { ok: false, reason: 'ShowUI URL: no function table' };
     if (str.showUi.err) return { ok: false, reason: 'ShowUI URL: ' + str.showUi.err.replace(/^self-start: ShowUI string/, 'ShowUI log text') };
-    var buf = im.buf, s = str.showUi.off;
-    var strIs = buf.slice(s, s + SHOWUI_LEN).equals(SHOWUI_FORM) ? 'patched'
-        : buf[s + SHOWUI_AT - 1] === 0 || buf[s + SHOWUI_LEN - 1] === 0 ? 'mixed'
-        : SHOWUI_EXPR.test(stringAt(buf, s)) ? 'stock' : null;
+    var buf = im.buf, s = str.showUi.off, text = showUiText(buf, s);
+    var strIs = typeof text === 'string' || !text ? text : 'patched';
     if (!strIs) return { ok: false, reason: 'ShowUI URL: ShowUI not called with the alternate display URL' };
     var rs = entryFunc(im, refs, str.rs, 'ShowUI URL: requestStream');
     if (rs.err) return { ok: false, reason: rs.err };
@@ -898,7 +919,9 @@ function locateShowUi(im, str, refs, inits, rela) {
     if (rela.some(function (a) { return a >= sVa && a < sVa + SHOWUI_LEN; })) return { ok: false, reason: 'ShowUI URL: a data pointer into the log text' };
     return {
         ok: true, str: s, len: SHOWUI_LEN, call: at, callLen: SHOWUI_CALL, url: url, getter: getter.off, requestStream: rs.off,
-        strIs: strIs, callIs: win.is, strBytes: SHOWUI_FORM.toString('hex'), callBytes: win.patched.toString('hex'), callStock: win.stock.toString('hex'),
+        strIs: strIs, callIs: win.is, form: strIs === 'patched' ? text.name : null,
+        strBytes: SHOWUI_FORMS[0].bytes.toString('hex'), callBytes: win.patched.toString('hex'), callStock: win.stock.toString('hex'),
+        forms: SHOWUI_FORMS.map(function (f) { return { name: f.name, url: f.url, strBytes: f.bytes.toString('hex') }; }),
     };
 }
 
@@ -1009,7 +1032,8 @@ function stockOriginal(proven, cur) {
 }
 
 module.exports = {
-    locate: locate, buildId: elfBuildId, SINK_STOCK: SINK_STOCK, MAP_URL: MAP_URL, MAP_URL_FORMS: FORMS, SHOWUI_URL: SHOWUI_URL, ALT_URL: ALT_URL,
+    locate: locate, buildId: elfBuildId, SINK_STOCK: SINK_STOCK, MAP_URL: MAP_URL, MAP_URL_FORMS: FORMS, SHOWUI_URL: SHOWUI_URL, SHOWUI_FORMS: SHOWUI_FORMS,
+    ALT_URL: ALT_URL,
     stockOriginal: stockOriginal,
     /* the ELF reading aapd_locate.js shares */
     elf: { parseElf: parseElf, Image: Image, noteBuildId: buildId, scan: scan, namedString: namedString, leaRefs: leaRefs,
