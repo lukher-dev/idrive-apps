@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.21
+
 The page is shorter: HUD map settings, Speed area and Android Auto map each
 open a page of their own with the controls that were on the main page. HUD
 map settings adds Vignette, which fades the HUD map out towards the HUD's
