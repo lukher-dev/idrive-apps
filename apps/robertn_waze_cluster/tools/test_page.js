@@ -50,7 +50,12 @@
  * render's current state; a pending patch, from the daemon and, before the
  * daemon runs, from its marker; a failed restart on the restart's own line,
  * CarPlay's line unchanged; the restart press restarts once, a greyed
- * button pressed sends nothing. The Logs
+ * button pressed sends nothing. The settings pages, HUD map settings, Speed
+ * area and Android Auto map: children of the main page, each opened by its
+ * button, with its title and rows; moving there and back keeps the app shown
+ * and its sockets open, whichever page the HMI shows first; the Vignette
+ * slider saved like the zoom; Turn cards on the cluster ticked as patchd
+ * holds it. The Logs
  * page: Start capture and the Capture row on it; Logs opens it (a child of the
  * main page), moving there keeps the app shown and its sockets open, it
  * holds the logs socket while shown; Save logs saves once and lists the
