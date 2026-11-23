@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.21
+
 The HUD map's vignette is gone for now: it did not show on the car.
 
 CarPlay: the phone's turn card and arrival-time card on the cluster are one
