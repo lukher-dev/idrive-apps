@@ -10,9 +10,10 @@ part of the map on the HUD. 100 % (the default) shows the whole map as
 before. The map is never scaled up, so a wide HUD map takes less zoom; the
 row shows the zoom in use. Own settings for this driver keeps the zoom too.
 
-Map size goes up to 135 % (85 % before). Above 100 % the map keeps its
-shape and the HUD's edges cut its sides; Move map left and Move map right
-then slide the map inside the HUD.
+Map size goes up to 135 % (85 % before; on some cars the HUD already cuts
+the map's sides above 85 %). Above 100 % the map keeps its shape and the
+HUD's edges cut its sides; Move map left and Move map right then slide the
+map inside the HUD.
 
 Hide map behind BMW's speed, a checkbox on the Speed area page: the HUD
 map is hidden in an area of the HUD so BMW's speed stays readable.

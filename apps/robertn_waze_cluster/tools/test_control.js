@@ -566,6 +566,13 @@ test('the speed area\'s place and size: 10 px a press, held inside the HUD; the 
     for (let i = 0; i < 100; i++) c.adjustHudClear('left');
     for (let i = 0; i < 100; i++) c.adjustHudClear('wider');
     await until('the HUD\'s whole width', () => c.renderStatus.hud_clear_x === 0 && c.renderStatus.hud_clear_w === 800);
+    /* one set by hand past the HUD's edge (the conf, a control command): a move keeps its size, held inside */
+    render.hudClearRect = [700, 0, 800, 90];
+    render.announce(render.state, render.reason);
+    await until('the hand-set one', () => c.renderStatus.hud_clear_x === 700);
+    await sleep(450);
+    c.adjustHudClear('left');
+    assert.strictEqual(c.hudClearText(), 'Speed area: 800x90 at 0,0', 'moved, its size kept');
     c.close();
     assert.strictEqual(c.hudClearText(), 'Speed area: —', 'nothing known while closed');
 });

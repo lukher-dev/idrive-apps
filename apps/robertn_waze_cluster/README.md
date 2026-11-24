@@ -74,7 +74,7 @@ The app is in the head unit's display language.
   stays.
 - **HUD map settings:** opens a page with the map's size, zoom and place:
   - **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 %
-    the HUD's edges cut the map's sides.
+    the HUD's edges cut the map's sides (on some cars already above 85 %).
   - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
     the default) to 250 %. The map is never scaled up, so a wide HUD map
     takes less zoom: the row shows the zoom in use.

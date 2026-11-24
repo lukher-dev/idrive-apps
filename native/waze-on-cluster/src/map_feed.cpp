@@ -130,6 +130,7 @@ void MapFeed::make_layer()
      * was. On the cluster the KOMBI scales a map_rect itself. */
     cr::VideoOptions vo = cfg_.video;
     scaling_ = false;
+    zoom_used_ = kHudZoomMin;   /* hud_shape's, when it shapes the picture */
     const uint32_t sw = q.w & ~3u, sh = q.h & ~3u;
     if (hosted()) {
         /* Hosted: the part of the picture the host's src covers where the
@@ -406,7 +407,15 @@ void MapFeed::set_hud_zoom(unsigned pct)
         return;
     cfg_.hud_zoom_pct = pct;
     uint32_t tw, th;
-    if (cfg_.target != "hud" || !layer_ || hosted() || !target_size(client_.targets, "hud", &tw, &th))
+    if (cfg_.target != "hud" || !layer_ || hosted() || !scaling_ || !target_size(client_.targets, "hud", &tw, &th))
+        return;
+    /* a zoom held to the same cap shows the same part: the layer stays */
+    const ScaleShape was = shape_;
+    crk::QuadRect q = quad(tw, th);
+    if (cfg_.rect.set() && cfg_.rect.fits(tw, th))
+        q = crk::QuadRect{cfg_.rect.x, cfg_.rect.y, cfg_.rect.w, cfg_.rect.h};
+    hud_shape(&q);
+    if (shape_ == was)
         return;
     /* another part of the picture: a new layer for it */
     log_info("render: HUD map zoom %u%%", pct);

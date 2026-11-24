@@ -522,6 +522,20 @@ static void hud_zoom()
     ok("the box back to standard: the zoom asked, 250, used at that box's cap, 240",
        hud_shows(scaled(318, 140, 452, 200, 452, 200)) && st.hud_zoom_used == 240);
 
+    const auto hud_layer_id = [&]() -> uint32_t {
+        for (const crs::Layer *x : b.svc->compositor().layers())
+            if (x->target() == 2)
+                return x->id();
+        return 0;
+    };
+    const uint32_t id240 = hud_layer_id();
+    feeds.set_hud_zoom(245);
+    pump(2000);
+    st = feeds.status("decode");
+    ok("zoom 245, held to the same cap, 240: the same layer and picture",
+       id240 && hud_layer_id() == id240 && hud_shows(scaled(318, 140, 452, 200, 452, 200)) && st.hud_zoom_pct == 245 &&
+           st.hud_zoom_used == 240);
+
     feeds.set_hud_zoom(100);
     pump(2000);
     ok("zoom 100 again: the whole picture", hud_shows(scaled(0, 0, 1088, 480, 452, 200)) &&

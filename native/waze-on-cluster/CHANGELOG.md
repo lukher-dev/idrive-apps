@@ -7,12 +7,15 @@ slider: it shows the middle of the map, never scaled up, and each driver
 profile keeps its own zoom. 100 % (the default) shows the whole map as
 before.
 
-The HUD map can be up to 135 % of the HUD's width (85 % before). Above
-100 % it keeps its shape and the HUD's edges cut its sides; at 135 % it
-fills the HUD's height. There the horizontal position slides which part of
-the map shows, and the zoom is held to what the map's width allows. Up to
-100 % nothing changes. Needs the head unit's scaler (hud_scale_down);
-without it the map is at most 100 % wide.
+The HUD map can be up to 135 % of the HUD's width (85 % before; on some
+cars the HUD already cuts the map's sides above 85 %). Above 100 % it keeps
+its shape and the HUD's edges cut its sides; at 135 % it fills the HUD's
+height. There the horizontal position slides which part of the map shows,
+and the zoom is held to what the map's width allows. Up to 85 % nothing
+changes. Needs the head unit's scaler (hud_scale_down); without it the map
+is at most 100 % wide. Earlier releases leave out a driver profile saved
+with the map above 100 % wide: set Map size to 100 % or less before going
+back to one.
 
 The HUD map can be hidden behind BMW's speed: hud_clear makes it black in a
 rectangle of the HUD's 800x480 scene (hud_clear_x, hud_clear_y, hud_clear_w,

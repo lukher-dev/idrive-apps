@@ -684,8 +684,9 @@ class WazeClusterControl extends EventEmitter {
         }
         const r = this.hudClearRect();
         const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-        const w = clamp(r[2] + d[2] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, HUD_W - r[0]);
-        const h = clamp(r[3] + d[3] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, HUD_H - r[1]);
+        /* wider and taller up to the edge from where it is; a move keeps its size, at most the HUD's */
+        const w = clamp(r[2] + d[2] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, d[2] ? HUD_W - r[0] : HUD_W);
+        const h = clamp(r[3] + d[3] * HUD_CLEAR_PX, HUD_CLEAR_MIN_PX, d[3] ? HUD_H - r[1] : HUD_H);
         const x = clamp(r[0] + d[0] * HUD_CLEAR_PX, 0, HUD_W - w);
         const y = clamp(r[1] + d[1] * HUD_CLEAR_PX, 0, HUD_H - h);
         if (x === r[0] && y === r[1] && w === r[2] && h === r[3]) {
