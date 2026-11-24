@@ -179,7 +179,8 @@ class TurnWatch extends EventEmitter {
                 this.error = null;
                 this._setStatus('available');
                 this._pollTimer = this._timers.setInterval(() => this._tick(), this._queryMs);
-                this._resendTimer = this._timers.setInterval(() => this.resend(), this._resendMs);
+                /* the render takes not near by default and after its own timeout: only near is said again */
+                this._resendTimer = this._timers.setInterval(() => this.near && this.resend(), this._resendMs);
                 this._tick();
             })
             .catch((e) => {
@@ -239,12 +240,25 @@ class TurnWatch extends EventEmitter {
             .then((c) => this._call('queryContent', { viewConfigs: [c] }))
             .then((r) => {
                 this._errors = 0;
-                if (gen === this._gen) this._update(parseManeuver(r), r);
-            }, () => {
+                if (gen !== this._gen) return;
+                if (this.status === 'unavailable') {
+                    this.error = null;
+                    this._log.info('turn: GuidanceEventList answers again');
+                    this._setStatus('available');
+                }
+                this._update(parseManeuver(r), r);
+            }, (e) => {
                 if (++this._errors >= FAILS_BEFORE_RECONFIG) {
                     this._errors = 0;
                     this._config = null;
-                    if (gen === this._gen) this._update(null, null);
+                    if (gen !== this._gen) return;
+                    /* a turn list that does not answer is no turn data, not a wait for a turn */
+                    if (this.status !== 'unavailable') {
+                        this.error = (e && e.message) || String(e);
+                        this._log.warn(`turn: queryContent failed ${FAILS_BEFORE_RECONFIG} times in a row: ${this.error}`);
+                        this._setStatus('unavailable');
+                    }
+                    this._update(null, null);
                 } else if (gen === this._gen) {
                     this._decide(null);
                 }

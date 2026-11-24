@@ -93,7 +93,8 @@ function texts(v, out) {
     return o;
 }
 
-/* queryContent's reply -> { kind, metres, text } of its first maneuver, or null. */
+/* queryContent's reply -> { kind, metres, text } of its first maneuver, or null;
+ * imperial: true too when its distance is in miles, feet or yards. */
 function parseManeuver(reply) {
     const views = reply && reply.viewContent;
     const list = Array.isArray(views) ? views : views ? [views] : [];
@@ -104,15 +105,22 @@ function parseManeuver(reply) {
                 continue;
             }
             const e = ev[kind], fd = e.formattedDistance || {};
-            return {
-                kind,
-                metres: toMetres(fd.distance, fd.unit === undefined || fd.unit === null ? '' : String(fd.unit)),
-                text: texts(e.description).join(' ').slice(0, 80)
-            };
+            const unit = fd.unit === undefined || fd.unit === null ? '' : String(fd.unit);
+            const m = { kind, metres: toMetres(fd.distance, unit), text: texts(e.description).join(' ').slice(0, 80) };
+            const k = UNITS[unit.trim().toLowerCase()];
+            if (m.metres !== null && (k === UNITS.mi || k === UNITS.ft || k === UNITS.yd)) {
+                m.imperial = true;
+            }
+            return m;
         }
     }
     return null;
 }
+
+/* An imperial distance that much over the one set still opens: the car's
+ * steps stand for the metric ones a little past them (a quarter, half and
+ * whole mile are 402, 805 and 1609 m against 400, 800 and 1600). */
+const IMPERIAL_SLACK = 1.03;
 
 class TurnGate {
     constructor(options) {
@@ -138,7 +146,7 @@ class TurnGate {
         const turn = !!maneuver && TRIGGER_KINDS.indexOf(maneuver.kind) >= 0;
         const showM = turn && maneuver.kind === 'branch' ? this.branchShowM : this.showM;
         if (!this.open) {
-            this.open = turn && maneuver.metres !== null && maneuver.metres <= showM;
+            this.open = turn && maneuver.metres !== null && maneuver.metres <= (maneuver.imperial ? showM * IMPERIAL_SLACK : showM);
             this._leavingAt = this._blankSince = null;
             return this.open;
         }

@@ -260,6 +260,13 @@ async function main() {
         assert.deepStrictEqual(got, [false, true, true, true, true, true, true, true, true, true, true, true, true, false]);
     });
 
+    await check('gate: a quarter, half and whole mile open at 400, 800 and 1600 m', () => {
+        for (const [d, unit, m] of [['1/4', 'MILE_US', 400], ['1/2', 'MILE_US', 800], ['0.5', 'mi', 800], ['1', 'MILE_UK', 1600]]) {
+            const g = new TurnGate({ showM: m });
+            assert.strictEqual(g.update(parseManeuver(reply('intersection', d, unit)), 0), true, `${d} ${unit} at ${m} m`);
+        }
+        assert.strictEqual(new TurnGate({ showM: 800 }).update(man('intersection', 830), 0), false, '830 m at 800 m');
+    });
     await watchChecks();
     console.log(`${passed}/${passed + failed.length} passed`);
     if (failed.length) throw new Error(`${failed.length} failed`);
@@ -583,6 +590,25 @@ async function watchChecks() {
         const raw = logged.filter((s) => s.startsWith('turn reply: '));
         assert.strictEqual(raw.length, 1);
         assert(raw[0].includes('"distance":"900"'));
+    });
+    await check('the 30 s resend repeats near 1 only', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => ({ viewContent: [] }));
+        const { w, sent } = watch(c, b);
+        w.setActive(true);
+        await c.advance(65000);
+        assert.strictEqual(w.status, 'available');
+        assert.deepStrictEqual(sent, []);
+    });
+    await check('queries that keep failing: unavailable, available again at the next answer', async () => {
+        const c = fakeClock(), b = fakeBuilders(c, () => reply('intersection', '3000', 'm'), { failQueries: 6 });
+        const { w, logged } = watch(c, b);
+        w.setActive(true);
+        await c.advance(2600);
+        assert.strictEqual(w.status, 'unavailable');
+        assert(logged.some((s) => s.includes('queryContent failed 6 times')), logged.join('\n'));
+        await c.advance(500);
+        assert.strictEqual(w.status, 'available');
+        assert.strictEqual(w.error, null);
     });
 }
 

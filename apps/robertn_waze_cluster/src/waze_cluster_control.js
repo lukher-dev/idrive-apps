@@ -643,6 +643,12 @@ class WazeClusterControl extends EventEmitter {
         return t('HUD map: {0}', this._hudState());
     }
 
+    /* True while the HUD map waits for a turn near: on, shown only near turns, none near. */
+    hudWaitsForTurn() {
+        const rs = this.renderStatus;
+        return this.render.link === 'up' && this.hudOn() === true && !this.hudDisabled() && !!rs && rs.hud_state === 'turn_wait';
+    }
+
     _hudState() {
         const on = this.hudOn();
         if (this.render.link !== 'up' || on === null) {

@@ -581,6 +581,12 @@ async function main() {
         nearBox.press();
         await until('near turns, no turn list: says so', () => render.hudNearTurn === 1 && nearBox.selected === true &&
             patch.map.hud_near_turn === 1 && byName.wocHud.text === 'HUD map: No turn data');
+        render.hudState = 'disabled';
+        render.announce(render.state, render.reason);
+        await until('no turn data says nothing over the HUD map\'s own trouble', () => byName.wocHud.text === 'HUD map: Disabled after errors');
+        render.hudState = null;
+        render.announce(render.state, render.reason);
+        await until('no turn data again', () => byName.wocHud.text === 'HUD map: No turn data');
         guidanceFails = false;
         guidance = turnReply(1500);
         await sleep(450);
@@ -628,6 +634,21 @@ async function main() {
         render.received.length = 0;
         OnlineApp.instance._turns.resend();
         await until('the page hidden: still told, on a connection of its own', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
+        /* a render restarted while the turn is near takes not near: its status file says so, and it is told again at once */
+        render.turnNear = false;
+        render.received.length = 0;
+        fs.writeFileSync(STATUS_FILE, JSON.stringify(render._status()));
+        OnlineApp.instance._followTurnMode();
+        await until('a restarted render: told again that the turn is near', () => render.received.some((m) => m.cmd === 'turn' && m.near === '1'));
+        /* a status file the render no longer writes (it writes it every second): the watch off, on again with a fresh one */
+        fs.writeFileSync(STATUS_FILE, JSON.stringify(render._status()));
+        const stale = (Date.now() - 30000) / 1000;
+        fs.utimesSync(STATUS_FILE, stale, stale);
+        OnlineApp.instance._followTurnMode();
+        await until('a stale status file: the watch off', () => OnlineApp.instance._turns.status === 'off');
+        fs.writeFileSync(STATUS_FILE, JSON.stringify(render._status()));
+        OnlineApp.instance._followTurnMode();
+        await until('a fresh one: the watch on again, the turn near', () => OnlineApp.instance._turns.status === 'available' && render.turnNear === true);
         byName.ST_OnlineApps_WazeCluster.emit('visible', { visible: true });
         await until('the page again', () => nearBox.selected === true && nearBox.enabled === true);
         const gate = OnlineApp.instance._turns._gate;

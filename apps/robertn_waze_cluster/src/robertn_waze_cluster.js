@@ -107,6 +107,8 @@ const HUD_NEAR_DIST_NAME = 'wocHudNearDist';
  * map shows while the page, the render's one owner, is closed. */
 const STATUS_FILE = '/run/waze-on-cluster/status.json';
 const TURN_MODE_MS = 2000;
+/* A status file older than this is a render's that stopped (it writes it every second). */
+const STATUS_STALE_MS = 10000;
 const SHOW_ON_NAME = 'wocShowOn';
 const PROFILE_NAME = 'wocProfile';
 const PROFILE_STATUS_NAME = 'wocProfileStatus';
@@ -520,18 +522,30 @@ class WazeClusterApp extends OnlineApp {
      * distance before a turn the render says (1 km while it says none): as
      * the render says while the page holds its socket, else as its status
      * file says (the page closed, or never opened since the head unit
-     * started, or a status without the field: the render answering busy). */
+     * started, or a status without the field: the render answering busy).
+     * A render that says no turn is near while one is (it restarted) is told again at once. */
     _followTurnMode() {
         let rs = this._control.renderStatus;
         if (!rs || rs.hud_near_turn === undefined) {
-            try {
-                rs = JSON.parse(fs.readFileSync(this._statusFile, 'utf8'));
-            } catch (e) {
-                rs = null;
-            }
+            rs = this._statusFromFile();
         }
         this._turns.setDistance(rs ? rs.hud_near_m : undefined);
         this._turns.setActive(!!rs && rs.hud === 1 && rs.hud_near_turn === 1);
+        if (rs && rs.hud_gate === 0 && this._turns.near) {
+            this._turns.resend();
+        }
+    }
+
+    /* The render's status file; null for none, one that does not read, or a stale one. */
+    _statusFromFile() {
+        try {
+            if (Math.abs(Date.now() - fs.statSync(this._statusFile).mtimeMs) > STATUS_STALE_MS) {
+                return null;
+            }
+            return JSON.parse(fs.readFileSync(this._statusFile, 'utf8'));
+        } catch (e) {
+            return null;
+        }
     }
 
     /* ---- rendering ---- */
@@ -643,8 +657,8 @@ class WazeClusterApp extends OnlineApp {
         this._setEnabled(GUIDE_NAME, hide !== null && !unavailable && c.clusterOn() !== false);
         this._write(GUIDE_NAME, t("Hide BMW's turn box"));
         this._setSelected(GUIDE_NAME, !!hide && !unavailable);
-        /* only near turns without BMW's turn list: no turn will show the map */
-        this._write(HUD_NAME, c.hudNearTurn() && this._turns.status === 'unavailable' ? t('HUD map: {0}', t('No turn data')) : c.hudText());
+        /* waiting for a turn without BMW's turn list: no turn will show the map */
+        this._write(HUD_NAME, c.hudWaitsForTurn() && this._turns.status === 'unavailable' ? t('HUD map: {0}', t('No turn data')) : c.hudText());
         this._write(HUD_KEEP_NAME, t("Keep HUD map over BMW's pop-ups"));
         this._setSelected(HUD_KEEP_NAME, c.hudKeepShown() === true);
         this._setEnabled(HUD_KEEP_NAME, c.canKeepHud());

@@ -78,12 +78,13 @@ The app is in the head unit's display language.
   stays.
 - **Show HUD map only near turns:** ticked, the HUD map shows only while a
   turn is close (from **Show from**, 1 km by default, and at least 1 km
-  before a motorway exit) and goes about 10 s after it. It reads the turns
-  your navigation app sends the car, as BMW's own HUD arrow does. Google
-  Maps sends them; Apple Maps should too, though it is untried. With an app
-  that sends none, such as Waze, the map never shows.
+  before a motorway exit) and goes about 10 s after it, or stays on when the
+  next turn is close behind. It reads the turns your navigation app sends
+  the car, as BMW's own HUD arrow does. Google Maps sends them; Apple Maps
+  should too, though it is untried. With an app that sends none, such as
+  Waze, the map never shows.
 - **Show from … before a turn:** how far before a turn the map appears with
-  the option above, 200 m to 2 km.
+  the option above, 200 m to 2 km (in metres also where the car shows miles).
 - **Size:** how wide the map is on the HUD.
 - **Move left / Move right / Move up / Move down** and **Centre:** where the
   map sits on the HUD.
@@ -123,7 +124,7 @@ want first, then restart once.
 | `Cluster map: Error` or `Unavailable` | [Report it](#logs-and-reporting-a-problem). |
 | `HUD map: Disabled after errors` | Update **Cluster renderer** in the Store. The cluster map keeps working. |
 | `HUD map: Waiting for a turn` | Normal with **Show HUD map only near turns**: the map shows as the next turn gets close. |
-| `HUD map: No turn data` | The car's turn list isn't available to the app. Untick **Show HUD map only near turns** to have the map always, and [report it](#logs-and-reporting-a-problem). |
+| `HUD map: No turn data` | The car's turn list isn't available to the app, or stopped answering. Untick **Show HUD map only near turns** to have the map always, and [report it](#logs-and-reporting-a-problem). |
 | CarPlay audio cuts out and `CarPlay Wi-Fi: 2.4 GHz` | On your iPhone, turn Wi-Fi off and on. |
 
 ## Logs and reporting a problem

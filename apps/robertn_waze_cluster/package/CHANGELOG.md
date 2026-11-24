@@ -3,12 +3,13 @@
 ## Unreleased
 
 Show HUD map only near turns, a checkbox in HUD: the HUD map shows only as
-a turn gets close and goes about 10 s after it. Show from, the slider under
-it, sets how far before a turn: 200 m to 2 km, 1 km by default (motorway
-exits from at least 1 km). It reads the turns the phone's navigation sends
-the car: Google Maps sends them, Waze does not. The HUD map row reads
-"Waiting for a turn" until then, or "No turn data" when the car's turn list
-is not available.
+a turn gets close and goes about 10 s after it, unless the next turn is
+close behind. Show from, the slider under it, sets how far before a turn:
+200 m to 2 km, 1 km by default (motorway exits from at least 1 km). It
+reads the turns the phone's navigation sends the car: Google Maps sends
+them, Waze does not. The HUD map row reads "Waiting for a turn" until then,
+or "No turn data" when the car's turn list is not available or stops
+answering.
 
 ## 0.6.17
 
