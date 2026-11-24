@@ -471,11 +471,11 @@ static void hud_zoom()
                 b.port.tick(b.now);
                 b.svc->after_poll(fds, first, b.now);
                 const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
-                const bool scaling = hud_scaling(feeds, b.now);
-                if (scaling)
+                const bool busy = scaling(feeds, b.now);
+                if (busy)
                     usleep(1000);
                 feeds.poll(b.now);
-                if (round > 0 && n <= 0 && !pending && !scaling)
+                if (round > 0 && n <= 0 && !pending && !busy)
                     break;
             }
         }
@@ -566,11 +566,11 @@ static void hud_wide()
                 b.port.tick(b.now);
                 b.svc->after_poll(fds, first, b.now);
                 const bool pending = (feeds.cluster() && feeds.cluster()->wants_write()) || (feeds.hud_feed() && feeds.hud_feed()->wants_write());
-                const bool scaling = hud_scaling(feeds, b.now);
-                if (scaling)
+                const bool busy = scaling(feeds, b.now);
+                if (busy)
                     usleep(1000);
                 feeds.poll(b.now);
-                if (round > 0 && n <= 0 && !pending && !scaling)
+                if (round > 0 && n <= 0 && !pending && !busy)
                     break;
             }
         }
