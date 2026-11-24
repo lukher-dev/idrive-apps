@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Kort i instrumentpanelet",
-  "SID_WOC_LOGS": "Logfiler"
+  "SID_WOC_LOGS": "Logfiler",
+  "SID_WOC_HUD_MAP": "Indstillinger for kort i HUD",
+  "SID_WOC_SPEED": "Hastighedsfelt",
+  "SID_WOC_AA": "Android Auto-kort"
 }

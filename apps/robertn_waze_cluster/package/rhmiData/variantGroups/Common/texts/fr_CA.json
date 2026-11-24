@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Cartes au combiné",
-  "SID_WOC_LOGS": "Journaux"
+  "SID_WOC_LOGS": "Journaux",
+  "SID_WOC_HUD_MAP": "Paramètres de la carte sur le HUD",
+  "SID_WOC_SPEED": "Zone de vitesse",
+  "SID_WOC_AA": "Carte Android Auto"
 }

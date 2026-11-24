@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Mapy na přístrojovém štítu",
-  "SID_WOC_LOGS": "Protokoly"
+  "SID_WOC_LOGS": "Protokoly",
+  "SID_WOC_HUD_MAP": "Nastavení mapy na HUD",
+  "SID_WOC_SPEED": "Plocha rychlosti",
+  "SID_WOC_AA": "Mapa Android Auto"
 }

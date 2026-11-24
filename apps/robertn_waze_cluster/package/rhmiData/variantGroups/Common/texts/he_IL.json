@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "מפות בלוח המחוונים",
-  "SID_WOC_LOGS": "יומנים"
+  "SID_WOC_LOGS": "יומנים",
+  "SID_WOC_HUD_MAP": "הגדרות המפה ב-HUD",
+  "SID_WOC_SPEED": "אזור המהירות",
+  "SID_WOC_AA": "מפת Android Auto"
 }

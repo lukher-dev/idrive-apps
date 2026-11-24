@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Mappe sul quadro",
-  "SID_WOC_LOGS": "Log"
+  "SID_WOC_LOGS": "Log",
+  "SID_WOC_HUD_MAP": "Impostazioni mappa HUD",
+  "SID_WOC_SPEED": "Area velocità",
+  "SID_WOC_AA": "Mappa Android Auto"
 }

@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Mapy na zegarach",
-  "SID_WOC_LOGS": "Logi"
+  "SID_WOC_LOGS": "Logi",
+  "SID_WOC_HUD_MAP": "Ustawienia mapy na HUD",
+  "SID_WOC_SPEED": "Obszar prędkości",
+  "SID_WOC_AA": "Mapa Android Auto"
 }

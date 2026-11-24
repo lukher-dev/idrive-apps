@@ -107,6 +107,9 @@
     "Speed area wider": "Hastighetsfelt bredere",
     "Speed area narrower": "Hastighetsfelt smalere",
     "Speed area taller": "Hastighetsfelt høyere",
-    "Speed area shorter": "Hastighetsfelt lavere"
+    "Speed area shorter": "Hastighetsfelt lavere",
+    "Speed area": "Hastighetsfelt",
+    "HUD map settings": "Innstillinger for kart i HUD",
+    "Android Auto map": "Android Auto-kart"
   }
 }

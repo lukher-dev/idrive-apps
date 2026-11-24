@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "地图仪表盘显示",
-  "SID_WOC_LOGS": "日志"
+  "SID_WOC_LOGS": "日志",
+  "SID_WOC_HUD_MAP": "HUD 地图设置",
+  "SID_WOC_SPEED": "车速区域",
+  "SID_WOC_AA": "Android Auto 地图"
 }

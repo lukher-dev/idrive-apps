@@ -107,6 +107,9 @@
     "Speed area wider": "Sebességmező szélesebb",
     "Speed area narrower": "Sebességmező keskenyebb",
     "Speed area taller": "Sebességmező magasabb",
-    "Speed area shorter": "Sebességmező alacsonyabb"
+    "Speed area shorter": "Sebességmező alacsonyabb",
+    "Speed area": "Sebességmező",
+    "HUD map settings": "HUD-térkép beállításai",
+    "Android Auto map": "Android Auto-térkép"
   }
 }

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+The main page is shorter: HUD map settings, Speed area and Android Auto map
+each open a page of their own with the rows that were on the main page.
+
 ## 0.6.15
 
 When boot recovery removes the Android Auto patch because Android Auto

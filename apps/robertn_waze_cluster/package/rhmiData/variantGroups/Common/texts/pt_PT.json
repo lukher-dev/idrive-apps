@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Mapas no quadrante",
-  "SID_WOC_LOGS": "Registos"
+  "SID_WOC_LOGS": "Registos",
+  "SID_WOC_HUD_MAP": "Definições do mapa no HUD",
+  "SID_WOC_SPEED": "Área da velocidade",
+  "SID_WOC_AA": "Mapa do Android Auto"
 }

@@ -107,6 +107,9 @@
     "Speed area wider": "Nopeusalue leveämmäksi",
     "Speed area narrower": "Nopeusalue kapeammaksi",
     "Speed area taller": "Nopeusalue korkeammaksi",
-    "Speed area shorter": "Nopeusalue matalammaksi"
+    "Speed area shorter": "Nopeusalue matalammaksi",
+    "Speed area": "Nopeusalue",
+    "HUD map settings": "HUD-kartan asetukset",
+    "Android Auto map": "Android Auto -kartta"
   }
 }

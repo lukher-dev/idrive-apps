@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Карти на приладах",
-  "SID_WOC_LOGS": "Журнали"
+  "SID_WOC_LOGS": "Журнали",
+  "SID_WOC_HUD_MAP": "Налаштування карти на HUD",
+  "SID_WOC_SPEED": "Поле швидкості",
+  "SID_WOC_AA": "Карта Android Auto"
 }

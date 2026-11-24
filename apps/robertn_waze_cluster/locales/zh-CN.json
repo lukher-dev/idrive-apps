@@ -109,6 +109,9 @@
     "Speed area wider": "车速区域加宽",
     "Speed area narrower": "车速区域变窄",
     "Speed area taller": "车速区域加高",
-    "Speed area shorter": "车速区域变矮"
+    "Speed area shorter": "车速区域变矮",
+    "Speed area": "车速区域",
+    "HUD map settings": "HUD 地图设置",
+    "Android Auto map": "Android Auto 地图"
   }
 }

@@ -14,9 +14,10 @@
  *
  * into src/locales.js, one of the app's modules, and the RHMI text files
  * (rhmiData/variantGroups/Common/texts of the staged tree): the string ids
- * the HMI shows itself (RHMI_TEXTS: the tile's name, the Logs page's
- * title), en_GB.json and en_US.json in English and those each language
- * names in its words, English where it has none.
+ * the HMI shows itself (RHMI_TEXTS: the tile's name, the titles of the
+ * Logs page and the three settings pages), en_GB.json and en_US.json in
+ * English and those each language names in its words, English where it
+ * has none.
  *
  *   node tools/gen_locales.js
  */
@@ -32,7 +33,10 @@ const TEXTS = path.join(TREE, 'rhmiData', 'variantGroups', 'Common', 'texts');
 /* The string ids of application.json and uiDescription.json, in English. */
 const RHMI_TEXTS = {
     SID_WOC_TITLE: 'Maps on cluster',
-    SID_WOC_LOGS: 'Logs'
+    SID_WOC_LOGS: 'Logs',
+    SID_WOC_HUD_MAP: 'HUD map settings',
+    SID_WOC_SPEED: 'Speed area',
+    SID_WOC_AA: 'Android Auto map'
 };
 
 /* The HMI's English text files (the oap-sdk's names for ENGLISCH__UK and ENGLISCH__US). */

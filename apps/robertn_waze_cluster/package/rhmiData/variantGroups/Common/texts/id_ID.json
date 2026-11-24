@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "Peta di panel instrumen",
-  "SID_WOC_LOGS": "Log"
+  "SID_WOC_LOGS": "Log",
+  "SID_WOC_HUD_MAP": "Pengaturan peta HUD",
+  "SID_WOC_SPEED": "Area kecepatan",
+  "SID_WOC_AA": "Peta Android Auto"
 }

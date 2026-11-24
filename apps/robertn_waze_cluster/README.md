@@ -72,22 +72,26 @@ The app is in the head unit's display language.
 - **Keep HUD map over BMW's pop-ups:** unticked (the default), the map steps
   aside while BMW's media and list pop-ups show on the HUD. Ticked, it
   stays.
-- **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 % the
-  HUD's edges cut the map's sides.
-- **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
-  the default) to 250 %. The map is never scaled up, so a wide HUD map
-  takes less zoom: the row shows the zoom in use.
-- **Map position:** where the map sits on the HUD, moved by **Move map left
-  / right / up / down** and back with **Centre map**. Above 100 %, left and
-  right slide the map inside the HUD.
-- **Hide map behind BMW's speed:** ticked, the map is hidden in an area of
-  the HUD, so BMW's speed readout stays readable. Off by default: BMW's
-  speed sits in a different place on different cars' HUDs. **Speed area**
-  shows that area's size and place in HUD pixels (250x90 at 110,320 by
-  default, where a 5 Series G30 LCI shows the speed and the speed-limit
-  sign); **Move speed area left / right / up / down** and **Speed area
-  wider / narrower / taller / shorter** move and size it 10 px a press.
-  The area stays where it is on the HUD when the map moves or changes size.
+- **HUD map settings:** opens a page with the map's size, zoom and place:
+  - **Map size:** how wide the map is on the HUD, up to 135 %. Above 100 %
+    the HUD's edges cut the map's sides.
+  - **Map zoom:** a closer part of the map on the HUD, 100 % (the whole map,
+    the default) to 250 %. The map is never scaled up, so a wide HUD map
+    takes less zoom: the row shows the zoom in use.
+  - **Map position:** where the map sits on the HUD, moved by **Move map
+    left / right / up / down** and back with **Centre map**. Above 100 %,
+    left and right slide the map inside the HUD.
+- **Speed area:** opens a page for the area of the HUD where BMW shows your
+  speed:
+  - **Hide map behind BMW's speed:** ticked, the map is hidden in that area,
+    so BMW's speed readout stays readable. Off by default: BMW's speed sits
+    in a different place on different cars' HUDs.
+  - **Speed area** shows the area's size and place in HUD pixels (250x90 at
+    110,320 by default, where a 5 Series G30 LCI shows the speed and the
+    speed-limit sign); **Move speed area left / right / up / down** and
+    **Speed area wider / narrower / taller / shorter** move and size it
+    10 px a press. The area stays where it is on the HUD when the map moves
+    or changes size.
 
 **CarPlay** and **Android Auto**
 
@@ -95,10 +99,11 @@ The app is in the head unit's display language.
 - **Patch** and **Remove patch:** see
   [above](#do-i-need-to-press-patch-or-remove-patch).
 - **CarPlay Wi-Fi** (CarPlay only): the Wi-Fi band your iPhone uses.
-- **Cluster map zoom** with **Zoom out / Zoom in** (Android Auto only): out
-  shows more map, in shows bigger text.
-- **Hide phone's turn card** (Android Auto only): hides Google Maps' own
-  turn card at the top of the map.
+- **Android Auto map** (Android Auto only): opens a page with **Cluster map
+  zoom** and:
+  - **Zoom out / Zoom in:** out shows more map, in shows bigger text.
+  - **Hide phone's turn card:** hides Google Maps' own turn card at the top
+    of the map.
 
 **Restart head unit** shows when a change needs a restart. Press it to
 apply the change.
@@ -177,7 +182,8 @@ names those languages) and its words, each keyed by the English (`{0}`,
 ```
 
 `node tools/build.js` writes them into the app (`src/locales.js`) and into
-the RHMI text files, which hold the tile's name and the Logs page's title.
+the RHMI text files, which hold the tile's name and the titles of the
+Logs page and the settings pages.
 `node tools/test_i18n.js` checks that every language has every word with
 the same `{n}`, and every HMI language its text file.
 

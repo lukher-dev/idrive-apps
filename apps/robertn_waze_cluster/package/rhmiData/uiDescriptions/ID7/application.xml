@@ -46,75 +46,11 @@
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
-            <component id="52" type="slider" widget="LT_Slider_LeftJustified_Fill_Steps">
+            <component id="110" type="button" widget="LT_Button_1Row">
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
-            <component id="95" type="slider" widget="LT_Slider_LeftJustified_Fill_Steps">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="55" type="label" widget="LT_Label_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="0"/>
-            </component>
-            <component id="56" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="57" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="58" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="59" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="60" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="98" type="checkBox" widget="LT_CheckBox_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="99" type="label" widget="LT_Label_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="0"/>
-            </component>
-            <component id="101" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="102" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="103" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="104" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="105" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="106" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="107" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="108" type="button" widget="LT_Button_1Row">
+            <component id="111" type="button" widget="LT_Button_1Row">
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
@@ -158,19 +94,7 @@
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
-            <component id="28" type="label" widget="LT_Label_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="0"/>
-            </component>
-            <component id="25" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="26" type="button" widget="LT_Button_1Row">
-                <property id="2" value="1"/>
-                <property id="3" value="3"/>
-            </component>
-            <component id="27" type="checkBox" widget="LT_CheckBox_1Row">
+            <component id="112" type="button" widget="LT_Button_1Row">
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>
@@ -234,6 +158,127 @@
                 <property id="3" value="3"/>
             </component>
             <component id="89" type="label" widget="LT_Label_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+        </layoutGroup>
+    </container>
+    <container id="3" type="state" widget="LT_State_Wide">
+        <property id="9" value="1"/>
+        <layoutGroup id="500" name="Titlebar">
+            <component id="113" type="title">
+                <property id="2" value="1"/>
+            </component>
+        </layoutGroup>
+        <layoutGroup id="600" name="List">
+            <property id="3" value="1"/>
+            <component id="52" type="slider" widget="LT_Slider_LeftJustified_Fill_Steps">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="95" type="slider" widget="LT_Slider_LeftJustified_Fill_Steps">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="55" type="label" widget="LT_Label_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="0"/>
+            </component>
+            <component id="56" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="57" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="58" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="59" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="60" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+        </layoutGroup>
+    </container>
+    <container id="4" type="state" widget="LT_State_Wide">
+        <property id="9" value="1"/>
+        <layoutGroup id="700" name="Titlebar">
+            <component id="114" type="title">
+                <property id="2" value="1"/>
+            </component>
+        </layoutGroup>
+        <layoutGroup id="800" name="List">
+            <property id="3" value="1"/>
+            <component id="98" type="checkBox" widget="LT_CheckBox_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="99" type="label" widget="LT_Label_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="0"/>
+            </component>
+            <component id="101" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="102" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="103" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="104" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="105" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="106" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="107" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="108" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+        </layoutGroup>
+    </container>
+    <container id="5" type="state" widget="LT_State_Wide">
+        <property id="9" value="1"/>
+        <layoutGroup id="900" name="Titlebar">
+            <component id="115" type="title">
+                <property id="2" value="1"/>
+            </component>
+        </layoutGroup>
+        <layoutGroup id="1000" name="List">
+            <property id="3" value="1"/>
+            <component id="28" type="label" widget="LT_Label_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="0"/>
+            </component>
+            <component id="25" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="26" type="button" widget="LT_Button_1Row">
+                <property id="2" value="1"/>
+                <property id="3" value="3"/>
+            </component>
+            <component id="27" type="checkBox" widget="LT_CheckBox_1Row">
                 <property id="2" value="1"/>
                 <property id="3" value="3"/>
             </component>

@@ -1,4 +1,7 @@
 {
   "SID_WOC_TITLE": "الخرائط على لوحة العدادات",
-  "SID_WOC_LOGS": "السجلات"
+  "SID_WOC_LOGS": "السجلات",
+  "SID_WOC_HUD_MAP": "إعدادات خريطة HUD",
+  "SID_WOC_SPEED": "منطقة السرعة",
+  "SID_WOC_AA": "خريطة Android Auto"
 }
