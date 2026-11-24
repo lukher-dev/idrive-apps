@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+The HUD map can be zoomed in, 100 to 250 %, from the app's Map zoom
+slider: it shows the middle of the map, never scaled up, and each driver
+profile keeps its own zoom. 100 % (the default) shows the whole map as
+before.
+
+The HUD map can be up to 135 % of the HUD's width (85 % before). Above
+100 % it keeps its shape and the HUD's edges cut its sides; at 135 % it
+fills the HUD's height. There the horizontal position slides which part of
+the map shows, and the zoom is held to what the map's width allows. Up to
+100 % nothing changes. Needs the head unit's scaler (hud_scale_down);
+without it the map is at most 100 % wide.
+
+The HUD map can be hidden behind BMW's speed: hud_clear makes it black in a
+rectangle of the HUD's 800x480 scene (hud_clear_x, hud_clear_y, hud_clear_w,
+hud_clear_h; 250x90 at 110,320 by default, a G30 LCI's speed and
+speed-limit sign), feathered at its edges. The rectangle stays put when the
+map moves or changes size. Off by default; the app's Hide map behind BMW's
+speed checkbox and Speed area buttons set it, saved per driver profile.
+Needs the head unit's scaler (hud_scale_down).
+
 ## 0.14.12
 
 The tests build with the cluster renderer's iDrive 7 log-level handling
@@ -112,25 +132,6 @@ starts, and `/usr/bin/carplay` stays as it ships: no write of the system
 partition to patch, remove or recover it. Updating from an earlier version
 puts the original file back and keeps the map, with at most one head-unit
 restart; where CarPlay already runs the earlier patch, none.
-The HUD map can be zoomed in, 100 to 250 %, from the app's Map zoom
-slider: it shows the middle of the map, never scaled up, and each driver
-profile keeps its own zoom. 100 % (the default) shows the whole map as
-before.
-
-The HUD map can be up to 135 % of the HUD's width (85 % before). Above
-100 % it keeps its shape and the HUD's edges cut its sides; at 135 % it
-fills the HUD's height. There the horizontal position slides which part of
-the map shows, and the zoom is held to what the map's width allows. Up to
-100 % nothing changes. Needs the head unit's scaler (hud_scale_down);
-without it the map is at most 100 % wide.
-
-The HUD map can be hidden behind BMW's speed: hud_clear makes it black in a
-rectangle of the HUD's 800x480 scene (hud_clear_x, hud_clear_y, hud_clear_w,
-hud_clear_h; 250x90 at 110,320 by default, a G30 LCI's speed and
-speed-limit sign), feathered at its edges. The rectangle stays put when the
-map moves or changes size. Off by default; the app's Hide map behind BMW's
-speed checkbox and Speed area buttons set it, saved per driver profile.
-Needs the head unit's scaler (hud_scale_down).
 
 ## 0.10.12
 

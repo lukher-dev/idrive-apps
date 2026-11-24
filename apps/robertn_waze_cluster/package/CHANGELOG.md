@@ -5,6 +5,26 @@
 The main page is shorter: HUD map settings, Speed area and Android Auto map
 each open a page of their own with the rows that were on the main page.
 
+Map zoom, a slider on the HUD map settings page: 100 to 250 %, a closer
+part of the map on the HUD. 100 % (the default) shows the whole map as
+before. The map is never scaled up, so a wide HUD map takes less zoom; the
+row shows the zoom in use. Own settings for this driver keeps the zoom too.
+
+Map size goes up to 135 % (85 % before). Above 100 % the map keeps its
+shape and the HUD's edges cut its sides; Move map left and Move map right
+then slide the map inside the HUD.
+
+Hide map behind BMW's speed, a checkbox on the Speed area page: the HUD
+map is hidden in an area of the HUD so BMW's speed stays readable.
+Off by default. The Speed area row shows the area, 250x90 at 110,320 by
+default (where a G30 LCI shows its speed and speed-limit sign), and its
+buttons move and size it 10 px a press. Own settings for this driver keeps
+it too.
+
+The HUD rows say what they change: Map size, Map position, Move map left /
+right / up / down and Centre map (Size, Position, Move left / right / up /
+down and Centre before). Android Auto's Zoom row is now Cluster map zoom.
+
 ## 0.6.15
 
 When boot recovery removes the Android Auto patch because Android Auto
@@ -20,25 +40,6 @@ A Patch or Remove patch that fails shows the reason.
 on cluster patches every software version of the car it can check, and
 removes the patch by itself if the head unit then fails to start. Requires
 the next waze-on-cluster.
-Map zoom, a slider in HUD: 100 to 250 %, a closer part of the map on the
-HUD. 100 % (the default) shows the whole map as before. The map is never
-scaled up, so a wide HUD map takes less zoom; the row shows the zoom in use.
-Own settings for this driver keeps the zoom too.
-
-Size in HUD goes up to 135 % (85 % before). Above 100 % the map keeps its
-shape and the HUD's edges cut its sides; Move left and Move right then slide
-the map inside the HUD.
-
-Hide map behind BMW's speed, a checkbox in HUD after the position buttons:
-the HUD map is hidden in an area of the HUD so BMW's speed stays readable.
-Off by default. The Speed area row shows the area, 250x90 at 110,320 by
-default (where a G30 LCI shows its speed and speed-limit sign), and its
-buttons move and size it 10 px a press. Own settings for this driver keeps
-it too.
-
-The HUD rows say what they change: Map size, Map position, Move map left /
-right / up / down and Centre map (Size, Position, Move left / right / up /
-down and Centre before). Android Auto's Zoom row is now Cluster map zoom.
 
 ## 0.6.12
 
