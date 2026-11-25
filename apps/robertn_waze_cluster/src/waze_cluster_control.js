@@ -360,7 +360,9 @@ function renderCommands(s) {
 function renderShows(rs, s) {
     return rs.cluster === s.cluster && rs.hud === s.hud && rs.hud_width_pct === s.hud_width_pct &&
         rs.hud_x === s.hud_offset_x && rs.hud_y === s.hud_offset_y &&
-        (!(s.hud_keep_shown === 0 || s.hud_keep_shown === 1) || rs.hud_keep_shown === undefined || rs.hud_keep_shown === s.hud_keep_shown);
+        (!(s.hud_keep_shown === 0 || s.hud_keep_shown === 1) || rs.hud_keep_shown === undefined || rs.hud_keep_shown === s.hud_keep_shown) &&
+        (!(s.hud_near_turn === 0 || s.hud_near_turn === 1) || rs.hud_near_turn === undefined || rs.hud_near_turn === s.hud_near_turn) &&
+        (typeof s.hud_near_m !== 'number' || rs.hud_near_m === undefined || rs.hud_near_m === s.hud_near_m);
 }
 
 /* A distance in the language's words: whole metres below 1 km ("800 m"),
@@ -515,7 +517,7 @@ class WazeClusterControl extends EventEmitter {
         }
         this._stored = null;
         const s = st.settings;
-        const asked = !!this._askedShownOn || this._askedHud != null || !!this._askedPos;
+        const asked = !!this._askedShownOn || this._askedHud != null || !!this._askedPos || this._askedNear != null;
         if (asked && !st.moved) {
             this._storedShown(null, true);
             return;
@@ -799,8 +801,11 @@ class WazeClusterControl extends EventEmitter {
 
     /* ---- the HUD map only near turns ---- */
     /* True while it shows only near turns, false while always; null while
-     * the render has not said (or has not got it). */
+     * the render has not said (or has not got it), or while the page loads. */
     hudNearTurn() {
+        if (this._loading()) {
+            return null;
+        }
         const v = this.renderStatus && this.renderStatus.hud_near_turn;
         return v === 0 || v === 1 ? v === 1 : null;
     }
@@ -812,14 +817,16 @@ class WazeClusterControl extends EventEmitter {
     toggleHudNearTurn() {
         if (this.canNearTurn()) {
             const on = !this.hudNearTurn();
-            this.render.send({ cmd: 'hud', hud_near_turn: on ? '1' : '0' });
-            this.patch.send({ cmd: 'hud-near-turn', on: on ? 1 : 0 });
+            this._write([[{ cmd: 'hud', hud_near_turn: on ? '1' : '0' }, { cmd: 'hud-near-turn', on: on ? 1 : 0 }]]);
         }
     }
 
     /* ---- how far before a turn the HUD map shows, only near turns ---- */
-    /* The distance in metres, as just asked until the render shows it; null while it has not said. */
+    /* The distance in metres, as just asked until the render shows it; null while it has not said, or while the page loads. */
     hudNearDist() {
+        if (this._loading()) {
+            return null;
+        }
         if (this._askedNear != null) {
             return this._askedNear;
         }
@@ -854,8 +861,7 @@ class WazeClusterControl extends EventEmitter {
             this._askedNear = null;
             this.emit('change');
         }, HUD_ASKED_MS);
-        this.render.send({ cmd: 'hud', hud_near_m: String(m) });
-        this.patch.send({ cmd: 'hud-near-dist', m });
+        this._write([[{ cmd: 'hud', hud_near_m: String(m) }, { cmd: 'hud-near-dist', m }]]);
         this.emit('change');
     }
 

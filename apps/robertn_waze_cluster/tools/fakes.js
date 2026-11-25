@@ -36,7 +36,7 @@
  * sent again `statusDelayMs` after a tick changes that;
  * cluster,
  * hud, hud-size, hud-pos, hud-keep-shown, hud-near-turn and hud-near-dist
- * change `map`; one of PROFILE_CMDS that names
+ * change `map`, and one that names
  * a profile and set ("profile", "own") other than the ones in effect is
  * refused as patchd refuses it (one naming none while a profile has own
  * settings too), with the settings in effect; one saved is answered
@@ -55,8 +55,6 @@ const STEP_MS = 40;
 const BACKLOG = 60;
 const RENDER_PAGE = 'map';
 const RENDER_FPS = '30 updates/s';
-/* The map settings patchd saves only for the driver profile they name (its MAP_CMDS). */
-const PROFILE_CMDS = ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'];
 
 class LineServer extends EventEmitter {
     /* opts.halfOpen: a connection's end comes to the subclass, which ends its side itself */
@@ -422,8 +420,8 @@ class FakePatch extends LineServer {
         const MAP = { cluster: ['cluster'], hud: ['hud'], 'hud-size': ['hud_width_pct'], 'hud-pos': ['hud_offset_x', 'hud_offset_y'],
             'hud-keep-shown': ['hud_keep_shown'], 'hud-near-turn': ['hud_near_turn'], 'hud-near-dist': ['hud_near_m'] };
         if (MAP[msg.cmd]) {
-            if (PROFILE_CMDS.indexOf(msg.cmd) >= 0 && (!('profile' in msg) ? this._ownSettings() : this.current === undefined ||
-                    msg.profile !== this.current || (msg.own === 1) !== !!(msg.profile && this.own[msg.profile]))) {
+            if (!('profile' in msg) ? this._ownSettings() : this.current === undefined || msg.profile !== this.current ||
+                    (msg.own === 1) !== !!(msg.profile && this.own[msg.profile])) {
                 this._send(socket, { ev: `${msg.cmd}-reply`, ok: false, refused: 'profile', reason: 'not the driver profile in effect',
                     settings: this.map, own_settings: this._ownSettings() });
                 return;

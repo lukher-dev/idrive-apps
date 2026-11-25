@@ -27,7 +27,10 @@
  * while it comes up, else one short connection; a newer turn replaces one
  * still waiting; no render, dropped; the page's link and a short connection
  * never refused busy for each other. Near turns and how far before a turn
- * go to the render with the other HUD settings.
+ * go to the render with the other HUD settings; their writes name the
+ * driver profile and set as the others' do, greyed while the page loads, and
+ * a driver switch or a refused write puts the stored ones on the page's
+ * render.
  *
  *   node tools/test_profiles.js
  */
@@ -463,7 +466,8 @@ async function main() {
     const sync5 = new ProfileSync({ control: page, readProfile: () => (readFails ? Promise.reject(new Error('timeout')) : Promise.resolve(who)),
         patchPath: PSOCK, renderPath: RSOCK, pollMs: 600000, replyMs: 200, log: quiet() });
     page.setWriteTarget(() => sync5.writeTarget(), (w) => sync5.confirmWrite(w), () => sync5.loading());
-    const mapWrites = () => patch.received.filter((m) => ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'].includes(m.cmd));
+    const mapWrites = () => patch.received.filter((m) => ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown', 'hud-near-turn',
+        'hud-near-dist'].includes(m.cmd));
     /* G with its own settings (both), the shared ones both; G in effect */
     const setUp = async () => {
         sync5.stop();
@@ -476,7 +480,7 @@ async function main() {
         patch.active = 'driverG';
         patch.current = 'driverG';
         patch.map = patch.own.driverG;
-        Object.assign(render, { cluster: 1, hud: 1, hudWidth: 0, hudX: 0, hudY: 0, hudKeep: 0 });
+        Object.assign(render, { cluster: 1, hud: 1, hudWidth: 0, hudX: 0, hudY: 0, hudKeep: 0, hudNearTurn: 0, hudNearM: 1000 });
         who = 'driverG';
         readFails = false;
         page.open();
@@ -729,6 +733,88 @@ async function main() {
         assert.deepStrictEqual(patch.map, settings(1, 1, 0, 0, 0, 0));
         patch.profileDelayMs = 0;
         patch.saveMs = 0;
+    });
+    /* near turns and how far before a turn, as patchd keeps them */
+    const near = (s, on, m) => Object.assign({}, s, { hud_near_turn: on, hud_near_m: m });
+    /* set up, and the page loaded as the app loads it when it opens: G's own settings in effect */
+    const setUpLoaded = async () => {
+        await setUp();
+        sync5.load();
+        await until('G\'s own settings loaded', () => !sync5.loading() && sync5.settled() && sync5.own === true);
+    };
+    await check('near turns and Show from: each write names the profile and set in effect, and is saved into them', async () => {
+        await setUpLoaded();
+        const writes = mapWrites().length;
+        assert(page.canNearTurn() && page.hudNearTurn() === false, 'near turns acts, always');
+        page.toggleHudNearTurn();
+        await until('near turns, saved as G\'s own', () => render.hudNearTurn === 1 && patch.active === 'driverG' &&
+            patch.map.hud_near_turn === 1 && page.canChangeHudNearDist());
+        page.setHudNearDistStep(2);
+        await until('600 m, saved as G\'s own', () => render.hudNearM === 600 && patch.map.hud_near_m === 600);
+        assert.deepStrictEqual(mapWrites().slice(writes), [{ cmd: 'hud-near-turn', on: 1, profile: 'driverG', own: 1 },
+            { cmd: 'hud-near-dist', m: 600, profile: 'driverG', own: 1 }]);
+        assert.deepStrictEqual(patch.shared, BOTH, 'the shared settings unchanged');
+    });
+    await check('while the page loads: near turns and Show from greyed and showing nothing, as the other HUD settings', async () => {
+        await setUp();
+        patch.map = patch.own.driverG = near(BOTH, 1, 600);
+        Object.assign(render, { hudNearTurn: 1, hudNearM: 600 });
+        render.announce(render.state, render.reason);
+        await until('near turns from 600 m', () => page.canChangeHudNearDist() && page.hudNearDist() === 600);
+        patch.profileDelayMs = 150;
+        sync5.load();
+        assert(sync5.loading() && page.hudKeepShown() === null && !page.canKeepHud(), 'loading: Keep HUD map greyed, nothing shown');
+        assert.deepStrictEqual([page.hudNearTurn(), page.canNearTurn(), page.hudNearDist(), page.hudNearDistStep(), page.canChangeHudNearDist()],
+            [null, false, null, null, false], 'loading: near turns and Show from greyed, nothing shown');
+        await until('loaded: near turns from 600 m', () => !sync5.loading() && page.hudNearTurn() === true && page.hudNearDist() === 600 &&
+            page.canChangeHudNearDist());
+        patch.profileDelayMs = 0;
+    });
+    await check('a driver switch, then a near-turn press before the next poll: the read before the write finds the new driver; nothing sent', async () => {
+        await setUpLoaded();
+        const writes = mapWrites().length;
+        render.received.length = 0;
+        who = 'driverB';
+        page.toggleHudNearTurn();
+        await until('B told', () => sync5.profile === 'driverB');
+        await sleep(100);
+        assert.strictEqual(mapWrites().length, writes, 'nothing written for G');
+        assert.deepStrictEqual(render.received, [], 'nothing to the render');
+        assert(render.hudNearTurn === 0 && page.hudNearTurn() === false, 'always, as it was');
+    });
+    await check('another driver whose settings differ only in near turns and Show from: the page\'s render moved to them and back', async () => {
+        await setUpLoaded();
+        patch.map = patch.own.driverG = near(BOTH, 1, 600);
+        patch.shared = near(BOTH, 0, 1000);
+        Object.assign(render, { hudNearTurn: 1, hudNearM: 600 });
+        render.announce(render.state, render.reason);
+        await until('G\'s: near turns from 600 m', () => page.hudNearTurn() === true && page.hudNearDist() === 600);
+        who = 'driverB';
+        sync5._poll();
+        await until('B\'s: always, from 1 km', () => sync5.settled() && sync5.profile === 'driverB' && render.hudNearTurn === 0 &&
+            render.hudNearM === 1000 && page.hudNearTurn() === false && page.hudNearDist() === 1000);
+        who = 'driverG';
+        sync5._poll();
+        await until('G\'s again: near turns from 600 m', () => sync5.settled() && sync5.profile === 'driverG' && render.hudNearTurn === 1 &&
+            render.hudNearM === 600 && page.hudNearTurn() === true && page.hudNearDist() === 600);
+    });
+    await check('a near-turn write patchd refuses: the stored settings back on the render, near turns and Show from too', async () => {
+        await setUpLoaded();
+        patch.map = patch.own.driverG = near(BOTH, 1, 600);
+        Object.assign(render, { hudNearTurn: 1, hudNearM: 600 });
+        render.announce(render.state, render.reason);
+        await until('near turns from 600 m', () => page.canChangeHudNearDist() && page.hudNearDist() === 600);
+        patch.current = 'driverX';   /* patchd has another driver in effect: G's page writes are refused */
+        render.received.length = 0;
+        page.setHudNearDistStep(7);
+        await until('the render took 1.6 km', () => render.received.some((m) => m.hud_near_m === '1600'));
+        await until('refused: 600 m back on the render and the page', () => render.hudNearM === 600 && page.hudNearDist() === 600);
+        page.toggleHudNearTurn();
+        await until('the render took always', () => render.received.some((m) => m.hud_near_turn === '0'));
+        await until('refused: near turns back on the render and the page', () => render.hudNearTurn === 1 && page.hudNearTurn() === true);
+        assert.deepStrictEqual(mapWrites().slice(-2), [{ cmd: 'hud-near-dist', m: 1600, profile: 'driverG', own: 1 },
+            { cmd: 'hud-near-turn', on: 0, profile: 'driverG', own: 1 }], 'the writes named G\'s own settings');
+        assert.deepStrictEqual(patch.map, near(BOTH, 1, 600), 'nothing saved');
     });
     sync5.stop();
     page.close();

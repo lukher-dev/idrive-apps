@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Robert Nisipeanu
 /* patchd's map settings written for a driver profile: a cluster, hud,
- * hud-size, hud-pos or hud-keep-shown command that names the profile and set
- * the app's page showed ("profile", "own") is saved into those settings
- * only. A write for a profile other than the one in effect, before any
+ * hud-size, hud-pos, hud-keep-shown, hud-near-turn or hud-near-dist command
+ * that names the profile and set the app's page showed ("profile", "own") is
+ * saved into those settings only. A write for a profile other than the one in effect, before any
  * profile is told since the start, for the own settings while the shared
  * ones are in effect or the other way round, is refused: nothing saved in
  * any profile's settings, the shared ones or map.state.conf, and the reply
@@ -191,7 +191,8 @@ function threeSets(active) {
     var writes = [
         { cmd: 'hud', on: 0, profile: A, own: 1 }, { cmd: 'cluster', on: 1, profile: A, own: 1 },
         { cmd: 'hud-size', hud_width_pct: 85, profile: A, own: 1 }, { cmd: 'hud-pos', hud_x: -50, hud_y: 5, profile: A, own: 1 },
-        { cmd: 'hud-keep-shown', on: 1, profile: A, own: 1 }, { cmd: 'hud', on: 0, profile: A, own: 0 },
+        { cmd: 'hud-keep-shown', on: 1, profile: A, own: 1 }, { cmd: 'hud-near-turn', on: 1, profile: A, own: 1 },
+        { cmd: 'hud-near-dist', m: 400, profile: A, own: 1 }, { cmd: 'hud', on: 0, profile: A, own: 0 },
         { cmd: 'hud', on: 0, profile: null, own: 0 }];
     var refused = [];
     for (var i = 0; i < writes.length; i++) refused.push(await ask(writes[i]));
@@ -212,11 +213,27 @@ function threeSets(active) {
         pf = profiles();
         return pf.own[B].hud_width_pct === 50 && same(pf.own[A], OWN_A) && same(pf.shared, SHARED) && state().hud_width_pct === 50;
     }), JSON.stringify(profiles()));
+    r = await ask({ cmd: 'hud-near-turn', on: 1, profile: B, own: 1 });
+    var r2 = await ask({ cmd: 'hud-near-dist', m: 600, profile: B, own: 1 });
+    ok('near turns from 600 m for B\'s own settings while B is in effect: saved into B\'s and map.state.conf only',
+        r.ok && r2.ok && r2.hud_near_m === 600 && await when(function () {
+            pf = profiles();
+            return pf.own[B].hud_near_turn === 1 && pf.own[B].hud_near_m === 600 && same(pf.own[A], OWN_A) && same(pf.shared, SHARED) &&
+                state().hud_near_turn === 1 && state().hud_near_m === 600;
+        }), JSON.stringify(profiles()));
+    before = files();
+    r = await ask({ cmd: 'hud-near-turn', on: 0, profile: A, own: 1 });
+    r2 = await ask({ cmd: 'hud-near-dist', m: 800, profile: B, own: 0 });
+    await saved();
+    ok('near turns or how far written for A, or for B\'s shared settings, while B has its own: refused with B\'s near turns from 600 m ' +
+        'in the reply, nothing saved', [r, r2].every(function (x) {
+        return x.ok === false && x.refused === 'profile' && x.settings.hud_near_turn === 1 && x.settings.hud_near_m === 600;
+    }) && files() === before, JSON.stringify([r, r2]));
     r = await ask({ cmd: 'hud-size', hud_width_pct: 70, profile: B, own: 0 });
     ok('a write for B\'s shared settings while B has its own: refused', r.ok === false && /has its own/.test(r.reason) &&
         profiles().own[B].hud_width_pct === 50 && same(profiles().shared, SHARED));
     r = await ask({ cmd: 'hud', on: 0, profile: 'a/b', own: 0 });
-    var r2 = await ask({ cmd: 'hud', on: 0, profile: B, own: 2 });
+    r2 = await ask({ cmd: 'hud', on: 0, profile: B, own: 2 });
     ok('a write naming no profile id, or own other than 0 or 1: refused', r.ok === false && /not a profile id/.test(r.reason) &&
         r2.ok === false && /own must be/.test(r2.reason));
 
@@ -279,10 +296,14 @@ function threeSets(active) {
     var st = await statusNow();
     before = files();
     r = await ask({ cmd: 'hud-size', hud_width_pct: 30 });
+    var near = [await ask({ cmd: 'hud-near-turn', on: 0 }), await ask({ cmd: 'hud-near-dist', m: 1400 })];
     await saved();
     ok('drivers with own settings: said in the status; a write without "profile" (an earlier app) refused, nothing saved',
         st.own_settings === true && r.ok === false && r.refused === 'profile' && /update Maps on cluster/.test(r.reason) &&
         r.own_settings === true && files() === before, JSON.stringify(r));
+    ok('drivers with own settings: near turns or how far without "profile" refused too, nothing saved', near.every(function (x) {
+        return x.ok === false && x.refused === 'profile' && /update Maps on cluster/.test(x.reason) && x.own_settings === true;
+    }) && files() === before, JSON.stringify(near));
     await stop();
 
     /* No driver with own settings: the shared settings are the only ones, a
@@ -294,6 +315,9 @@ function threeSets(active) {
     r = await ask({ cmd: 'hud-size', hud_width_pct: 30 });
     ok('no driver with own settings: said in the status; a write without "profile" saved', st.own_settings === false && r.ok &&
         r.settings.hud_width_pct === 30 && await when(function () { return state().hud_width_pct === 30; }), JSON.stringify(r));
+    r = await ask({ cmd: 'hud-near-dist', m: 1400 });
+    ok('no driver with own settings: how far before a turn without "profile" saved', r.ok && r.settings.hud_near_m === 1400 &&
+        await when(function () { return state().hud_near_m === 1400; }), JSON.stringify(r));
     await ask({ cmd: 'profile', id: A });
     var told = statusNext();
     r = await ask({ cmd: 'profile-own', id: A, on: 1 });

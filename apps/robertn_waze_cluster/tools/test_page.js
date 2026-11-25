@@ -474,7 +474,8 @@ async function main() {
             .map((n) => byName[n].enabled);
         const own = byName.wocProfile;
         const sync = OnlineApp.instance._profiles;
-        const mapWrites = () => patch.received.filter((m) => ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'].includes(m.cmd));
+        const mapWrites = () => patch.received.filter((m) => ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown', 'hud-near-turn',
+            'hud-near-dist'].includes(m.cmd));
 
         const profileLine = byName.wocProfileStatus;
         /* no driver with own settings: the shared settings are the only
@@ -581,6 +582,8 @@ async function main() {
         nearBox.press();
         await until('near turns, no turn list: says so', () => render.hudNearTurn === 1 && nearBox.selected === true &&
             patch.map.hud_near_turn === 1 && byName.wocHud.text === 'HUD map: No turn data');
+        assert.deepStrictEqual(mapWrites().slice(-1), [{ cmd: 'hud-near-turn', on: 1, profile: GUEST, own: 0 }],
+            'the write names the driver profile and the settings the page showed');
         render.hudState = 'disabled';
         render.announce(render.state, render.reason);
         await until('no turn data says nothing over the HUD map\'s own trouble', () => byName.wocHud.text === 'HUD map: Disabled after errors');
@@ -605,6 +608,8 @@ async function main() {
             nearDist.cells['0:Value'] === 1 && patch.map.hud_near_m === 400);
         assert.deepStrictEqual(render.received.filter((m) => m.hud_near_m !== undefined).map((m) => m.hud_near_m), ['800', '600', '400'],
             'one command to the render a step');
+        assert.deepStrictEqual(mapWrites().filter((m) => m.cmd === 'hud-near-dist').slice(-3), [800, 600, 400].map((m) =>
+            ({ cmd: 'hud-near-dist', m, profile: GUEST, own: 0 })), 'each write names the driver profile and the settings the page showed');
         await until('the watch at 400 m', () => OnlineApp.instance._turns._gate.showM === 400);
         guidance = turnReply(600);
         await sleep(150);

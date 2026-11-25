@@ -603,7 +603,7 @@ function profileCmd(msg, sock) {
  * null. A write without "profile" (an app before it, or one while no
  * driver has own settings) is saved only while no driver has own settings:
  * the shared settings are then the only ones. */
-var MAP_CMDS = ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown'];
+var MAP_CMDS = ['cluster', 'hud', 'hud-size', 'hud-pos', 'hud-keep-shown', 'hud-near-turn', 'hud-near-dist'];
 function ownSettings() { return !!profiles && profilesInUse(profiles); }
 function mapWriteRefusal(msg) {
     if (!('profile' in msg)) return ownSettings() ? 'drivers have their own map settings: update Maps on cluster' : null;

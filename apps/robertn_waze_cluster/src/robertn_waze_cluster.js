@@ -12,7 +12,7 @@
  * profile is detected), Cluster map (the shared render's map), the Hide
  * BMW's turn box checkbox (the render's setting; a press asks the render to
  * flip it), Logs. While any driver has own settings, Show on and the HUD's
- * checkbox, slider and position buttons are greyed until the driver profile
+ * checkboxes, sliders and position buttons are greyed until the driver profile
  * is settled (profile_sync.js), and the line under Own settings says when
  * it cannot be read. HUD: HUD map (the map
  * on the HUD), the Keep HUD map over BMW's pop-ups and Show HUD map only

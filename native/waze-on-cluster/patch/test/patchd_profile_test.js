@@ -510,8 +510,8 @@ var A = 'a1b2c3d4-0000-4000-8000-000000000001', B = 'a1b2c3d4-0000-4000-8000-000
     /* Near turns and how far before a turn, per profile; a profiles.json from before them: always, 1000 m. */
     ok('a profiles.json from before hud_near_turn and hud_near_m: A\'s set read with 0 and 1000',
         r.settings.hud_near_turn === 0 && r.settings.hud_near_m === 1000, JSON.stringify(r));
-    r = await ask({ cmd: 'hud-near-turn', on: 1 });
-    var rm = await ask({ cmd: 'hud-near-dist', m: 600 });
+    r = await ask({ cmd: 'hud-near-turn', on: 1, profile: A, own: 1 });
+    var rm = await ask({ cmd: 'hud-near-dist', m: 600, profile: A, own: 1 });
     ok('near turns from 600 m as A\'s own: in A\'s copy and map.state.conf', r.ok && rm.ok && rm.hud_near_m === 600 &&
         await when(function () {
             var a = profiles().own[A];
